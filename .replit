@@ -2,35 +2,36 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["openssl", "postgresql"]
+packages = ["openssl", "postgresql", "nodejs-20_x"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+# Build and run the Next.js app from the next/ directory
+run = ["bash", "-lc", "cd next && npm ci --yes && npm run build && npm start"]
 
 [workflows]
-runButton = "Project"
+runButton = "Next dev"
 
 [[workflows.workflow]]
-name = "Project"
+name = "Next dev"
 mode = "parallel"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Start application"
+args = "Start Next"
 
 [[workflows.workflow]]
-name = "Start application"
+name = "Start Next"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
-waitForPort = 5000
+args = "cd next && npm ci --yes && npm run dev -- -p $PORT"
+waitForPort = 3001
 
 [[ports]]
-localPort = 5000
+localPort = 3001
 externalPort = 80
 
 [agent]
