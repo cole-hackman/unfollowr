@@ -26,7 +26,7 @@ export function StatusPie({ items }: { items: Item[] }) {
         borderRadius: 8,
       },
     ],
-  } as const;
+  };
   const options = {
     cutout: "62%",
     plugins: {
