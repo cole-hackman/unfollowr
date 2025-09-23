@@ -2,7 +2,8 @@
 import { motion, type HTMLMotionProps } from "framer-motion";
 import clsx from "clsx";
 
-type Props = Omit<HTMLMotionProps<"button">, "ref"> & {
+type Props = Omit<HTMLMotionProps<"button">, "ref" | "children"> & {
+  children?: React.ReactNode;
   variant?: "primary" | "outline" | "ghost";
   iconLeft?: React.ReactNode;
 };
