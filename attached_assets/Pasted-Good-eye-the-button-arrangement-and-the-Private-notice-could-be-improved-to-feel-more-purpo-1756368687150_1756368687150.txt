@@ -1,0 +1,77 @@
+Good eye 👀 — the button arrangement and the “Private” notice could be improved to feel more **purposeful, consistent, and visually balanced**. Right now it feels slightly scattered and the green badge breaks the otherwise **blue-first identity** of your UI.
+
+Here’s what I’d recommend:
+
+---
+
+## 🔄 Button Placement & Hierarchy
+
+### Current layout
+
+* Disabled **Analyze** button on far left
+* **Try with sample files** in the middle
+* **Clear all** on the far right
+
+This creates a **neutral row** with no clear visual priority.
+
+---
+
+### Improved layout
+
+Group buttons into **primary vs secondary actions**:
+
+1. **Primary action** (blue, large):
+
+   * `Analyze non-followers`
+   * Always on the **right side** (consistent with "next/forward" patterns).
+   * Becomes enabled after files uploaded.
+
+2. **Secondary actions** (ghost/outlined, smaller):
+
+   * `Try with sample files`
+   * `Clear all`
+
+   → These should sit **left of the primary button**, grouped together.
+
+---
+
+### Suggested arrangement
+
+```
+[ Try with sample files ]   [ Clear all ]      [ Analyze non-followers ]
+```
+
+* Primary CTA (“Analyze”) is **right-aligned** and dominant.
+* Supportive options stay grouped together on the left.
+* Keeps user flow clear: "experiment or reset → confirm action."
+
+---
+
+## 🔒 Privacy Notice Restyle
+
+* Instead of green (which looks like success/confirmation), make it **blue** (same shade as your UI: #2563EB).
+* Icon: lock or shield in outline style, blue.
+* Background: soft blue tint (`bg-blue-50`).
+* Text: darker blue (`text-blue-700`).
+
+### Example (Tailwind-ish):
+
+```html
+<div class="flex items-center gap-2 rounded-lg bg-blue-50 text-blue-700 px-3 py-2 text-sm font-medium">
+  <svg class="w-4 h-4 text-blue-600" .../> 
+  Private: Files never leave your device without your consent.
+</div>
+```
+
+---
+
+## ✨ Why this works
+
+* **Consistency**: uses your brand blue, not green.
+* **Clarity**: users instantly know the main action is "Analyze."
+* **Hierarchy**: support actions feel optional; primary CTA is prominent.
+* **Alignment with best practices**: mirrors common SaaS upload flows.
+
+---
+
+Do you want me to **mock this up visually** (side-by-side with current) so your SWE can immediately see how the buttons + notice should look, or just provide Tailwind/React snippets for implementation?

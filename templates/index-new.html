@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Clean up your following in minutes. Upload your Instagram export to see who doesn't follow you back—fast. Privacy-first, clear results, direct profile links.">
+    <title>Unfollowr - Clean up your following in minutes</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='unfollowr-new.css') }}" rel="stylesheet">
+</head>
+<body class="bg-ufr fade-in">
+    <!-- Navigation Header -->
+    <nav class="navbar sticky-header" style="padding: 1rem 0;">
+        <div class="container" style="max-width: 1200px;">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}" aria-label="Unfollowr home">
+                <span class="ufr-logo ufr-logo-md">Unfollowr</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Mobile Floating Upload CTA -->
+    <div class="mobile-upload-cta" id="mobileUploadCta">
+        <button onclick="scrollToUpload()" class="mobile-cta-btn">
+            <i class="fas fa-upload"></i>
+            Upload export
+        </button>
+    </div>
+
+    <!-- Floating decorative elements -->
+    <div class="floating-element float" style="top: 15%; left: 10%;">
+        <i class="fas fa-file-alt floating-file-icon"></i>
+    </div>
+    <div class="floating-element float" style="top: 25%; right: 15%; animation-delay: -2s;">
+        <i class="fas fa-users floating-file-icon"></i>
+    </div>
+    <div class="floating-element float" style="top: 60%; left: 5%; animation-delay: -4s;">
+        <i class="fas fa-chart-line floating-file-icon"></i>
+    </div>
+    <div class="floating-element float" style="top: 70%; right: 10%; animation-delay: -1s;">
+        <i class="fas fa-download floating-file-icon"></i>
+    </div>
+    <!-- Hero Section -->
+    <header class="py-5 py-md-6" style="min-height: 80vh; display: flex; align-items: center;">
+        <div class="container text-center" style="max-width: 880px;">
+            <div class="reveal">
+                <div class="ai-badge mb-3">
+                    <i class="fas fa-sparkles"></i>
+                    New: AI Features
+                </div>
+                <h1 class="display-hero mb-4">Find out who's not following back.</h1>
+                <p class="lead-hero mb-4 mx-auto">Upload your Instagram export — discover unfollowers instantly. 100% private.</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <button onclick="scrollToUpload()" class="btn-ufr btn-ufr-primary">
+                        <i class="fas fa-upload"></i>
+                        Upload my export
+                    </button>
+                    <a href="#trust-section" class="btn-ufr btn-ufr-outline">
+                        <i class="fas fa-shield-alt"></i>
+                        Why safer than competitors?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-4" style="max-width: 880px;">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'info' if category == 'info' else 'success' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' if category == 'info' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Upload Section (moved up) -->
+    <section id="upload" class="py-5 reveal" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);">
+        <div class="container" style="max-width: 880px;">
+            <div class="mb-4 text-center">
+                <h2 class="section-title mb-3">Upload your export</h2>
+                <p class="text-ufr-muted">Large glassy card with drag/drop animation — files never leave your device.</p>
+            </div>
+            
+            <div class="upload-card">
+                <!-- Single Elegant Dropzone -->
+                <div class="elegant-dropzone" id="elegantDropzone" tabindex="0" role="button" aria-label="Upload your Instagram export files">
+                    <i class="fas fa-cloud-upload-alt dropzone-icon"></i>
+                    <div class="dropzone-headline">Drag & drop your Instagram files</div>
+                    <div class="dropzone-subtext">Add Followers + Following (JSON/HTML)</div>
+                </div>
+
+                <!-- File Chips Container -->
+                <div class="file-chips-container empty" id="fileChipsContainer"></div>
+
+                <!-- Upload Progress Bar -->
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="upload-progress-bar" id="uploadProgressBar" style="width: 0%"></div>
+                </div>
+
+                <!-- Error Display -->
+                <div id="uploadError" class="alert alert-danger d-none mt-3" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span class="error-message"></span>
+                </div>
+
+                <!-- Hidden Form -->
+                <form action="{{ url_for('compare') }}" method="POST" enctype="multipart/form-data" id="uploadForm" class="d-none">
+                    <input type="file" name="followers_file" id="followersInput">
+                    <input type="file" name="following_file" id="followingInput">
+                </form>
+
+                <!-- Privacy Notice (Blue Theme) -->
+                <div class="privacy-notice-blue text-center mt-3 mb-4">
+                    <div class="privacy-badge-blue">
+                        <i class="fas fa-lock"></i>
+                        <span>🔒 Files never leave your device</span>
+                    </div>
+                </div>
+
+                <!-- Button Hierarchy (Improved Layout) -->
+                <div class="button-hierarchy">
+                    <div class="secondary-actions">
+                        <button class="btn-secondary-action" id="sampleBtn">
+                            <i class="fas fa-download"></i>
+                            <span>Try with sample files</span>
+                        </button>
+                        <button class="btn-secondary-action" id="clearBtn">
+                            <i class="fas fa-times"></i>
+                            <span>Clear all</span>
+                        </button>
+                    </div>
+                    <button class="btn-primary-action" id="analyzeBtn" disabled 
+                            title="Upload your Followers + Following files to begin"
+                            aria-label="Upload your Followers + Following files to begin" 
+                            aria-disabled="true">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analyze non-followers</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Smart Features Highlight Section -->
+    <section id="smart-features" class="py-5 reveal">
+        <div class="container" style="max-width: 980px;">
+            <div class="text-center mb-5 reveal">
+                <h2 class="section-title mb-3">
+                    <i class="fas fa-sparkles ai-sparkle"></i>
+                    Smarter insights
+                </h2>
+                <p class="text-ufr-muted mb-3">Unfollowr helps you spot who matters, who's inactive, and who's just noise.</p>
+                <div class="google-ai-badge">
+                    <i class="fab fa-google"></i>
+                    Built with Google AI
+                </div>
+            </div>
+            <div class="row g-4 mb-5">
+                {% set smart_features = [
+                    {'title':'Smart Groups','desc':'Automatically sorts accounts into Celebrities, Friends, Spam, and more.', 'icon': 'fas fa-users-cog', 'color': 'primary'},
+                    {'title':'Assistant','desc':'Type or tap a question — like "Hide celebrities" or "Show real friends" — and the assistant filters instantly.', 'icon': 'fas fa-comments', 'color': 'success'},
+                    {'title':'Clear Suggestions','desc':'See not just who doesn\'t follow back, but why they\'re suggested for removal.', 'icon': 'fas fa-lightbulb', 'color': 'warning'}
+                ] %}
+                {% for feature in smart_features %}
+                <div class="col-12 col-md-4">
+                    <div class="ai-feature-card h-100 text-center reveal-stagger">
+                        <div class="ai-icon-chip ai-{{ feature.color }}" style="animation-delay: {{ loop.index * 0.2 }}s;">
+                            <i class="{{ feature.icon }}"></i>
+                        </div>
+                        <h3 class="h5 mb-2">{{ feature.title }}</h3>
+                        <p class="mb-0 text-ufr-muted">{{ feature.desc }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+
+            
+            <!-- Interactive Demo -->
+            <div class="ai-demo-section text-center reveal">
+                <div class="ai-demo-container">
+                    <div class="ai-demo-header">
+                        <i class="fas fa-comment-dots"></i>
+                        Try the Assistant
+                    </div>
+                    <div class="ai-demo-queries">
+                        <div class="demo-query" data-query="Hide celebrities and brands">
+                            <i class="fas fa-quote-left"></i>
+                            Hide celebrities and brands
+                        </div>
+                        <div class="demo-query" data-query="Show me spam accounts">
+                            <i class="fas fa-quote-left"></i>
+                            Show me spam accounts
+                        </div>
+                        <div class="demo-query" data-query="Who are my real friends?">
+                            <i class="fas fa-quote-left"></i>
+                            Who are my real friends?
+                        </div>
+                    </div>
+                    <div class="ai-demo-result">
+                        <div class="demo-response">
+                            <i class="fas fa-robot"></i>
+                            Click a query above to see how the assistant responds
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section id="how" class="py-5 reveal">
+        <div class="container" style="max-width: 980px;">
+            <div class="text-center mb-5 reveal">
+                <h2 class="section-title mb-3">How it works</h2>
+                <p class="text-ufr-muted">Simple, fast, and privacy-first</p>
+            </div>
+            <div class="row g-4">
+                {% set steps = [
+                    {'title':'Upload','desc':'Add your Instagram files (JSON/HTML).', 'icon': 'fas fa-upload'},
+                    {'title':'We sort & analyze','desc':'Accounts grouped with extra insights.', 'icon': 'fas fa-magic'},
+                    {'title':'Decide easily','desc':'See clear suggestions and open profiles directly.', 'icon': 'fas fa-external-link-alt'}
+                ] %}
+                {% for s in steps %}
+                <div class="col-12 col-md-4">
+                    <div class="glass-card h-100 text-center reveal-stagger">
+                        <div class="icon-chip pulse-glow" style="animation-delay: {{ loop.index * 2 }}s;">
+                            <i class="{{ s.icon }}"></i>
+                        </div>
+                        <h3 class="h5 mb-2">{{ s.title }}</h3>
+                        <p class="mb-0 text-ufr-muted">{{ s.desc }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Trust Section - Why safer than competitors -->
+    <section id="trust-section" class="py-5 reveal" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, rgba(16, 185, 129, 0.08) 100%);">
+        <div class="container" style="max-width: 880px;">
+            <div class="text-center mb-5">
+                <h2 class="section-title mb-3">Why safer than competitors?</h2>
+                <p class="text-ufr-muted">Privacy-first vs. paid competitors with trial walls</p>
+            </div>
+            <div class="row g-4 mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="comparison-card unfollowr">
+                        <div class="comparison-header">
+                            <h4 class="h5">Unfollowr</h4>
+                            <span class="badge-success">FREE</span>
+                        </div>
+                        <ul class="comparison-list">
+                            <li><i class="fas fa-check text-success"></i> No Instagram login required</li>
+                            <li><i class="fas fa-check text-success"></i> Files processed locally</li>
+                            <li><i class="fas fa-check text-success"></i> No data stored</li>
+                            <li><i class="fas fa-check text-success"></i> Always free core features</li>
+                            <li><i class="fas fa-check text-success"></i> AI assistant included</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="comparison-card competitors">
+                        <div class="comparison-header">
+                            <h4 class="h5">Other Tools</h4>
+                            <span class="badge-warning">PAID</span>
+                        </div>
+                        <ul class="comparison-list">
+                            <li><i class="fas fa-times text-muted"></i> Often require login</li>
+                            <li><i class="fas fa-times text-muted"></i> Data stored on servers</li>
+                            <li><i class="fas fa-times text-muted"></i> 14-day trial limits</li>
+                            <li><i class="fas fa-times text-muted"></i> Subscription required</li>
+                            <li><i class="fas fa-times text-muted"></i> Basic filtering only</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <button onclick="scrollToUpload()" class="btn-ufr btn-ufr-primary">
+                    <i class="fas fa-upload"></i>
+                    Try it now — completely free
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Privacy & Roadmap Section -->
+    <section class="py-5 reveal">
+        <div class="container" style="max-width: 880px;">
+            <div class="row g-4">
+                <div class="col-12 col-md-6">
+                    <div class="glass-card h-100 reveal-stagger">
+                        <div class="icon-chip pulse-glow" style="animation-delay: 8s;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="h5 mb-3">Privacy first</h3>
+                        <div class="privacy-tagline mb-3">
+                            <strong>Your files stay private. Always.</strong>
+                        </div>
+                        <ul class="mb-0 text-ufr-muted">
+                            <li>No account login required</li>
+                            <li>Files processed per-session; not stored</li>
+                            <li>Smart analysis is privacy-focused and secure</li>
+                            <li>We never store your data — all processing is ephemeral</li>
+                        </ul>
+
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="glass-card h-100 reveal-stagger">
+                        <div class="icon-chip pulse-glow" style="animation-delay: 10s;">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3 class="h5 mb-3">What's next</h3>
+                        <ul class="mb-0 text-ufr-muted">
+                            <li>Twitter & TikTok exports</li>
+                            <li>Saved sessions & diffs</li>
+                            <li>CSV export of results</li>
+                            <li>Advanced filtering options</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-5 reveal">
+        <div class="container" style="max-width: 880px;">
+            <div class="text-center mb-5 reveal">
+                <h2 class="section-title mb-3">Frequently Asked Questions</h2>
+                <p class="text-ufr-muted">Everything you need to know about using Unfollowr</p>
+            </div>
+            
+            <div class="accordion" id="faqAccordion">
+                <!-- Why is the upload box near the top -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger faq-hover">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq0">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            Why is the upload box near the top?
+                        </button>
+                    </h3>
+                    <div id="faq0" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>Because uploading is the first step. We want to make it fast and easy to get started.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Does this work on mobile and desktop -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger faq-hover">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq0a">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            Does this work on mobile and desktop?
+                        </button>
+                    </h3>
+                    <div id="faq0a" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>Yes. Unfollowr is fully responsive — you can upload and analyze your Instagram export on both phones and computers.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Do I need to log in with Instagram -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger faq-hover">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq0b">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            Do I need to log in with Instagram?
+                        </button>
+                    </h3>
+                    <div id="faq0b" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>No. You only upload your exported files. We never ask for your password or login.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How long does processing take -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger faq-hover">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq0c">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            How long does processing take?
+                        </button>
+                    </h3>
+                    <div id="faq0c" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>Usually under a minute, depending on the size of your export.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Can I delete my data -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger faq-hover">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq0d">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            Can I delete my data?
+                        </button>
+                    </h3>
+                    <div id="faq0d" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>All processing is local. Closing the tab or clearing your cache removes everything.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How does the assistant work -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger faq-hover">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq0e">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            How does the assistant work?
+                        </button>
+                    </h3>
+                    <div id="faq0e" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>We use Google's Gemini to help group and classify accounts. Only small bits of text like usernames or bios are sent for analysis — we never store your files, and Gemini does not train on your data.</p>
+                            <p><a href="{{ url_for('privacy') }}" class="text-decoration-none" style="color: var(--ufr-blue);">Read our Privacy Policy</a> for complete details about how we handle your data.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How to get Instagram data -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            How do I get my Instagram data?
+                        </button>
+                    </h3>
+                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p><strong>Step 1:</strong> Go to Instagram Settings → Privacy and Security → Download Your Information</p>
+                            <p><strong>Step 2:</strong> Request a download of your data in JSON format</p>
+                            <p><strong>Step 3:</strong> Wait for Instagram to prepare your data (usually takes up to 1 hour)</p>
+                            <p><strong>Step 4:</strong> Download and extract the ZIP file</p>
+                            <p><strong>Step 5:</strong> Find the followers and following files in the connections folder</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File formats -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            What file formats are supported?
+                        </button>
+                    </h3>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>We support both <strong>JSON</strong> and <strong>HTML</strong> formats from Instagram data exports:</p>
+                            <ul>
+                                <li><strong>JSON files:</strong> followers_1.json, following.json</li>
+                                <li><strong>HTML files:</strong> followers_1.html, following.html</li>
+                            </ul>
+                            <p>The tool automatically detects the format and processes accordingly.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Safety -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            Is this safe to use?
+                        </button>
+                    </h3>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p><strong>Absolutely!</strong> Your privacy and security are our top priorities:</p>
+                            <ul>
+                                <li>No login required - we never access your Instagram account</li>
+                                <li>Files are processed locally and not stored on our servers</li>
+                                <li>No personal data is collected or shared</li>
+                                <li>All processing happens in your browser session</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="accordion-item glass-card mb-3 reveal-stagger">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent border-0 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                            <i class="fas fa-chevron-down me-3 text-ufr-primary"></i>
+                            What do I get in the results?
+                        </button>
+                    </h3>
+                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-ufr-muted">
+                            <p>You'll get a clean, organized list of accounts that don't follow you back, including:</p>
+                            <ul>
+                                <li>Alphabetically sorted usernames</li>
+                                <li>Direct links to each profile</li>
+                                <li>Batch selection for bulk actions</li>
+                                <li>Summary statistics (total followers, following, non-followers)</li>
+                                <li>Letter-group navigation for easy browsing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%); border-top: 1px solid var(--ufr-glass-border);">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <span class="small text-ufr-muted">© {{ current_year or 2025 }} Unfollowr</span>
+            <div class="d-flex gap-3 small">
+                <a href="{{ url_for('privacy') }}" class="text-decoration-none">Privacy Policy</a>
+                <a href="#terms" class="text-decoration-none">Terms</a>
+                <a href="mailto:hello@unfollowr.app" class="text-decoration-none">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Enhanced JavaScript -->
+    <script>
+        // Smooth scroll to upload section
+        function scrollToUpload() {
+            document.getElementById('upload').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Premium Reveal System with Re-animation
+        class PremiumRevealManager {
+            constructor() {
+                this.prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                this.init();
+            }
+
+            init() {
+                if (this.prefersReducedMotion) {
+                    // Disable animations for users who prefer reduced motion
+                    document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => {
+                        el.classList.add('is-visible');
+                        el.style.opacity = '1';
+                        el.style.transform = 'none';
+                        el.style.transition = 'none';
+                    });
+                    return;
+                }
+
+                // Create observer for re-reveal animations
+                const revealObserver = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        const target = entry.target;
+                        
+                        if (entry.isIntersecting) {
+                            // Element entering viewport
+                            target.classList.add('is-visible');
+                            target.classList.remove('is-hidden');
+                            
+                            // Handle stagger groups
+                            if (target.classList.contains('reveal-stagger')) {
+                                this.handleStaggerGroup(target);
+                            }
+                        } else {
+                            // Element leaving viewport
+                            // Only hide if it has been visible before to prevent flash
+                            if (target.classList.contains('is-visible')) {
+                                target.classList.remove('is-visible');
+                                target.classList.add('is-hidden');
+                            }
+                        }
+                    });
+                }, {
+                    threshold: 0.2,
+                    rootMargin: '-20% 0px -20% 0px' // More aggressive enter/exit for smoother experience
+                });
+
+                // Observe all reveal elements
+                document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => {
+                    revealObserver.observe(el);
+                });
+
+                // Handle staggered sections
+                this.initStaggerGroups();
+            }
+
+            handleStaggerGroup(container) {
+                const staggerItems = container.querySelectorAll('.reveal-stagger');
+                staggerItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.add('is-visible');
+                        item.classList.remove('is-hidden');
+                    }, index * 80); // 80ms stagger delay
+                });
+            }
+
+            initStaggerGroups() {
+                // Add stagger support to "How it works" cards
+                const howItWorksCards = document.querySelectorAll('#how .glass-card');
+                howItWorksCards.forEach((card, index) => {
+                    card.classList.add('reveal-stagger');
+                    card.style.transitionDelay = `${index * 80}ms`;
+                });
+
+                // Add stagger to FAQ items
+                const faqItems = document.querySelectorAll('.accordion-item');
+                faqItems.forEach((item, index) => {
+                    item.classList.add('reveal-stagger');
+                    item.style.transitionDelay = `${index * 80}ms`;
+                });
+            }
+        }
+
+        // Initialize premium reveal system
+        const revealManager = new PremiumRevealManager();
+
+        // AI Demo Functionality
+        class AIDemoManager {
+            constructor() {
+                this.queries = document.querySelectorAll('.demo-query');
+                this.responseDiv = document.querySelector('.demo-response');
+                this.responses = {
+                    'Hide celebrities and brands': {
+                        icon: 'fas fa-filter',
+                        text: 'Applied filters! Hiding 23 celebrities and 8 brand accounts. Showing 45 regular accounts.'
+                    },
+                    'Show me spam accounts': {
+                        icon: 'fas fa-ban',
+                        text: 'Found 12 spam accounts with giveaway keywords and suspicious patterns. Ready to unfollow.'
+                    },
+                    'Who are my real friends?': {
+                        icon: 'fas fa-heart',
+                        text: 'Identified 18 real friends based on personal names, low follower counts, and mutual connections.'
+                    }
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.queries.forEach(query => {
+                    query.addEventListener('click', () => {
+                        const queryText = query.dataset.query;
+                        this.showResponse(queryText);
+                    });
+                });
+            }
+
+            showResponse(queryText) {
+                const response = this.responses[queryText];
+                if (!response) return;
+
+                this.responseDiv.classList.remove('active');
+                
+                setTimeout(() => {
+                    this.responseDiv.innerHTML = `
+                        <i class="${response.icon}"></i>
+                        ${response.text}
+                    `;
+                    this.responseDiv.classList.add('active');
+                }, 100);
+            }
+        }
+
+        // Initialize AI demo
+        new AIDemoManager();
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Premium Upload Card Manager
+        class PremiumUploadManager {
+            constructor() {
+                this.files = { followers: null, following: null };
+                this.maxSizeMB = 50;
+                
+                this.dropzone = document.getElementById('elegantDropzone');
+                this.chipsContainer = document.getElementById('fileChipsContainer');
+                this.uploadForm = document.getElementById('uploadForm');
+                this.analyzeBtn = document.getElementById('analyzeBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.sampleBtn = document.getElementById('sampleBtn');
+                this.errorDiv = document.getElementById('uploadError');
+                this.followersInput = document.getElementById('followersInput');
+                this.followingInput = document.getElementById('followingInput');
+                
+                this.init();
+            }
+
+            init() {
+                // Dropzone events
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    this.dropzone.addEventListener(eventName, this.preventDefaults, false);
+                    document.body.addEventListener(eventName, this.preventDefaults, false);
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    this.dropzone.addEventListener(eventName, () => {
+                        this.dropzone.classList.add('drag-active');
+                    }, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    this.dropzone.addEventListener(eventName, () => {
+                        this.dropzone.classList.remove('drag-active');
+                    }, false);
+                });
+
+                this.dropzone.addEventListener('drop', this.handleDrop.bind(this), false);
+                this.dropzone.addEventListener('click', this.openFileDialog.bind(this));
+                this.dropzone.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.openFileDialog();
+                    }
+                });
+
+                // Button events
+                this.analyzeBtn.addEventListener('click', this.analyzeFiles.bind(this));
+                this.clearBtn.addEventListener('click', this.clearAll.bind(this));
+                this.sampleBtn.addEventListener('click', this.useSampleFiles.bind(this));
+
+                // Chip remove events (delegated)
+                this.chipsContainer.addEventListener('click', (e) => {
+                    if (e.target.closest('.chip-remove')) {
+                        const chipElement = e.target.closest('.premium-file-chip');
+                        const fileType = chipElement.dataset.type;
+                        this.removeFile(fileType);
+                    }
+                });
+            }
+
+            preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            handleDrop(e) {
+                const files = Array.from(e.dataTransfer.files);
+                this.processFiles(files);
+            }
+
+            openFileDialog() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.accept = '.json,.html,.htm';
+                input.addEventListener('change', (e) => {
+                    this.processFiles(Array.from(e.target.files));
+                });
+                input.click();
+            }
+
+            processFiles(files) {
+                if (!files.length) return;
+                
+                // Clear any previous errors
+                this.hideError();
+
+                for (const file of files) {
+                    if (!this.validateFile(file)) continue;
+
+                    const detectedType = this.detectFileType(file);
+                    
+                    if (detectedType && !this.files[detectedType]) {
+                        // Auto-detected and slot available
+                        this.setFile(detectedType, file);
+                    } else if (detectedType && this.files[detectedType]) {
+                        // Auto-detected but slot taken - replace with user confirmation
+                        if (confirm(`Replace existing ${detectedType} file with ${file.name}?`)) {
+                            this.setFile(detectedType, file);
+                        }
+                    } else if (!this.files.followers) {
+                        // No auto-detection, use first available slot
+                        this.setFile('followers', file);
+                    } else if (!this.files.following) {
+                        this.setFile('following', file);
+                    } else {
+                        // Both slots full
+                        this.showError('Both files already uploaded. Remove one to replace it.');
+                        break;
+                    }
+                }
+                
+                // Provide helpful feedback
+                this.updateUploadFeedback();
+            }
+
+            detectFileType(file) {
+                const name = file.name.toLowerCase();
+                
+                // Enhanced detection patterns
+                if (/followers/i.test(name) && !/following/i.test(name)) return 'followers';
+                if (/following/i.test(name) && !/followers/i.test(name)) return 'following';
+                
+                // Additional patterns for Instagram exports
+                if (/followers_\d+\.(json|html)$/i.test(name)) return 'followers';
+                if (/following\.(json|html)$/i.test(name)) return 'following';
+                
+                return null; // Let user choose manually
+            }
+
+            validateFile(file) {
+                // Check file extension
+                const validExtensions = ['.json', '.html', '.htm'];
+                const hasValidExtension = validExtensions.some(ext => 
+                    file.name.toLowerCase().endsWith(ext)
+                );
+
+                if (!hasValidExtension) {
+                    this.showError('Unsupported file type. Please upload JSON or HTML files.');
+                    return false;
+                }
+
+                // Check file size
+                if (file.size > this.maxSizeMB * 1024 * 1024) {
+                    this.showError(`File too large. Maximum size is ${this.maxSizeMB}MB.`);
+                    return false;
+                }
+
+                // Check if file is empty
+                if (file.size === 0) {
+                    this.showError('File is empty. Please upload a valid export file.');
+                    return false;
+                }
+
+                // Enhanced MIME type validation
+                const validTypes = ['application/json', 'text/html', 'text/plain', 'application/octet-stream'];
+                if (file.type && !validTypes.includes(file.type)) {
+                    // Warning but don't reject - some systems set incorrect MIME types
+                    console.warn('Unexpected MIME type:', file.type, 'for file:', file.name);
+                }
+
+                return true;
+            }
+
+            setFile(type, file) {
+                this.files[type] = file;
+                this.renderChips();
+                this.updateAnalyzeButton();
+                this.updateUploadFeedback();
+                this.hideError();
+                
+                // Log for debugging
+                console.log(`Set ${type} file:`, file.name, `(${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+            }
+
+            removeFile(type) {
+                this.files[type] = null;
+                this.renderChips();
+                this.updateAnalyzeButton();
+                this.updateUploadFeedback();
+                this.hideError();
+                
+                console.log(`Removed ${type} file`);
+            }
+
+            renderChips() {
+                this.chipsContainer.innerHTML = '';
+                
+                const hasFiles = this.files.followers || this.files.following;
+                
+                if (!hasFiles) {
+                    this.chipsContainer.classList.add('empty');
+                    return;
+                }
+
+                this.chipsContainer.classList.remove('empty');
+
+                ['followers', 'following'].forEach(type => {
+                    const file = this.files[type];
+                    if (file) {
+                        const chip = this.createChip(type, file);
+                        this.chipsContainer.appendChild(chip);
+                    }
+                });
+            }
+
+            createChip(type, file) {
+                const chip = document.createElement('div');
+                chip.className = 'premium-file-chip';
+                chip.dataset.type = type;
+
+                const icon = type === 'followers' ? 'fas fa-users' : 'fas fa-user-plus';
+                const label = type.charAt(0).toUpperCase() + type.slice(1);
+
+                chip.innerHTML = `
+                    <i class="${icon} chip-icon"></i>
+                    <div class="chip-content">
+                        <div class="chip-label">${label}</div>
+                        <div class="chip-filename" title="${file.name}">${file.name}</div>
+                    </div>
+                    <button type="button" class="chip-remove" aria-label="Remove ${label} file">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                return chip;
+            }
+
+            updateAnalyzeButton() {
+                const ready = this.files.followers && this.files.following;
+                this.analyzeBtn.disabled = !ready;
+                
+                // Update button text and accessibility
+                if (ready) {
+                    this.analyzeBtn.innerHTML = '<i class="fas fa-chart-line"></i><span>Analyze non-followers</span>';
+                    this.analyzeBtn.setAttribute('aria-label', 'Analyze non-followers - both files uploaded');
+                    this.analyzeBtn.removeAttribute('title');
+                } else {
+                    let missingFiles = [];
+                    if (!this.files.followers) missingFiles.push('Followers');
+                    if (!this.files.following) missingFiles.push('Following');
+                    
+                    const tooltipText = `Upload your ${missingFiles.join(' + ')} files to begin`;
+                    this.analyzeBtn.setAttribute('title', tooltipText);
+                    this.analyzeBtn.setAttribute('aria-label', tooltipText);
+                    this.analyzeBtn.setAttribute('aria-disabled', 'true');
+                }
+            }
+
+            analyzeFiles() {
+                if (!this.files.followers || !this.files.following) return;
+
+                // Set file inputs
+                const followersTransfer = new DataTransfer();
+                const followingTransfer = new DataTransfer();
+                
+                followersTransfer.items.add(this.files.followers);
+                followingTransfer.items.add(this.files.following);
+                
+                this.followersInput.files = followersTransfer.files;
+                this.followingInput.files = followingTransfer.files;
+
+                // Show loading state
+                this.analyzeBtn.disabled = true;
+                this.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Analyzing...</span>';
+
+                // Submit form
+                this.uploadForm.submit();
+            }
+
+            clearAll() {
+                this.files = { followers: null, following: null };
+                this.renderChips();
+                this.updateAnalyzeButton();
+                this.hideError();
+                this.updateUploadFeedback();
+                
+                // Reset dropzone visual state
+                this.dropzone.classList.remove('drag-active');
+            }
+
+            useSampleFiles() {
+                // For demo purposes, open Instagram help page
+                window.open('https://help.instagram.com/1061437673956446', '_blank', 'noopener');
+            }
+
+            showError(message) {
+                this.errorDiv.querySelector('.error-message').textContent = message;
+                this.errorDiv.classList.remove('d-none');
+            }
+
+            hideError() {
+                this.errorDiv.classList.add('d-none');
+            }
+            
+            updateUploadFeedback() {
+                const followersExists = !!this.files.followers;
+                const followingExists = !!this.files.following;
+                
+                if (followersExists && followingExists) {
+                    // Success state - both files uploaded
+                    this.dropzone.classList.add('upload-complete');
+                    this.dropzone.classList.remove('upload-partial');
+                } else if (followersExists || followingExists) {
+                    // Partial state - one file uploaded
+                    this.dropzone.classList.add('upload-partial');
+                    this.dropzone.classList.remove('upload-complete');
+                } else {
+                    // Empty state
+                    this.dropzone.classList.remove('upload-complete', 'upload-partial');
+                }
+            }
+        }
+
+        // Initialize premium upload manager
+        const uploadManager = new PremiumUploadManager();
+
+        // Sticky Header Scroll Effect
+        const stickyHeader = document.querySelector('.sticky-header');
+        let lastScrollY = window.scrollY;
+
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+            
+            if (currentScrollY > 50) {
+                stickyHeader.classList.add('scrolled');
+            } else {
+                stickyHeader.classList.remove('scrolled');
+            }
+            
+            lastScrollY = currentScrollY;
+        });
+        
+        // Initialize button states on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure tooltips work with Bootstrap if available
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        });
+
+        // Enhanced accordion animation
+        document.querySelectorAll('.accordion-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const chevron = this.querySelector('.fa-chevron-down');
+                if (chevron) {
+                    setTimeout(() => {
+                        if (this.classList.contains('collapsed')) {
+                            chevron.style.transform = 'rotate(0deg)';
+                        } else {
+                            chevron.style.transform = 'rotate(180deg)';
+                        }
+                    }, 50);
+                }
+            });
+        });
+
+        // Subtle file type validation feedback
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const fileName = file.name.toLowerCase();
+                    const isValid = fileName.endsWith('.json') || fileName.endsWith('.html') || fileName.endsWith('.htm');
+                    
+                    if (!isValid) {
+                        this.style.borderColor = '#dc3545';
+                        this.style.boxShadow = '0 0 0 2px rgba(220, 53, 69, 0.25)';
+                    } else {
+                        this.style.borderColor = 'var(--ufr-blue)';
+                        this.style.boxShadow = '0 0 0 2px var(--ufr-focus)';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

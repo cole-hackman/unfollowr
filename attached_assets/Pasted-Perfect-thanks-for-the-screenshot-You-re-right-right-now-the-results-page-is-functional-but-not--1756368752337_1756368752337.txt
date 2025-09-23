@@ -1,0 +1,176 @@
+Perfect — thanks for the screenshot. You’re right: right now the results page is functional but not **engaging**. To match the polish of **Cluely.com**, we need better **filters, interactivity, and AI accessibility**. Here’s a PRD your senior SWE can act on:
+
+---
+
+# 📄 PRD – Results Page Improvements (Filters + AI Assistant Integration)
+
+**Product:** Unfollowr
+**Feature Set:** Results Page Redesign (Filters, AI, Interactivity)
+**Owner:** \[You]
+**Engineering:** \[Senior SWE]
+
+---
+
+## 1. Objective
+
+Make the **Non-followers Results page** more engaging, polished, and useful. Right now it feels static and lacks discoverability of AI. This update will:
+
+* Add **alphabetical and advanced filters**.
+* Reintroduce the **AI Assistant** as a visible chat entrypoint.
+* Improve **UI polish** (spacing, cards, animations) to feel as smooth as Cluely.
+
+---
+
+## 2. Scope
+
+### In Scope
+
+* Alphabetical filter bar (A–Z + `#`).
+* New **filter button** for segment/criteria filters.
+* Visible floating AI Assistant chat icon with quick-start suggestions.
+* UI polish (spacing, typography, hover states, reveal animations).
+* Filter + AI integration with existing dataset.
+
+### Out of Scope
+
+* New AI functionality (stick to classification + filters already scoped).
+* Full redesign of export/report flow.
+
+---
+
+## 3. Features & Requirements
+
+### A) Header Stats Bar
+
+* Keep existing metrics (Followers, Following, Non-followers, Ratio).
+* Style to be **lighter, smoother** (glassy cards, subtle shadow).
+* Add hover animation (lift + glow).
+
+---
+
+### B) Filters
+
+#### Alphabetical Filter
+
+* Horizontal scroll bar (sticky) showing **A–Z + #**.
+* Clicking filters accounts to only show usernames starting with that letter.
+* Active letter styled in **blue highlight**.
+
+#### Advanced Filter Button
+
+* New **“Filters” button** (next to “Export list” / “Open profiles”).
+* On click → opens side panel or dropdown with options:
+
+  * Segment: Celebrity, Friend, Spam, Unknown.
+  * Non-follower toggle.
+  * Suggestion score (slider 0–1).
+  * Inactive only (if data available).
+* Apply/Reset actions at bottom.
+
+---
+
+### C) AI Assistant
+
+* Bring back **AI Assistant** as a **floating chat icon** in bottom-right corner.
+* Icon: blue speech bubble (prominent but not overwhelming).
+* On click → slide-in drawer (right side).
+* Drawer content:
+
+  * Greeting:
+
+    > “👋 Hi, I can help filter your results. Try asking:”
+
+    * “Hide celebrities”
+    * “Show spam accounts”
+    * “Show real friends who don’t follow back”
+  * Input bar at bottom with rounded send button.
+* Results update instantly when filters applied.
+* Applied filters summary above results:
+
+  > “Applied filters: hiding 23 celebrities, 10 spam accounts. Showing 93 accounts.”
+
+---
+
+### D) Results Grid & Table
+
+* Grid view:
+
+  * Rounded cards, centered username, hover glow.
+  * Profile link → small external icon.
+  * Checkbox in top-right corner.
+* Table view:
+
+  * Cleaner rows, no heavy borders, hover highlight.
+  * Actions column simplified to single icon.
+* Add subtle fade-in for accounts on load/filter change.
+
+---
+
+### E) Search
+
+* Keep search bar.
+* Ensure it works **with filters and AI results combined**.
+
+---
+
+## 4. Technical Requirements
+
+* Next.js + Tailwind + Framer Motion.
+* Add Alphabetical filter → client-side filter of in-memory dataset.
+* Filter side panel → client-side filtering (combine with AI filters).
+* Floating AI icon → new component `<AIChatLauncher />`.
+* AI integration:
+
+  * `/api/ai/translate-query` for natural-language → filter JSON.
+  * Temperature 0, JSON output enforced.
+* State management: centralize dataset + active filters (Zustand or Context).
+
+---
+
+## 5. Deliverables
+
+* Redesigned Results page with:
+
+  * Alphabetical filter bar.
+  * Advanced filter button + side panel.
+  * Floating AI Assistant chat icon + drawer.
+  * Polished Grid + Table layouts.
+  * Updated stat cards.
+* Fully responsive design.
+
+---
+
+## 6. Acceptance Criteria
+
+* ✅ Alphabetical filter bar works (A–Z).
+* ✅ Clicking “Filters” opens side panel with segment, score, non-follower toggles.
+* ✅ Floating AI Assistant visible on all results screens.
+* ✅ AI Assistant drawer opens with suggestions + input bar.
+* ✅ Queries apply filters correctly (e.g., “Hide celebrities” removes celeb accounts).
+* ✅ Applied filter summary visible above results.
+* ✅ Grid + Table toggle works with filters active.
+* ✅ Search works with filters + AI combined.
+* ✅ Page feels polished: hover states, smooth transitions, responsive design.
+* ✅ Lighthouse Perf ≥ 90, CLS < 0.05.
+
+---
+
+## 7. Notes
+
+* Inspiration: **Cluely’s results pages** (calm, interactive, clear hierarchy).
+* Priority: **Make the page fun to use**, not just functional.
+* AI should feel **accessible + helpful**, not hidden.
+
+---
+
+⚡ This PRD gives your SWE everything needed to make the results page **as smooth and engaging as Cluely’s**, while fixing discoverability of AI and adding useful filters.
+
+---
+
+Do you want me to also draft **mock Tailwind/React component scaffolds** for:
+
+* Alphabetical filter bar
+* Floating AI chat launcher
+* Filter side panel
+
+…so your SWE has code starting points?

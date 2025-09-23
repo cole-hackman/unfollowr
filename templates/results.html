@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" id="htmlRoot">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your Unfollowr analysis results showing accounts that don't follow you back on Instagram.">
+    <title>Results - Unfollowr</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <style>
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .container { padding: 0.5rem; }
+            .display-5 { font-size: 1.8rem; }
+            .btn-group { flex-direction: column; gap: 0.5rem; }
+            .controls-row > .col-md-6 { margin-bottom: 1rem; }
+            .stats-card { margin-bottom: 1rem; }
+            .card-body { padding: 1rem; }
+        }
+
+        /* Success Animation Styles */
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes checkmark {
+            0% { stroke-dashoffset: 24; }
+            100% { stroke-dashoffset: 0; }
+        }
+        
+        .success-animation {
+            animation: successPulse 0.6s ease-in-out;
+        }
+        
+        .checkmark-animation {
+            stroke-dasharray: 24;
+            animation: checkmark 0.5s ease-in-out forwards;
+        }
+
+        /* Progress overlay styles removed to eliminate popups */
+
+        /* Enhanced Typography */
+        .letter-heading {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .username-text {
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+        }
+
+        /* Statistics Enhancements */
+        .session-stats {
+            background: linear-gradient(135deg, rgba(0,123,255,0.1), rgba(40,167,69,0.1));
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <button class="btn btn-outline-light theme-toggle" onclick="toggleTheme()" id="themeToggle">
+        <i class="fas fa-sun" id="themeIcon"></i>
+    </button>
+
+    <!-- Progress overlay removed to eliminate popups -->
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <div class="mb-2 mb-md-0">
+                <h1 class="display-5 mb-1">
+                    <i class="fas fa-chart-line me-2 text-info"></i>
+                    Unfollowr Results
+                </h1>
+                <p class="text-muted mb-0">Accounts you follow who don't follow you back</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-success" onclick="exportUnfollowList()" id="exportBtn">
+                    <i class="fas fa-download me-2"></i>
+                    Export List
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Analyze Again
+                </a>
+            </div>
+        </div>
+
+        <!-- Session Statistics -->
+        <div class="session-stats">
+            <div class="row text-center">
+                <div class="col-md-3 col-6 mb-2">
+                    <h6 class="text-muted mb-1">Processed</h6>
+                    <h4 class="mb-0" id="processedCount">0</h4>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <h6 class="text-muted mb-1">Remaining</h6>
+                    <h4 class="mb-0" id="remainingCount">{{ total_non_followers }}</h4>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <h6 class="text-muted mb-1">Session Progress</h6>
+                    <h4 class="mb-0" id="sessionProgress">0%</h4>
+                </div>
+                <div class="col-md-3 col-6 mb-2">
+                    <h6 class="text-muted mb-1">Last Action</h6>
+                    <h4 class="mb-0" id="lastActionTime">-</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card success text-center">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-2x text-success mb-2"></i>
+                        <h3 class="card-title">{{ "{:,}".format(total_followers) }}</h3>
+                        <p class="card-text text-muted">Followers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card instagram text-center">
+                    <div class="card-body">
+                        <i class="fas fa-user-plus fa-2x text-info mb-2"></i>
+                        <h3 class="card-title">{{ "{:,}".format(total_following) }}</h3>
+                        <p class="card-text text-muted">Following</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card warning text-center">
+                    <div class="card-body">
+                        <i class="fas fa-user-minus fa-2x text-warning mb-2"></i>
+                        <h3 class="card-title">{{ "{:,}".format(total_non_followers) }}</h3>
+                        <p class="card-text text-muted">Non-Followers</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card stats-card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-percentage fa-2x text-secondary mb-2"></i>
+                        <h3 class="card-title">
+                            {% if total_following > 0 %}
+                                {{ "%.1f"|format((total_non_followers / total_following) * 100) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                        <p class="card-text text-muted">Non-Follow Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if non_followers %}
+            <!-- Results Section -->
+            <div class="card results-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Non-Followers List ({{ total_non_followers }})
+                    </h3>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadCSV()">
+                            <i class="fas fa-download me-1"></i>
+                            Download CSV
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard()">
+                            <i class="fas fa-copy me-1"></i>
+                            Copy List
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+
+
+                    <!-- Enhanced Controls Row -->
+                    <div class="controls-row row mb-3">
+                        <div class="col-md-6 mb-2">
+                            <!-- Search Filter -->
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchInput" 
+                                       placeholder="Search usernames..." onkeyup="filterResults()">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <!-- Batch Size Selector -->
+                            <select class="form-select" id="batchSize" onchange="updateBatchSize()">
+                                <option value="5">Batch: 5 users</option>
+                                <option value="10" selected>Batch: 10 users</option>
+                                <option value="15">Batch: 15 users</option>
+                                <option value="20">Batch: 20 users</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-8 mb-2">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="viewToggle" onclick="toggleView()">
+                                    <i class="fas fa-table me-1"></i>
+                                    Compact View
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="undoLastBatch()" id="undoBtn" disabled>
+                                    <i class="fas fa-undo me-1"></i>
+                                    Undo Last Batch
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="selectFirst10()">
+                                    <i class="fas fa-check-square me-1"></i>
+                                    Select First <span id="batchDisplayCount">10</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="unselectAll()">
+                                    <i class="fas fa-times me-1"></i>
+                                    Unselect All
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <button type="button" class="btn btn-outline-light w-100" id="unfollowSelected" onclick="unfollowSelected()" disabled>
+                                <i class="fas fa-user-minus me-1"></i>
+                                Unfollow Selected (<span id="selectedCount">0</span>)
+                            </button>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Scrollable Container for Lists Only -->
+                    <div class="list-scroll-container" style="max-height: 70vh; overflow-y: auto;">
+                        <!-- Card Grid View -->
+                        <div id="cardView">
+                            <!-- Dynamic content will be populated by JavaScript -->
+                        </div>
+
+                        <!-- Compact Table View (hidden by default) -->
+                        <div id="compactView" class="d-none">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th width="10%" class="text-center">Select</th>
+                                            <th width="70%">Username</th>
+                                            <th width="20%">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody">
+                                        <!-- Dynamic content will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No Results Message (hidden by default) -->
+                    <div id="noResultsMessage" class="text-center py-4 d-none">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No usernames match your search</h5>
+                        <p class="text-muted">Try adjusting your search terms</p>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-heart fa-4x text-success mb-4"></i>
+                    <h3 class="mb-3">Great news!</h3>
+                    <p class="lead text-muted">
+                        Everyone you follow also follows you back. You have a 100% follow-back rate!
+                    </p>
+                    <a href="{{ url_for('index') }}" class="btn btn-info mt-3">
+                        <i class="fas fa-redo me-2"></i>
+                        Analyze Another Account
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables and data
+        let isCompactView = false;
+        let currentBatchSize = 10;
+        let lastBatchUsers = [];
+        let processedUsers = new Set();
+        let isDarkTheme = true;
+        
+        // Data from server
+        const userTimestamps = {{ user_timestamps | tojson }};
+        const nonFollowersData = {{ non_followers_with_data | tojson }};
+        const groupedData = {{ grouped_non_followers | tojson }};
+        const totalNonFollowers = {{ total_non_followers }};
+        
+        // Debug: Log received data
+        console.log('📊 Data received from server:');
+        console.log('- userTimestamps:', userTimestamps);
+        console.log('- nonFollowersData:', nonFollowersData);
+        console.log('- totalNonFollowers:', totalNonFollowers);
+        console.log('- Sample user data:', nonFollowersData.slice(0, 3));
+        
+        // Current filtering
+        let currentSearchTerm = '';
+        let filteredUsers = [...nonFollowersData];
+        
+        // Session tracking
+        let sessionStartTime = new Date();
+        
+        console.log('🎉 Unfollowr Results loaded with', totalNonFollowers, 'non-followers');
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing enhanced Unfollowr...');
+            
+            // Check if required elements exist
+            const requiredElements = ['batchDisplayCount', 'selectedCount', 'unfollowSelected', 'processedCount', 'remainingCount', 'sessionProgress', 'lastActionTime'];
+            let missingElements = [];
+            
+            requiredElements.forEach(id => {
+                if (!document.getElementById(id)) {
+                    missingElements.push(id);
+                }
+            });
+            
+            if (missingElements.length > 0) {
+                console.warn('⚠️ Missing DOM elements:', missingElements);
+            }
+            
+            initializeTheme();
+            loadSessionState();
+            renderUserList();
+            updateSessionStats();
+            initializeIndexScroller();
+            
+            console.log('✅ Initialization complete');
+        });
+
+        // === THEME FUNCTIONALITY ===
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            const htmlRoot = document.getElementById('htmlRoot');
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (isDarkTheme) {
+                htmlRoot.setAttribute('data-bs-theme', 'dark');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('unfollowrTheme', 'dark');
+            } else {
+                htmlRoot.setAttribute('data-bs-theme', 'light');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('unfollowrTheme', 'light');
+            }
+            
+            showSuccessAnimation(document.getElementById('themeToggle'));
+        }
+        
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('unfollowrTheme');
+            if (savedTheme === 'light') {
+                isDarkTheme = false;
+                toggleTheme();
+            }
+        }
+
+        // === UNSELECT ALL FUNCTIONALITY ===
+        function unselectAll() {
+            const checkboxes = document.getElementsByClassName('user-checkbox');
+            
+            for (let checkbox of checkboxes) {
+                if (checkbox.checked && !checkbox.disabled) {
+                    checkbox.checked = false;
+                }
+            }
+            
+            updateSelectedCount();
+            showSuccessAnimation(document.querySelector('[onclick="unselectAll()"]'));
+            console.log('✅ All users unselected');
+        }
+
+        // === BATCH SIZE FUNCTIONALITY ===
+        function updateBatchSize() {
+            const batchSizeEl = document.getElementById('batchSize');
+            const batchDisplayCountEl = document.getElementById('batchDisplayCount');
+            
+            if (!batchSizeEl) {
+                console.warn('⚠️ batchSize element not found');
+                return;
+            }
+            
+            const batchSize = batchSizeEl.value;
+            currentBatchSize = parseInt(batchSize);
+            
+            if (batchDisplayCountEl) {
+                batchDisplayCountEl.textContent = batchSize;
+            }
+            
+            localStorage.setItem('unfollowrBatchSize', batchSize);
+            showSuccessAnimation(batchSizeEl);
+        }
+
+        // === USER LIST RENDERING ===
+        function renderUserList() {
+            if (isCompactView) {
+                renderCompactView();
+            } else {
+                renderCardView();
+            }
+            updateSelectedCount();
+        }
+        
+        function renderCardView() {
+            const cardView = document.getElementById('cardView');
+            
+            if (filteredUsers.length === 0) {
+                cardView.innerHTML = '<div class="text-center py-4"><h5 class="text-muted">No users match your current filters</h5></div>';
+                return;
+            }
+            
+            // Group users by first letter for card view
+            const grouped = {};
+            filteredUsers.forEach(user => {
+                const letter = user.username[0].toUpperCase();
+                const key = letter.match(/[A-Z]/) ? letter : '#';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(user);
+            });
+            
+            let html = '';
+            const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                if (a === '#') return 1;
+                if (b === '#') return -1;
+                return a.localeCompare(b);
+            });
+            
+            sortedKeys.forEach(letter => {
+                html += `
+                    <div class="letter-group mb-4">
+                        <h4 class="letter-heading sticky-top bg-${isDarkTheme ? 'dark' : 'light'} py-2 px-3 rounded mb-3 text-center" id="group-${letter}">
+                            ${letter}
+                            <span class="badge bg-secondary ms-2">${grouped[letter].length} accounts</span>
+                        </h4>
+                        <div class="row">
+                `;
+                
+                grouped[letter].forEach(user => {
+                    const isProcessed = processedUsers.has(user.username);
+                    
+                    html += `
+                        <div class="col-lg-4 col-md-6 mb-3 result-item" data-username="${user.username.toLowerCase()}" data-letter="${letter}">
+                            <div class="card h-100 ${isProcessed ? 'opacity-50' : ''}">
+                                <div class="card-body d-flex align-items-center">
+                                    <div class="me-3">
+                                        <input type="checkbox" class="form-check-input user-checkbox" 
+                                               value="${user.username}" onchange="updateSelectedCount()" 
+                                               ${isProcessed ? 'disabled' : ''}>
+                                    </div>
+                                    <div class="me-3">
+                                        <i class="fab fa-instagram fa-2x ${isProcessed ? 'text-muted' : ''}"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="card-title mb-2 username-text ${isProcessed ? 'text-muted' : ''}">${user.username}</h6>
+                                        <div class="d-grid">
+                                            <a href="https://instagram.com/${user.username}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                View Profile
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+            });
+            
+            cardView.innerHTML = html;
+        }
+        
+        function renderCompactView() {
+            const tableBody = document.getElementById('tableBody');
+            
+            if (filteredUsers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">No users match your current filters</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            filteredUsers.forEach(user => {
+                const isProcessed = processedUsers.has(user.username);
+                
+                html += `
+                    <tr class="table-row-item ${isProcessed ? 'opacity-50' : ''}" data-username="${user.username.toLowerCase()}">
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input user-checkbox" 
+                                   value="${user.username}" onchange="updateSelectedCount()" 
+                                   ${isProcessed ? 'disabled' : ''}>
+                        </td>
+                        <td>
+                            <strong class="username-text ${isProcessed ? 'text-muted' : ''}">${user.username}</strong>
+                        </td>
+                        <td>
+                            <a href="https://instagram.com/${user.username}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-external-link-alt me-1"></i>
+                                View Profile
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+        // === UTILITY FUNCTIONS ===
+        
+        function showSuccessAnimation(element) {
+            element.classList.add('success-animation');
+            setTimeout(() => element.classList.remove('success-animation'), 600);
+        }
+        
+        // Progress functions removed to eliminate popups
+        
+        // === SEARCH AND FILTERING ===
+        function filterResults() {
+            currentSearchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            // Filter users based on search term
+            filteredUsers = nonFollowersData.filter(user => 
+                user.username.toLowerCase().includes(currentSearchTerm)
+            );
+            
+            // Apply current sorting to filtered results
+            applySortingToFilteredUsers();
+            renderUserList();
+        }
+        
+        function applySortingToFilteredUsers() {
+            // Always sort alphabetically
+            filteredUsers.sort((a, b) => a.username.localeCompare(b.username));
+        }
+
+        // === VIEW TOGGLE ===
+        function toggleView() {
+            isCompactView = !isCompactView;
+            const cardView = document.getElementById('cardView');
+            const compactView = document.getElementById('compactView');
+            const viewToggle = document.getElementById('viewToggle');
+            
+            if (isCompactView) {
+                cardView.classList.add('d-none');
+                compactView.classList.remove('d-none');
+                viewToggle.innerHTML = '<i class="fas fa-th-large me-1"></i>Card View';
+            } else {
+                compactView.classList.add('d-none');
+                cardView.classList.remove('d-none');
+                viewToggle.innerHTML = '<i class="fas fa-table me-1"></i>Compact View';
+            }
+            
+            renderUserList();
+            showSuccessAnimation(viewToggle);
+        }
+
+        // === BATCH OPERATIONS ===
+        function selectFirst10() {
+            const batchCount = currentBatchSize;
+            const checkboxes = document.getElementsByClassName('user-checkbox');
+            let selectedCount = 0;
+            
+            // First uncheck all
+            for (let checkbox of checkboxes) {
+                checkbox.checked = false;
+            }
+            
+            // Then select first batch size that are not processed
+            for (let checkbox of checkboxes) {
+                if (selectedCount >= batchCount) break;
+                if (!checkbox.disabled && !processedUsers.has(checkbox.value)) {
+                    checkbox.checked = true;
+                    selectedCount++;
+                }
+            }
+            
+            updateSelectedCount();
+            showSuccessAnimation(document.querySelector('[onclick="selectFirst10()"]'));
+        }
+        
+        function updateSelectedCount() {
+            const checkboxes = document.getElementsByClassName('user-checkbox');
+            const selectedCountEl = document.getElementById('selectedCount');
+            const unfollowBtn = document.getElementById('unfollowSelected');
+            
+            let count = 0;
+            for (let checkbox of checkboxes) {
+                if (checkbox.checked && !checkbox.disabled) count++;
+            }
+            
+            if (selectedCountEl) {
+                selectedCountEl.textContent = count;
+            }
+            
+            if (unfollowBtn) {
+                unfollowBtn.disabled = count === 0;
+                
+                // Update button text safely
+                const baseText = unfollowBtn.innerHTML.split('(')[0];
+                unfollowBtn.innerHTML = `${baseText}(${count})`;
+            }
+        }
+
+        // === ENHANCED UNFOLLOW WITH AUTO-DESELECTION ===
+        let unfollowInProgress = false;
+        
+        function unfollowSelected() {
+            if (unfollowInProgress) {
+                console.log('⏸️ Unfollow already in progress, ignoring duplicate call');
+                return;
+            }
+            
+            unfollowInProgress = true;
+            console.log('🚀 Enhanced batch unfollow initiated');
+            
+            try {
+                const checkboxes = document.getElementsByClassName('user-checkbox');
+                const selectedUsers = [];
+                
+                console.log(`📋 Found ${checkboxes.length} total checkboxes`);
+                
+                for (let checkbox of checkboxes) {
+                    if (checkbox.checked && !checkbox.disabled) {
+                        selectedUsers.push(checkbox.value);
+                        console.log(`✅ Selected user: ${checkbox.value}`);
+                    }
+                }
+                
+                console.log(`🎯 Total selected users: ${selectedUsers.length}`, selectedUsers);
+                
+                if (selectedUsers.length === 0) {
+                    alert('Please select at least one user to unfollow.');
+                    unfollowInProgress = false;
+                    return;
+                }
+                
+                const actualCount = Math.min(selectedUsers.length, currentBatchSize);
+                const remainingCount = selectedUsers.length - actualCount;
+                
+                let message = `Are you sure you want to open ${actualCount} Instagram profiles for unfollowing?`;
+                if (remainingCount > 0) {
+                    message += `\n\nNote: Only the first ${actualCount} profiles will open (based on your batch size setting). The remaining ${remainingCount} will stay selected for the next batch.`;
+                }
+                
+                if (confirm(message)) {
+                    console.log('💪 User confirmed, starting enhanced tab opening process');
+                    
+                    // Progress functions removed
+                    
+                    const unfollowBtn = document.getElementById('unfollowSelected');
+                    const originalText = unfollowBtn.innerHTML;
+                    unfollowBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Opening profiles...';
+                    unfollowBtn.disabled = true;
+                    
+                    // Get users to open (limited by batch size)
+                    const usersToOpen = selectedUsers.slice(0, actualCount);
+                    console.log(`🔗 Opening tabs for: ${usersToOpen.length} users`, usersToOpen);
+                    
+                    // Store for undo functionality
+                    lastBatchUsers = [...usersToOpen];
+                    
+                    // Open all tabs
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    usersToOpen.forEach((username, index) => {
+                        setTimeout(() => {
+                            try {
+                                console.log(`🌐 Opening tab ${index + 1}/${usersToOpen.length} for: ${username}`);
+                                const newWindow = window.open(`https://instagram.com/${username}`, '_blank');
+                                
+                                if (newWindow) {
+                                    successCount++;
+                                    console.log(`✅ Successfully opened tab for: ${username}`);
+                                } else {
+                                    errorCount++;
+                                    console.log(`❌ Popup blocked for: ${username}`);
+                                }
+                            } catch (error) {
+                                errorCount++;
+                                console.error(`💥 Error opening tab for ${username}:`, error);
+                            }
+                        }, index * 100); // Small delay between each tab opening
+                    });
+                    
+                    console.log(`📊 Results: ${successCount} success, ${errorCount} errors`);
+                    
+                    // Auto-deselect processed users and mark as processed
+                    console.log(`🔄 Auto-deselecting ${usersToOpen.length} processed users`);
+                    usersToOpen.forEach(username => {
+                        processedUsers.add(username);
+                        for (let checkbox of checkboxes) {
+                            if (checkbox.checked && checkbox.value === username) {
+                                checkbox.checked = false;
+                                console.log(`✅ Deselected and marked as processed: ${username}`);
+                                break;
+                            }
+                        }
+                    });
+                    
+                    // Update session stats
+                    updateSessionStats();
+                    updateLastActionTime();
+                    saveSessionState();
+                    
+                    // Re-render to show processed state
+                    renderUserList();
+                    
+                    // Enable undo button
+                    document.getElementById('undoBtn').disabled = false;
+                    
+                    setTimeout(() => {
+                        unfollowBtn.innerHTML = originalText;
+                        unfollowBtn.disabled = false;
+                        unfollowInProgress = false;
+                        // Progress function removed
+                        console.log('🔄 Enhanced process complete');
+                        
+                        // Show success message
+                        if (successCount > 0) {
+                            showSuccessAnimation(unfollowBtn);
+                        }
+                    }, 1000);
+                    
+                } else {
+                    console.log('❌ User cancelled batch unfollow');
+                    unfollowInProgress = false;
+                }
+            } catch (error) {
+                console.error('💥 Critical error in enhanced unfollowSelected:', error);
+                unfollowInProgress = false;
+                // Progress function removed
+            }
+        }
+
+        // === UNDO FUNCTIONALITY ===
+        function undoLastBatch() {
+            if (lastBatchUsers.length === 0) {
+                alert('No recent batch to undo.');
+                return;
+            }
+            
+            const message = `Undo processing of ${lastBatchUsers.length} users? This will mark them as not processed and make them selectable again.`;
+            
+            if (confirm(message)) {
+                console.log('↩️ Undoing last batch:', lastBatchUsers);
+                
+                // Remove from processed set
+                lastBatchUsers.forEach(username => {
+                    processedUsers.delete(username);
+                    console.log(`↩️ Restored: ${username}`);
+                });
+                
+                // Update stats and re-render
+                updateSessionStats();
+                renderUserList();
+                saveSessionState();
+                
+                // Clear undo data
+                lastBatchUsers = [];
+                document.getElementById('undoBtn').disabled = true;
+                
+                showSuccessAnimation(document.getElementById('undoBtn'));
+                console.log('✅ Undo completed');
+            }
+        }
+
+        // === SESSION MANAGEMENT ===
+        function updateSessionStats() {
+            const processedCount = processedUsers.size;
+            const remaining = totalNonFollowers - processedCount;
+            const progressPercent = totalNonFollowers > 0 ? ((processedCount / totalNonFollowers) * 100).toFixed(1) : 0;
+            
+            const processedCountEl = document.getElementById('processedCount');
+            const remainingCountEl = document.getElementById('remainingCount');
+            const sessionProgressEl = document.getElementById('sessionProgress');
+            
+            if (processedCountEl) processedCountEl.textContent = processedCount;
+            if (remainingCountEl) remainingCountEl.textContent = remaining;
+            if (sessionProgressEl) sessionProgressEl.textContent = progressPercent + '%';
+        }
+        
+        function updateLastActionTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const lastActionTimeEl = document.getElementById('lastActionTime');
+            if (lastActionTimeEl) {
+                lastActionTimeEl.textContent = timeStr;
+            }
+        }
+        
+        function saveSessionState() {
+            const sessionData = {
+                processedUsers: Array.from(processedUsers),
+                lastBatchUsers: lastBatchUsers,
+                currentBatchSize: currentBatchSize,
+                isDarkTheme: isDarkTheme,
+                sessionStartTime: sessionStartTime.toISOString()
+            };
+            localStorage.setItem('unfollowrSession', JSON.stringify(sessionData));
+        }
+        
+        function loadSessionState() {
+            const saved = localStorage.getItem('unfollowrSession');
+            if (saved) {
+                try {
+                    const sessionData = JSON.parse(saved);
+                    processedUsers = new Set(sessionData.processedUsers || []);
+                    lastBatchUsers = sessionData.lastBatchUsers || [];
+                    currentBatchSize = sessionData.currentBatchSize || 10;
+                    
+                    // Update UI controls safely
+                    const batchSizeEl = document.getElementById('batchSize');
+                    const batchDisplayCountEl = document.getElementById('batchDisplayCount');
+                    const undoBtnEl = document.getElementById('undoBtn');
+                    
+                    if (batchSizeEl) batchSizeEl.value = currentBatchSize.toString();
+                    if (batchDisplayCountEl) batchDisplayCountEl.textContent = currentBatchSize;
+                    
+                    if (lastBatchUsers.length > 0 && undoBtnEl) {
+                        undoBtnEl.disabled = false;
+                    }
+                    
+                    console.log(`📂 Loaded session: ${processedUsers.size} processed users`);
+                } catch (e) {
+                    console.log('❌ Failed to load session state:', e);
+                }
+            }
+            
+            // Load batch size preference
+            const savedBatchSize = localStorage.getItem('unfollowrBatchSize');
+            if (savedBatchSize) {
+                currentBatchSize = parseInt(savedBatchSize);
+                const batchSizeEl = document.getElementById('batchSize');
+                const batchDisplayCountEl = document.getElementById('batchDisplayCount');
+                
+                if (batchSizeEl) batchSizeEl.value = savedBatchSize;
+                if (batchDisplayCountEl) batchDisplayCountEl.textContent = savedBatchSize;
+            }
+        }
+
+        // === EXPORT FUNCTIONALITY ===
+        function exportUnfollowList() {
+            const selectedUsers = [];
+            const checkboxes = document.getElementsByClassName('user-checkbox');
+            
+            for (let checkbox of checkboxes) {
+                if (checkbox.checked && !checkbox.disabled) {
+                    selectedUsers.push(checkbox.value);
+                }
+            }
+            
+            if (selectedUsers.length === 0) {
+                // Export all non-followers if none selected
+                const allUsers = nonFollowersData.map(user => user.username);
+                downloadTextFile(allUsers, 'unfollowr-all-non-followers.txt');
+            } else {
+                // Export selected users
+                downloadTextFile(selectedUsers, 'unfollowr-selected-users.txt');
+            }
+            
+            showSuccessAnimation(document.getElementById('exportBtn'));
+        }
+        
+        function downloadTextFile(usernames, filename) {
+            const content = usernames.join('\\n');
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log(`📁 Exported ${usernames.length} users to ${filename}`);
+        }
+
+        // === INDEX SCROLLER (ENHANCED) ===
+        function initializeIndexScroller() {
+            if (isCompactView) return;
+            
+            const letters = [...new Set(filteredUsers.map(user => {
+                const letter = user.username[0].toUpperCase();
+                return letter.match(/[A-Z]/) ? letter : '#';
+            }))].sort((a, b) => {
+                if (a === '#') return 1;
+                if (b === '#') return -1;
+                return a.localeCompare(b);
+            });
+            
+            if (letters.length <= 1) return; // Don't show scroller for single letter
+            
+            // Remove existing scroller
+            const existing = document.getElementById('indexScroller');
+            if (existing) existing.remove();
+            
+            const indexScroller = document.createElement('div');
+            indexScroller.id = 'indexScroller';
+            indexScroller.className = 'position-fixed';
+            indexScroller.style.cssText = `
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 1000;
+                background: rgba(33, 37, 41, 0.9);
+                border-radius: 12px;
+                padding: 6px 3px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                max-height: 50vh;
+                display: flex;
+                flex-direction: column;
+                gap: 0px;
+                overflow: visible;
+            `;
+            
+            letters.forEach(letter => {
+                const letterItem = document.createElement('div');
+                letterItem.className = 'index-letter text-center text-light';
+                letterItem.style.cssText = `
+                    cursor: pointer;
+                    font-size: 9px;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    transition: all 0.3s ease;
+                    padding: 2px 4px;
+                    min-width: 18px;
+                    height: 16px;
+                    line-height: 1.1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                letterItem.textContent = letter;
+                letterItem.onclick = () => scrollToLetter(letter);
+                
+                letterItem.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                    this.style.transform = 'scale(1.1)';
+                });
+                
+                letterItem.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = 'transparent';
+                    this.style.transform = 'scale(1)';
+                });
+                
+                indexScroller.appendChild(letterItem);
+            });
+            
+            document.body.appendChild(indexScroller);
+        }
+        
+        function scrollToLetter(letter) {
+            const groupElement = document.getElementById(`group-${letter}`);
+            if (groupElement) {
+                groupElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                showSuccessAnimation(groupElement);
+            }
+        }
+
+        // === LEGACY FUNCTIONS (Updated) ===
+        function downloadCSV() {
+            const allUsers = nonFollowersData.map(user => user.username);
+            const csvContent = 'Username,URL\n' + 
+                allUsers.map(username => {
+                    const url = `https://instagram.com/${username}`;
+                    return `${username},${url}`;
+                }).join('\n');
+                
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'unfollowr-complete-report.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('📁 Downloaded complete CSV report');
+        }
+        
+        function copyToClipboard() {
+            const allUsers = nonFollowersData.map(user => user.username);
+            const text = allUsers.join('\n');
+            
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('📋 Copied to clipboard');
+                showSuccessAnimation(document.querySelector('[onclick="copyToClipboard()"]'));
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showSuccessAnimation(document.querySelector('[onclick="copyToClipboard()"]'));
+            });
+        }
+        
+        // Mobile responsive helper
+        function checkMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Handle window resize for responsiveness
+        window.addEventListener('resize', function() {
+            if (!isCompactView && !checkMobile()) {
+                initializeIndexScroller();
+            } else {
+                const scroller = document.getElementById('indexScroller');
+                if (scroller) scroller.remove();
+            }
+        });
+        
+        console.log('🎯 All enhanced features loaded successfully');
+    </script>
+</body>
+</html>

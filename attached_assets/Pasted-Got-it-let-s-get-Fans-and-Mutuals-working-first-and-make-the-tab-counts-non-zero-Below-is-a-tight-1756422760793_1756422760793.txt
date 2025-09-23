@@ -1,0 +1,244 @@
+Got it—let’s get Fans and Mutuals working first (and make the tab counts non-zero). Below is a tight, senior-friendly plan plus drop-in code you can use today.
+
+⸻
+
+What’s probably causing the “all zeros”
+
+Common culprits:
+	1.	Case/format mismatch ("Agi_Atharv" vs "agi_atharv", with/without @).
+	2.	Different shapes (objects vs strings) or using the wrong key (id vs username).
+	3.	Async race: computing buckets before followers/following have loaded.
+	4.	Memo deps wrong (stale computation), or counts read from the wrong object.
+
+We’ll fix all four: normalize + dedupe, typed shapes, safe async, and pure set ops.
+
+⸻
+
+Types (keep it simple)
+
+// types.ts
+export type Account = { username: string; full_name?: string | null };
+
+// followers = they follow YOU
+// following = YOU follow them
+export type Connections = {
+  followers: Account[];  // source: followers.json
+  following: Account[];  // source: following.json
+};
+
+
+⸻
+
+Core logic (pure, testable)
+
+// lib/connections.ts
+import type { Account, Connections } from "@/types";
+
+const norm = (u: string) =>
+  u.trim().replace(/^@+/, "").toLowerCase();
+
+function toSet(list: Account[]) {
+  const s = new Set<string>();
+  for (const a of list) if (a?.username) s.add(norm(a.username));
+  return s;
+}
+
+export type Buckets = {
+  // keys are normalized usernames
+  fans: string[];        // they follow you; you don't follow them
+  unfollowers: string[]; // you follow them; they don't follow you
+  mutuals: string[];     // both follow each other
+};
+
+export function computeBuckets({ followers, following }: Connections): Buckets {
+  const FOL = toSet(followers); // THEY -> YOU
+  const ING = toSet(following); // YOU  -> THEM
+
+  const fans: string[] = [];
+  const unfollowers: string[] = [];
+  const mutuals: string[] = [];
+
+  // pass 1: walk following (you -> them)
+  for (const a of following) {
+    const u = norm(a.username);
+    if (FOL.has(u)) mutuals.push(u);
+    else unfollowers.push(u);
+  }
+
+  // pass 2: walk followers (they -> you) to get remaining fans
+  for (const a of followers) {
+    const u = norm(a.username);
+    if (!ING.has(u)) fans.push(u);
+  }
+
+  // OPTIONAL: dedupe in case of dup input
+  return {
+    fans: Array.from(new Set(fans)),
+    unfollowers: Array.from(new Set(unfollowers)),
+    mutuals: Array.from(new Set(mutuals)),
+  };
+}
+
+// Helper to map normalized usernames back to full objects for rendering.
+export function indexByUsername(list: Account[]) {
+  const map = new Map<string, Account>();
+  for (const a of list) {
+    const key = norm(a.username);
+    if (!map.has(key)) map.set(key, a);
+  }
+  return map;
+}
+
+
+⸻
+
+React hook (handles async + memo)
+
+// hooks/useConnectionBuckets.ts
+import { useMemo } from "react";
+import type { Account } from "@/types";
+import { computeBuckets, indexByUsername } from "@/lib/connections";
+
+export function useConnectionBuckets(
+  followers: Account[] | undefined,
+  following: Account[] | undefined
+) {
+  return useMemo(() => {
+    if (!followers?.length && !following?.length) {
+      return {
+        ready: false,
+        counts: { fans: 0, mutuals: 0, unfollowers: 0 },
+        fans: [] as Account[],
+        mutuals: [] as Account[],
+        unfollowers: [] as Account[],
+      };
+    }
+
+    const buckets = computeBuckets({ followers: followers ?? [], following: following ?? [] });
+    const idx = indexByUsername([...(followers ?? []), ...(following ?? [])]);
+
+    const mapList = (arr: string[]) => arr.map(u => idx.get(u) ?? { username: u });
+
+    const fans = mapList(buckets.fans);
+    const mutuals = mapList(buckets.mutuals);
+    const unfollowers = mapList(buckets.unfollowers);
+
+    return {
+      ready: true,
+      counts: {
+        fans: fans.length,
+        mutuals: mutuals.length,
+        unfollowers: unfollowers.length,
+      },
+      fans,
+      mutuals,
+      unfollowers,
+    };
+  }, [followers, following]);
+}
+
+
+⸻
+
+Wiring into your tabs (example)
+
+// components/ConnectionsView.tsx
+import { useConnectionBuckets } from "@/hooks/useConnectionBuckets";
+import type { Account } from "@/types";
+
+export default function ConnectionsView({
+  followers,
+  following,
+  activeTab,
+  setActiveTab,
+}: {
+  followers: Account[] | undefined;
+  following: Account[] | undefined;
+  activeTab: "unfollowers" | "fans" | "mutuals";
+  setActiveTab: (t: "unfollowers" | "fans" | "mutuals") => void;
+}) {
+  const { ready, counts, fans, mutuals, unfollowers } = useConnectionBuckets(followers, following);
+
+  const list =
+    activeTab === "fans" ? fans :
+    activeTab === "mutuals" ? mutuals :
+    unfollowers;
+
+  return (
+    <div className="space-y-4">
+      {/* Tabs */}
+      <div className="flex gap-3">
+        <button
+          className={`px-4 py-2 rounded-xl border ${activeTab === "unfollowers" ? "bg-blue-600 text-white" : "bg-white text-slate-700"}`}
+          onClick={() => setActiveTab("unfollowers")}
+        >
+          Unfollowers {counts.unfollowers}
+        </button>
+        <button
+          className={`px-4 py-2 rounded-xl border ${activeTab === "fans" ? "bg-blue-600 text-white" : "bg-white text-slate-700"}`}
+          onClick={() => setActiveTab("fans")}
+        >
+          Fans {counts.fans}
+        </button>
+        <button
+          className={`px-4 py-2 rounded-xl border ${activeTab === "mutuals" ? "bg-blue-600 text-white" : "bg-white text-slate-700"}`}
+          onClick={() => setActiveTab("mutuals")}
+        >
+          Mutuals {counts.mutuals}
+        </button>
+      </div>
+
+      {/* Empty / loading states */}
+      {!ready ? (
+        <div className="text-slate-500">Loading connections…</div>
+      ) : list.length === 0 ? (
+        <div className="rounded-xl border p-6 text-slate-500">
+          No results for this tab.
+        </div>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {list.map(acc => (
+            <div key={acc.username} className="rounded-xl border shadow-sm p-4 flex items-center justify-between">
+              <div>
+                <div className="font-semibold text-slate-900">{acc.username}</div>
+                {acc.full_name && <div className="text-slate-500 text-sm">{acc.full_name}</div>}
+              </div>
+              <a
+                href={`https://instagram.com/${acc.username}`}
+                target="_blank"
+                className="inline-flex items-center rounded-lg bg-blue-600 text-white px-3 py-2 text-sm hover:bg-blue-700"
+              >
+                View Profile
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+⸻
+
+Hooking up your filter chips (optional, after counts work)
+	•	Keep the Fans / Mutuals / Unfollowers tabs as your primary segmentation.
+	•	Your “Celebrities / Brands / Sports / Creators” chips should filter within the currently active tab.
+	•	Once Fans & Mutuals are verified, I can give you a tiny tagAccounts() helper to attach label pills (brand/sports/etc.) and update the chip counts.
+
+⸻
+
+Quick validation checklist
+	1.	Confirm followers and following are arrays of { username }.
+	2.	Strip @ and lowercase before any comparisons.
+	3.	Ensure the followers file truly means “they → you” (not reversed). If the semantics are flipped anywhere, Fans/Unfollowers invert.
+	4.	Log sample counts in dev:
+
+console.log("followers", followers?.length, "following", following?.length);
+
+
+	5.	After wiring, verify with 3 hand-picked usernames you know are fans/mutuals.
+
+⸻
+
+If you paste these three files (types.ts, lib/connections.ts, hooks/useConnectionBuckets.ts) and wire the example component, your Fans and Mutuals tabs will populate with correct counts and lists. Want me to add the tagging heuristics next so the filter chips show non-zero too?

@@ -1,0 +1,73 @@
+ChatGPT said:
+
+Got it — I see exactly what you mean. Right now your homepage leans too hard on “AI AI AI” wording, which can overwhelm people and feel like you’re selling the tech, not the outcome.
+
+The trick: keep the “✨ New: AI Features” badge (because that drives clicks) but shift the language to benefits and simplicity, while letting AI be the how, not the headline.
+
+🔄 Suggested Revisions
+Hero Section
+
+Current:
+“Now powered by AI — smarter unfollow suggestions, instant filters, and a built-in chatbot...”
+
+Suggested:
+“Now smarter than ever — clearer suggestions, easy filters, and a new assistant to help you tidy up faster.”
+
+👉 Keeps “New” energy, but focuses on what the user gets (clarity, ease, speed).
+
+“Smarter with AI” Section
+
+Current:
+“Unfollowr isn’t just lists — it’s intelligent insights powered by Gemini AI.”
+
+Suggested:
+“Unfollowr isn’t just lists — it helps you spot who matters, who’s inactive, and who’s just noise.”
+
+Cards:
+
+Smart Groups
+Automatically sorts accounts into Celebrities, Friends, Spam, and more.
+
+Assistant
+Ask in plain English: “Hide celebrities” or “Show real friends who don’t follow back.”
+
+Clear Suggestions
+See not just who doesn’t follow back, but why they’re suggested for removal.
+
+👉 Removes “AI Chatbot” as a label → reframes as Assistant. Still clearly AI-powered, but less heavy-handed.
+
+“How it works” Section
+
+Current:
+
+Upload → AI Analysis → Smart Unfollow
+
+Suggested:
+
+Upload — Add your Instagram files (JSON/HTML).
+
+We sort & analyze — Accounts grouped with extra insights.
+
+Decide easily — See clear suggestions and open profiles directly.
+
+👉 Simplifies wording, AI is implicit in “we sort & analyze.”
+
+FAQ
+
+Add one Q:
+“How does the assistant work?”
+Answer:
+
+“We use Google’s Gemini AI to help group and classify accounts. Only small bits of text like usernames or bios are sent for analysis — we never store your files, and Gemini does not train on your data.”
+
+👉 Transparency without AI buzz overload.
+
+🪄 Why this works
+
+Keeps “✨ New: AI Features” at the top → still eye-catching.
+
+Moves focus from AI itself → outcomes: clearer suggestions, faster cleanup, less mental load.
+
+Keeps privacy messaging crisp and reassuring.
+
+Do you want me to rewrite your current homepage copy section-by-section in polished marketing tone (drop-in replacement text), so your SWE can just update the components with new strings?

@@ -1,0 +1,228 @@
+Unfollowr — “Cluely-level polish” Implementation Brief
+0) Goal
+
+Lift the landing page from “clean but flat” to high-polish, motion-driven, brandful. Keep copy/IA the same; upgrade visual system, motion, depth, and interactivity.
+
+1) References
+
+Primary style reference: Cluely (screenshots provided). Emulate soft gradients, glassmorphism, subtle glows, and confident type hierarchy.
+
+Keep Unfollowr brand: white/near-white base, dark gray text, blue CTAs.
+
+2) Tech & Standards
+
+Framework: Next.js + Tailwind (current stack).
+
+Animation: Framer Motion (prefer) with whileInView for scroll reveals; fall back to reduced motion.
+
+Icons: Lucide.
+
+Images: Next/Image.
+
+Lint/format: ESLint + Prettier (project defaults).
+
+Performance budgets: LCP < 2.5s on cable 4G; CLS < 0.05; Lighthouse Perf ≥ 90.
+
+3) Design System (Tailwind tokens)
+
+Add to tailwind.config.js:
+
+Colors
+
+brand.blue: #2563eb (600), #1d4ed8 (700)
+
+Neutrals: #0f172a (900), #111827 (800), #64748b (500)
+
+Glass borders: white/20, fills white/30
+
+Typography
+
+Headline: Space Grotesk (or Geist Sans), weights 600–700
+
+Body: Inter 400–500
+
+Shadows
+
+shadow-soft: 0 10px 30px -10px rgb(0 0 0 / .2)
+
+shadow-glow: 0 0 0 1px rgb(255 255 255 / .15), 0 10px 40px -10px rgb(37 99 235 / .45)
+
+Radii: rounded-2xl primary
+
+Transitions: transition-all duration-200 ease-out
+
+Load fonts via @next/font (or @fontsource) with display: swap.
+
+4) Global Effects
+
+Subtle background gradient on body:
+
+bg-[radial-gradient(1200px_600px_at_50%_-100px,#e8efff,transparent)] over bg-slate-50.
+
+Floating decorative elements (blurred blobs / file icons) absolutely positioned with a gentle float animation:
+
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.float { animation: float 5s ease-in-out infinite; }
+
+
+Glassmorphism utility:
+
+<div class="bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl shadow-soft">
+
+
+Respect prefers-reduced-motion: disable parallax/float when set.
+
+5) Components to Build/Refactor
+A) Hero
+
+Layout: Left = headline + subhead + primary/secondary CTAs. Right/top = floating decorative elements.
+
+Type scale:
+
+H1: text-6xl md:text-7xl font-bold tracking-tight
+
+Subhead: text-xl text-slate-600 max-w-xl
+
+CTAs:
+
+Primary: bg-brand.blue text-white rounded-xl px-6 py-3 shadow-glow hover:scale-[1.03] hover:shadow-lg
+
+Secondary: outline dark, subtle glow on hover
+
+Motion:
+
+Container: fade+rise on mount (initial {opacity:0,y:24} → inView {opacity:1,y:0})
+
+CTAs: hover scale + shadow; focus ring ring-2 ring-brand.blue/50
+
+B) “How it works” (3 cards)
+
+Convert to glass cards with icon chips.
+
+Each card animates in staggered on scroll.
+
+Hover: slight lift -translate-y-1 + shadow-glow.
+
+C) “Upload your export” panel
+
+Convert to prominent glass card with soft inner glow.
+
+Drag-and-drop highlight state (border becomes brand blue + light glow).
+
+Show file type badges (JSON/HTML) with tooltips.
+
+Microcopy under button: “We never store your files. Processing stays on your device.”
+
+D) Trust/Privacy + “What’s next”
+
+Two wide glass cards with subtle gradient underlay.
+
+Add tiny shield/rocket icon chips with animated pulse every ~6s (reduced motion aware).
+
+E) FAQ accordion
+
+Smooth height animations with Framer Motion.
+
+Chevron rotates; focus states for accessibility.
+
+F) Sticky Header
+
+Transparent initially; on scroll add backdrop-blur + bg-white/60 + hairline border.
+
+Active link underline animation.
+
+G) Footer
+
+Add tiny byline and links; subtle gradient top border.
+
+6) Motion Spec (Framer Motion)
+
+Reveal pattern (default): initial {opacity:0,y:16} whileInView {opacity:1,y:0} transition {duration:.4, ease:'easeOut'} viewport {{ once:true, margin:'-80px' }}
+
+Stagger groups: parent variants={{show:{transition:{staggerChildren:.08}}}}
+
+Hover: scale to 1.03, shadow change; button press scale: .98.
+
+Floating elements: CSS keyframes (see above); pause on prefers-reduced-motion.
+
+7) Accessibility
+
+Color contrast AA for text on translucent backgrounds (test on both light/dark parts of gradient).
+
+Focus rings consistent and visible (ring-2 ring-brand.blue/50).
+
+Keyboard nav through accordions and upload controls.
+
+Motion reduction respected.
+
+8) Performance
+
+Inline critical CSS via Next; lazy-load heavy images.
+
+Use next/image with priority for hero only.
+
+Avoid large BG videos; decorative SVGs only.
+
+Purge unused Tailwind classes.
+
+Lighthouse target ≥ 90 across Perf/Best Practices/SEO.
+
+9) Analytics & UX Feedback
+
+Track: CTA clicks, DnD vs. file picker usage, FAQ opens.
+
+Add simple scroll-depth tracking to confirm reveal timing.
+
+10) Implementation Plan (PR slices)
+
+Tokens & fonts (config + global styles).
+
+Hero (structure, type, CTAs, background gradient, floating elements).
+
+Cards (shared glass card + hover states) → apply to “How it works”, Trust/Next.
+
+Upload panel (DnD, states, microinteractions).
+
+FAQ (animated accordion).
+
+Sticky header (scroll trigger, blur).
+
+A11y + reduced-motion pass.
+
+Perf pass + analytics.
+
+11) Acceptance Criteria (ship checklist)
+
+✅ Fonts load with display: swap; FOUT acceptable < 300ms.
+
+✅ All primary sections reveal smoothly on scroll; reduced-motion disables reveals.
+
+✅ Buttons/links have distinct hover, active, and focus states.
+
+✅ “Upload” has DnD highlight, file badges, and success/error states.
+
+✅ Glass cards render with subtle depth on both light and dark monitors (no muddy contrast).
+
+✅ Sticky header transitions after 40–80px scroll; no layout shift.
+
+✅ Lighthouse: Perf ≥ 90, Acc ≥ 95, CLS < 0.05 on mobile emulation.
+
+✅ No console errors; animations < 60% main thread long tasks during scroll.
+
+12) Nice-to-Have (if time)
+
+Gradient scroll mask at fold (“Keep scrolling” hint chip).
+
+Very light parallax on floating elements (tilt based on mouse, disabled on mobile).
+
+Downloadable sample files to test the flow.
+
+Themed dark mode toggle (invert glass + deepen gradients).
+
+Notes for Engineer
+
+Keep copy and IA as-is; this is a visual polish + interaction sprint.
+
+Prefer composable <GlassCard> and <Reveal> utilities to reduce duplication.
+
+Commit in small PRs with storybook/preview links for motion review.

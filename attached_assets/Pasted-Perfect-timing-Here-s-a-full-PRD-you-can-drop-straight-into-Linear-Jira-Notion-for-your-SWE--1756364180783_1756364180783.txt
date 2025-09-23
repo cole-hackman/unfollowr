@@ -1,0 +1,234 @@
+Perfect timing 👍 Here’s a **full PRD** you can drop straight into Linear/Jira/Notion for your SWE. It’s written like a proper **Product Requirements Document** with scope, flow, API contracts, and acceptance criteria. This will let your engineer integrate **Gemini AI** into **Unfollowr** (Instagram non-follower analyzer).
+
+---
+
+# 📄 Product Requirements Document (PRD)
+
+**Feature:** AI-powered Segmentation & Chatbot
+**Product:** Unfollowr (Instagram Non-Follower Analyzer)
+**Date:** 2025-08-27
+**Owner:** \[You]
+**Engineering:** \[Senior SWE]
+**AI:** Google Gemini API (1.5 Flash)
+
+---
+
+## 1. Problem Statement
+
+Unfollowr currently identifies accounts that a user follows but who don’t follow back. This works, but users still face **decision fatigue**: *“Who should I actually unfollow?”*
+We want to integrate **AI classification + a chatbot assistant** so users can quickly understand their following list, get recommendations, and interact in natural language.
+
+---
+
+## 2. Goals & Objectives
+
+* Enrich follower/following data with **AI-powered segments** (e.g., Celebrity, Creator, Friend, Spam).
+* Provide **reasons/explanations** for suggestions (transparent AI).
+* Add a **chatbot interface** so users can filter and query their data in plain English.
+* Keep costs low: free-tier friendly using **heuristics-first, LLM-assist if ambiguous**.
+* Maintain privacy: all processing stays local or within Unfollowr servers (no external Instagram API calls).
+
+---
+
+## 3. Non-Goals
+
+* Real-time Instagram API lookups (blocked by Meta).
+* Persistent user history (v1 = session-only).
+* Recommendation personalization beyond provided data (no behavioral tracking).
+
+---
+
+## 4. User Stories
+
+1. **As a user**, I want to upload my export and see accounts grouped into meaningful categories (e.g., “Celebrities”, “Likely Friends”).
+2. **As a user**, I want to see *why* someone is suggested for unfollow (e.g., “Doesn’t follow you back” + “Spammy keywords”).
+3. **As a user**, I want to ask: *“Hide celebrities and brands”* and instantly filter my list.
+4. **As a user**, I want the chatbot to answer: *“Who are my real friends that don’t follow back?”*
+5. **As a user**, I want the app to work smoothly without hitting AI limits, so it feels reliable.
+
+---
+
+## 5. Proposed Solution
+
+### 5.1 Data Pipeline
+
+1. User uploads Instagram export.
+2. Normalize to `Account` object:
+
+   ```ts
+   type Account = {
+     username: string;
+     fullName?: string;
+     bio?: string;
+     followersCount?: number;
+     followingCount?: number;
+     nonFollower?: boolean;
+     segment?: "celebrity"|"creator"|"brand"|"friend"|"spam"|"unknown";
+     suggestionScore?: number;
+     explanations?: string[];
+   }
+   ```
+3. Run **Heuristic Classifier** → label most accounts offline.
+4. Send **ambiguous accounts** (no strong signal) to **Gemini 1.5 Flash** for classification.
+5. Merge results → output enriched list.
+
+---
+
+### 5.2 Segmentation
+
+Segments:
+
+* **Celebrity / Brand** (e.g., verified, big accounts, brand terms)
+* **Creator** (artist, fitness, influencer keywords)
+* **Friend (Real Person)** (real name, low follower count, private)
+* **Spam** (giveaway/crypto/forex keywords, emoji soup)
+* **Unknown** (unclassified)
+
+Each account gets:
+
+* **Segment label**
+* **Confidence score**
+* **Explanations** (short reasons)
+
+---
+
+### 5.3 Suggestion Score
+
+* Weighted algorithm:
+
+  * Non-follower = +0.6
+  * Celeb/Brand/Creator = +0.3
+  * Spam = +0.5
+  * Friend = −0.7 (protect real people)
+* Renders “Suggested unfollows” list sorted by score.
+
+---
+
+### 5.4 Chatbot
+
+* UI: floating chat bubble → opens side panel.
+* Prompts → sent to **Gemini API** (`/api/ai/translate-query`).
+* Gemini returns **structured filter JSON**:
+
+  ```json
+  {
+    "segments": ["celebrity","brand"],
+    "minSuggestion": 0.6,
+    "hideFollowers": true
+  }
+  ```
+* Frontend applies filters to the local dataset.
+* Responses show counts + reason summaries.
+
+Example UX:
+
+* User: *“Hide celebrities and brands”* → list updates instantly.
+* User: *“Show me real friends who don’t follow back”* → filter: `{segments:["friend"], hideFollowers:true}`.
+
+---
+
+### 5.5 AI Integration (Gemini)
+
+* **Model:** `gemini-1.5-flash`
+* **Temperature:** `0` (deterministic, reproducible)
+* **Mode:** JSON-only responses (`responseMimeType: application/json`)
+* **Batch size:** ≤50 accounts per call
+* **Endpoints:**
+
+  * `/api/ai/classify-batch` → classify ambiguous accounts
+  * `/api/ai/translate-query` → convert NL → filter JSON
+
+---
+
+## 6. UX Requirements
+
+* Upload flow unchanged.
+* New **Segment filter bar** above results (toggle chips).
+* **Suggested unfollows tab** with reasons shown per account.
+* Chatbot accessible from a **chat bubble** in bottom right.
+* Loading states: show “AI is enriching results…” spinner after upload.
+* Errors: fallback to heuristics if API fails.
+
+---
+
+## 7. Technical Requirements
+
+### Frontend
+
+* Next.js + Tailwind
+* Components: `<UploadCard />`, `<Reveal />`, `<Chatbot />`, `<AccountList />`
+* State: React context or Zustand store for account list
+
+### Backend
+
+* Node API routes under `/api/ai/*`
+* Integrate Google Gemini via `@google/generative-ai`
+* Hide API key on server only
+* Add simple rate limiting (1 batch per session)
+
+### Data Flow
+
+1. Upload → parse → local `Account[]`.
+2. Run heuristics → mark ambiguous.
+3. Call `/api/ai/classify-batch` → merge results.
+4. Store enriched list in memory.
+5. Chatbot queries → `/api/ai/translate-query` → apply filters.
+
+---
+
+## 8. Security & Privacy
+
+* Files processed client-side; only ambiguous bios/names sent to Gemini.
+* No data stored server-side; ephemeral session only.
+* Obfuscate usernames before LLM call if needed (`id:hash(username)`).
+* Always sanitize bios to remove slurs before showing.
+
+---
+
+## 9. Success Metrics
+
+* ≥80% of accounts classified into meaningful segments.
+* Users can filter via chatbot with ≥90% accuracy to intent.
+* AI API calls per session ≤1–2 (cost-controlled).
+* Lighthouse Perf ≥90, CLS <0.05 maintained.
+
+---
+
+## 10. Acceptance Criteria
+
+* ✅ Upload produces enriched list with segment chips.
+* ✅ “Suggested unfollows” tab sorted by score, each row has explanation.
+* ✅ Chatbot responds to at least 5 core queries:
+
+  1. Hide celebrities
+  2. Show only friends
+  3. Show spam accounts
+  4. Show non-followers only
+  5. Show real friends who don’t follow back
+* ✅ If Gemini quota is hit, fallback = heuristic only (no crash).
+* ✅ All outputs are valid JSON (no malformed responses).
+* ✅ Accessibility: chat and filters usable by keyboard & screen readers.
+
+---
+
+## 11. Open Questions
+
+* Do we obfuscate usernames before sending to Gemini (privacy vs UX tradeoff)?
+* Do we persist filters/selections across sessions (localStorage)?
+
+---
+
+## 12. Timeline
+
+* **Week 1:** Implement heuristics + segment chips.
+* **Week 2:** Add Gemini classify-batch endpoint + merge.
+* **Week 3:** Add chatbot endpoint + frontend chat panel.
+* **Week 4:** QA, perf testing, ship.
+
+---
+
+✅ This gives your SWE everything needed: **data contract, endpoints, UX, AI prompts, fallback rules, acceptance criteria.**
+
+---
+
+Do you want me to also draft the **exact Gemini prompts** (system + user templates) for both *classify-batch* and *translate-query* so your SWE can copy them straight into the code?

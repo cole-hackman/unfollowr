@@ -1,0 +1,86 @@
+📄 PRD – Fix Upload Flow & Analyze Button Activation
+
+Product: Unfollowr
+Feature Set: Upload & Analyze Flow
+Owner: [You]
+Engineering: [Senior SWE]
+Date: [Today’s Date]
+
+⸻
+
+1. Objective
+
+Users report that after uploading their Instagram export files, the “Analyze non-followers” button remains disabled. The upload → validate → enable workflow needs to be fixed so the analyze flow is smooth and reliable.
+
+⸻
+
+2. Scope
+
+In Scope
+	•	Fix logic that enables the Analyze button after valid files are uploaded.
+	•	Validate file types (JSON or HTML only).
+	•	Ensure both required files (Followers + Following) are present before enabling.
+	•	Show inline error if wrong/missing file.
+	•	Update UI state transitions (disabled → enabled) smoothly.
+
+Out of Scope
+	•	AI analysis backend logic (assume existing analysis function works once called).
+	•	Styling of the upload card (only behavior/state updates are in scope).
+
+⸻
+
+3. Current Behavior
+	•	User drags/drops or selects files.
+	•	Files appear in upload UI.
+	•	Issue: Analyze button remains disabled regardless of valid files being present.
+
+⸻
+
+4. Expected Behavior
+	•	Before Upload:
+	•	Analyze button disabled.
+	•	Tooltip or gray state explains: “Upload your Followers + Following files to begin.”
+	•	On Upload:
+	•	Validate file type: must be .json or .html.
+	•	Identify file as Followers or Following (via filename check or content keys).
+	•	If valid + both files uploaded → enable Analyze non-followers button.
+	•	On Invalid File:
+	•	Show inline error (e.g., “Unsupported file type, please upload JSON/HTML.”).
+	•	Keep button disabled.
+	•	On Clear All:
+	•	Remove uploaded files.
+	•	Reset state → button disabled.
+
+⸻
+
+5. Technical Requirements
+	•	Frontend stack: Next.js + React + Tailwind.
+	•	Use client-side validation:
+	•	Check MIME type (application/json, text/html).
+	•	Parse JSON for expected keys: relationships_followers and relationships_following.
+	•	Button state logic:
+	•	disabled = !(followersFile && followingFile && filesValid).
+	•	Accessibility:
+	•	Ensure disabled button has aria-disabled.
+	•	Error messages should be screen-reader accessible.
+
+⸻
+
+6. Deliverables
+	•	Fixed upload card with:
+	•	Proper validation.
+	•	Clear error messages.
+	•	Smooth enable/disable state for Analyze button.
+	•	Unit tests for upload flow logic.
+	•	Manual QA: upload combinations (valid, invalid, missing) and confirm correct state changes.
+
+⸻
+
+7. Acceptance Criteria
+	•	✅ Upload both valid files → Analyze button enabled.
+	•	✅ Upload only one file → button stays disabled.
+	•	✅ Upload wrong file type → error shown, button disabled.
+	•	✅ Clear All resets state → button disabled again.
+	•	✅ Tooltip or helper text always clarifies why button is disabled.
+	•	✅ Works consistently for drag-and-drop and file picker.
+	•	✅ Mobile and desktop tested.

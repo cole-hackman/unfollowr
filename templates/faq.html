@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Unfollowr</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container my-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fab fa-instagram text-danger me-3"></i>
+                Frequently Asked Questions
+            </h1>
+            <p class="lead text-muted">Everything you need to know about using Unfollowr</p>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back to App
+            </a>
+        </div>
+
+        <!-- FAQ Content -->
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="accordion" id="faqAccordion">
+                    
+                    <!-- Question 1 -->
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                <i class="fas fa-download me-3 text-primary"></i>
+                                How do I get my Instagram followers and following data?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <h5 class="text-primary mb-3">Step-by-step guide:</h5>
+                                <ol class="mb-4">
+                                    <li class="mb-2"><strong>Select Data:</strong> Choose "Some of your information" and check "Followers and following" under "Connections" tab</li>
+                                    <li class="mb-2"><strong>Choose Format:</strong> Click "Download to device" then select either "JSON" or "HTML" format with date range of your choice (for best results, use all time)</li>
+                                    <li class="mb-2">Wait for Instagram to email you the download link (usually takes a few hours)</li>
+                                    <li class="mb-2">Download and extract the zip file</li>
+                                    <li class="mb-2">Look for <code>followers_1.json/html</code> and <code>following.json/html</code> files</li>
+                                </ol>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Tip:</strong> The download process can take anywhere from 30 minutes to 48 hours depending on Instagram's current load.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 2 -->
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                <i class="fas fa-shield-alt me-3 text-success"></i>
+                                Is my data safe? Do you store my information?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5 class="text-success mb-3">Your Privacy Matters:</h5>
+                                        <ul class="list-unstyled">
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All processing happens in your browser</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>No data is stored on our servers</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Files are deleted immediately after processing</li>
+                                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>No personal information is collected</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-lock me-2"></i>
+                                            <strong>100% Private</strong><br>
+                                            Your Instagram data never leaves your device except for the brief moment it's processed to show you results.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 3 -->
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                <i class="fas fa-file-alt me-3 text-warning"></i>
+                                What file formats are supported?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5 class="text-warning mb-3">Supported Formats:</h5>
+                                        <div class="mb-3">
+                                            <span class="badge bg-primary me-2">JSON</span>
+                                            <span class="text-muted">followers_1.json, following.json</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <span class="badge bg-secondary me-2">HTML</span>
+                                            <span class="text-muted">followers_1.html, following.html</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>File Size Limit:</strong> Maximum 50MB per file
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 4 -->
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                <i class="fas fa-users me-3 text-info"></i>
+                                What does "non-followers" mean?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <p class="mb-3">Non-followers are accounts that you follow, but they don't follow you back. This app helps you identify these one-way relationships.</p>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-info">Example:</h6>
+                                        <ul class="text-muted">
+                                            <li>You follow @example_user</li>
+                                            <li>@example_user doesn't follow you</li>
+                                            <li>= @example_user is a "non-follower"</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-lightbulb me-2"></i>
+                                            This helps you clean up your following list and focus on mutual connections.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 5 -->
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                <i class="fas fa-external-link-alt me-3 text-danger"></i>
+                                How do I unfollow people using the results?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <h5 class="text-danger mb-3">Unfollowing Process:</h5>
+                                <ol class="mb-4">
+                                    <li class="mb-2">Select users you want to unfollow using the checkboxes</li>
+                                    <li class="mb-2">Click the <strong>"Unfollow Selected"</strong> button</li>
+                                    <li class="mb-2">Instagram profiles will open in new tabs</li>
+                                    <li class="mb-2">Click the <strong>"Following"</strong> button on each profile</li>
+                                    <li class="mb-2">Confirm the unfollow action</li>
+                                </ol>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Safety Note:</strong> We disabled "Select All" to prevent browser crashes from opening too many tabs at once. Select users in small batches.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question 6 -->
+                    <div class="accordion-item bg-dark border-secondary">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-dark text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                <i class="fas fa-bug me-3 text-secondary"></i>
+                                I'm having trouble with my files. What should I check?
+                            </button>
+                        </h2>
+                        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                <h5 class="text-secondary mb-3">Common Issues & Solutions:</h5>
+                                
+                                <div class="mb-4">
+                                    <h6 class="text-warning">File Upload Errors:</h6>
+                                    <ul class="text-muted">
+                                        <li>Make sure files are named correctly (followers_1.json/html, following.json/html)</li>
+                                        <li>Check that files are under 50MB</li>
+                                        <li>Ensure you're uploading the right files from your Instagram data export</li>
+                                    </ul>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6 class="text-warning">No Results or Empty Lists:</h6>
+                                    <ul class="text-muted">
+                                        <li>Make sure you uploaded both followers AND following files</li>
+                                        <li>Check that your Instagram export included follower data</li>
+                                        <li>Try re-downloading your Instagram data if files seem corrupted</li>
+                                    </ul>
+                                </div>
+
+                                <div class="alert alert-secondary">
+                                    <i class="fas fa-question-circle me-2"></i>
+                                    Still having issues? The files you download from Instagram should contain your actual follower and following data in JSON or HTML format.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-5 pt-4 border-top border-secondary">
+            <p class="text-muted">
+                <i class="fab fa-instagram me-2"></i>
+                Unfollowr - Find, Filter, and Unfollow with Ease
+            </p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-upload me-2"></i>Start Using Unfollowr
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

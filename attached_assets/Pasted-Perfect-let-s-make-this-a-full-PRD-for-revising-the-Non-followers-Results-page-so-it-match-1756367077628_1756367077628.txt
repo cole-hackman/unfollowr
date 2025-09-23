@@ -1,0 +1,163 @@
+Perfect — let’s make this a **full PRD** for revising the **Non-followers Results** page so it matches the smooth, clean polish of **Cluely.com**, while also fixing the **AI Assistant functionality**.
+
+---
+
+# 📄 PRD – Results Page Redesign + AI Assistant Fixes
+
+**Product:** Unfollowr
+**Feature Set:** Non-followers Results UI & AI Assistant
+**Owner:** \[You]
+**Engineering:** \[Senior SWE]
+
+---
+
+## 1. Objective
+
+The Non-followers Results page currently works but feels cluttered and less polished than desired. We want it to match the **smooth, minimal, modern style of Cluely**. Additionally, the **AI Assistant isn’t functioning correctly** — filters don’t apply consistently, and UX is clunky. This update will:
+
+* Deliver a **cleaner, calmer results UI**.
+* Make the **AI Assistant functional, responsive, and trustworthy**.
+* Ensure consistency with homepage polish.
+
+---
+
+## 2. Scope
+
+### In Scope
+
+* Visual redesign of results page (cards, table, metrics).
+* Improved transitions/animations (Cluely-style smoothness).
+* Fix AI Assistant functionality (queries → filters).
+* Update action buttons (export, copy, open profiles).
+* Responsive/mobile polish.
+
+### Out of Scope
+
+* New AI features beyond filtering/classification (covered in other PRDs).
+* Backend changes outside AI pipeline.
+
+---
+
+## 3. Design Goals (Cluely-inspired)
+
+* **Minimalist UI**: More white space, fewer borders, soft shadows.
+* **Typography hierarchy**: Bold headers, subtle secondary text.
+* **Smooth interactions**: Hover states, fade-in animations.
+* **Calm palette**: Blue highlights only for CTAs; softer grays for background.
+* **AI panel**: Feels integrated, not bolted-on.
+
+---
+
+## 4. Page Structure
+
+### Header (Stats Bar)
+
+* 4 metric cards (Followers, Following, Non-followers, Follow Ratio).
+* Style: white glassy cards with shadow + subtle hover lift.
+* Icons smaller + lighter (Cluely style).
+
+### View Toggles
+
+* Toggle: **Grid / Table** view.
+* Smooth transition (fade/slide) between layouts.
+
+### Actions Row
+
+* Buttons:
+
+  * `Export list` (primary)
+  * `Open selected profiles`
+  * `Copy selected`
+* Simplify: keep **primary action left-aligned**, secondary smaller.
+
+### Results List
+
+* **Grid View**:
+
+  * Rounded cards, centered username, `Open Profile` as subtle icon.
+  * Remove alphabet strip (A–Z) unless explicitly needed — replace with **search + filter bar**.
+* **Table View**:
+
+  * Minimal rows, no heavy borders, hover highlight.
+  * Two columns: Username + Actions (icon-only).
+
+### AI Assistant Panel
+
+* Slide-in drawer (right side).
+* Default collapsed to bubble → expands smoothly on click.
+* Greeting:
+  *“Hi 👋 I can help you filter your results. Try asking:”*
+
+  * Hide celebrities
+  * Show real friends
+  * Show spam accounts
+* Input bar at bottom with rounded field + send button.
+
+---
+
+## 5. AI Assistant Functionality Fixes
+
+* **Current issue**: Filters don’t apply or return 0 accounts incorrectly.
+* **Fix requirements**:
+
+  1. Ensure queries → structured filters (`segments`, `minSuggestion`, `hideFollowers`).
+  2. Apply filters **instantly** to in-memory dataset.
+  3. Show applied filter summary above results:
+
+     > “Applied filters: hiding 23 celebrities, 8 brands. Showing 95 accounts.”
+  4. Fallback: If AI fails, show message:
+     *“Couldn’t process that query. Try: ‘Hide celebrities’ or ‘Show spam accounts.’”*
+
+---
+
+## 6. Technical Requirements
+
+* Tech: Next.js + Tailwind + Framer Motion.
+* Smooth transitions (fade/slide) for toggles, filters, AI panel.
+* Refactor dataset handling to ensure filters apply consistently across **Grid** and **Table** view.
+* AI API calls:
+
+  * Use `/api/ai/translate-query`.
+  * Temperature 0, JSON response enforced.
+* Error handling: Always degrade gracefully to heuristics.
+
+---
+
+## 7. Deliverables
+
+* Redesigned **Results Page** (grid + table).
+* Functional **AI Assistant drawer** with working filters.
+* Polished **metrics header** + simplified action bar.
+* New **filter/search bar** (replaces A–Z strip).
+* Responsive layouts for mobile + desktop.
+
+---
+
+## 8. Acceptance Criteria
+
+* ✅ Results page has clean Cluely-style design (minimal borders, white space, soft shadows).
+* ✅ Metric cards lift subtly on hover.
+* ✅ Grid + Table toggle transitions smoothly.
+* ✅ Search bar filters usernames instantly.
+* ✅ AI Assistant drawer expands/collapses smoothly.
+* ✅ Queries apply correct filters (segments, non-followers, spam).
+* ✅ Applied filter summary is shown to user.
+* ✅ If AI fails, error fallback appears, and baseline list remains visible.
+* ✅ Page fully responsive, mobile-friendly.
+* ✅ Lighthouse Perf ≥ 90, CLS < 0.05.
+
+---
+
+## 9. Notes
+
+* Prioritize **clarity > density**. Users should feel calm and in control.
+* Cluely reference: clean typography, glassy cards, breathing room.
+* AI assistant must feel like a **helpful guide**, not an unreliable gimmick.
+
+---
+
+This PRD is ready for implementation — it combines **UI polish** with the **AI assistant fixes** so the results page feels as clean and smooth as the homepage.
+
+---
+
+Do you want me to also **draft exact Tailwind/React component outlines** (e.g., for the metric cards, assistant drawer, and grid cards) so your SWE has scaffolding code ready?

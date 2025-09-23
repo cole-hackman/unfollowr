@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your Instagram non-followers analysis results - clean, organized list with direct profile links">
+    <title>Non-followers Results - Unfollowr</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='unfollowr-new.css') }}" rel="stylesheet">
+</head>
+<body class="bg-ufr fade-in">
+    <!-- Header -->
+    <header class="py-4 border-bottom border-ufr">
+        <div class="container" style="max-width: 1100px;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="h2 mb-1">Non-followers Results</h1>
+                    <p class="text-ufr-muted mb-0">Accounts you follow who don't follow you back</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn-ufr btn-ufr-outline" id="toggleView">
+                        <i class="fas fa-table"></i>
+                        Table view
+                    </button>
+                    <button class="btn-ufr btn-ufr-primary" onclick="exportUnfollowList()">
+                        <i class="fas fa-download"></i>
+                        Export list
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn-ufr btn-ufr-outline">
+                        <i class="fas fa-arrow-left"></i>
+                        Analyze again
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Statistics Cards -->
+    <section class="py-4">
+        <div class="container" style="max-width: 1100px;">
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="ufr-card text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-users fa-lg text-ufr-primary"></i>
+                        </div>
+                        <h3 class="h4 mb-1">{{ "{:,}".format(total_followers) }}</h3>
+                        <p class="small text-ufr-muted mb-0">Followers</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ufr-card text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-user-plus fa-lg text-ufr-primary"></i>
+                        </div>
+                        <h3 class="h4 mb-1">{{ "{:,}".format(total_following) }}</h3>
+                        <p class="small text-ufr-muted mb-0">Following</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ufr-card text-center">
+                        <div class="mb-2">
+                            <i class="fas fa-user-minus fa-lg text-warning"></i>
+                        </div>
+                        <h3 class="h4 mb-1">{{ "{:,}".format(total_non_followers) }}</h3>
+                        <p class="small text-ufr-muted mb-0">Non-followers</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ufr-card text-center">
+                        <div class="mb-2">
+                            {% if ai_enabled and suggested_unfollows %}
+                                <i class="fas fa-robot fa-lg text-success"></i>
+                            {% else %}
+                                <i class="fas fa-percentage fa-lg text-success"></i>
+                            {% endif %}
+                        </div>
+                        {% if ai_enabled and suggested_unfollows %}
+                            <h3 class="h4 mb-1">{{ "{:,}".format(suggested_unfollows|length) }}</h3>
+                            <p class="small text-ufr-muted mb-0">AI Suggestions</p>
+                        {% else %}
+                            <h3 class="h4 mb-1">{{ "%.1f"|format((total_followers / total_following * 100) if total_following > 0 else 0) }}%</h3>
+                            <p class="small text-ufr-muted mb-0">Follow ratio</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if ai_enabled and segments_summary %}
+    <!-- AI Segments Filter -->
+    <section class="py-3">
+        <div class="container" style="max-width: 1100px;">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="small fw-semibold text-ufr-muted me-2">Segments:</span>
+                {% for segment, count in segments_summary.items() %}
+                <button class="segment-chip" data-segment="{{ segment }}">
+                    <i class="fas fa-{{ 'star' if segment == 'celebrity' else 'palette' if segment == 'creator' else 'building' if segment == 'brand' else 'user-friends' if segment == 'friend' else 'ban' if segment == 'spam' else 'question' }}"></i>
+                    {{ segment.title() }} ({{ count }})
+                </button>
+                {% endfor %}
+                <button class="segment-chip segment-clear ms-2" id="clearSegments">
+                    <i class="fas fa-times"></i>
+                    Clear filters
+                </button>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Results Section -->
+    <section class="py-4">
+        <div class="container" style="max-width: 1100px;">
+            <!-- Action Bar -->
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <h2 class="h4 mb-0" id="resultsTitle">{{ "{:,}".format(total_non_followers) }} non-followers</h2>
+                    {% if ai_enabled %}
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="viewMode" id="allView" checked>
+                        <label class="btn btn-sm btn-outline-primary" for="allView">All</label>
+                        
+                        <input type="radio" class="btn-check" name="viewMode" id="suggestedView">
+                        <label class="btn btn-sm btn-outline-primary" for="suggestedView">AI Suggestions</label>
+                    </div>
+                    {% endif %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label small text-ufr-muted" for="selectAll">
+                            Select all
+                        </label>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if ai_enabled %}
+                    <button class="btn-ufr btn-ufr-outline" id="chatBtn">
+                        <i class="fas fa-comment"></i>
+                        Ask AI
+                    </button>
+                    {% endif %}
+                    <button class="btn-ufr btn-ufr-outline" onclick="copySelectedList()">
+                        <i class="fas fa-copy"></i>
+                        Copy selected
+                    </button>
+                    <button class="btn-ufr btn-ufr-primary" onclick="unfollowSelected()">
+                        <i class="fas fa-external-link-alt"></i>
+                        Open selected profiles
+                    </button>
+                </div>
+            </div>
+
+            {% if grouped_non_followers %}
+            <!-- A-Z Navigation (sticky) -->
+            <div class="az-nav">
+                <div class="d-flex flex-wrap gap-2 small">
+                    {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#' %}
+                        {% if letter in grouped_non_followers %}
+                            <a href="#group-{{ letter }}" class="text-decoration-none">{{ letter }}</a>
+                        {% else %}
+                            <span class="disabled">{{ letter }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Grid View (default) -->
+            <div id="gridView" class="results-container">
+                {% for letter, users in grouped_non_followers.items() %}
+                    <h3 id="group-{{ letter }}" class="letter-group">{{ letter }}</h3>
+                    <div class="row g-3 mb-4">
+                        {% for username in users %}
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" data-username="{{ username }}" {% if enriched_data.get(username) %}data-segment="{{ enriched_data[username].get('segment', 'unknown') }}" data-score="{{ enriched_data[username].get('suggestionScore', 0) }}"{% endif %}>
+                            <div class="user-card {% if enriched_data.get(username) %}account-card-ai{% endif %}">
+                                {% if enriched_data.get(username) %}
+                                    <div class="account-segment">{{ enriched_data[username].get('segment', 'unknown').title() }}</div>
+                                {% endif %}
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold mb-1">{{ username }}</div>
+                                    {% if enriched_data.get(username) and enriched_data[username].get('suggestionScore') %}
+                                        <div class="suggestion-score {% if enriched_data[username].get('suggestionScore', 0) > 0.8 %}high{% elif enriched_data[username].get('suggestionScore', 0) > 0.6 %}medium{% else %}low{% endif %} mb-2">
+                                            <i class="fas fa-star"></i>
+                                            {{ "%.1f"|format(enriched_data[username].get('suggestionScore', 0) * 100) }}%
+                                        </div>
+                                    {% endif %}
+                                    <a href="https://instagram.com/{{ username }}" target="_blank" rel="noopener" class="small">
+                                        <i class="fas fa-external-link-alt me-1"></i>Open profile
+                                    </a>
+                                    {% if enriched_data.get(username) and enriched_data[username].get('explanations') %}
+                                        <div class="account-explanations">
+                                            {{ enriched_data[username]['explanations'][0] if enriched_data[username]['explanations'] else '' }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input user-checkbox" type="checkbox" value="{{ username }}" aria-label="Select {{ username }}">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Table View (hidden by default) -->
+            <div id="tableView" class="d-none">
+                <div class="table-responsive">
+                    <table class="table table-ufr">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">
+                                    <input class="form-check-input" type="checkbox" id="selectAllTable">
+                                </th>
+                                <th>Username</th>
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for username in non_followers %}
+                            <tr>
+                                <td>
+                                    <input class="form-check-input user-checkbox-table" type="checkbox" value="{{ username }}">
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">{{ username }}</span>
+                                </td>
+                                <td>
+                                    <a href="https://instagram.com/{{ username }}" target="_blank" rel="noopener" class="btn-ufr btn-ufr-outline btn-sm">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="ufr-card" style="max-width: 400px; margin: 0 auto;">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h3 class="h4 mb-2">Great news!</h3>
+                    <p class="text-ufr-muted mb-0">Everyone you follow also follows you back. Your following list is perfectly balanced!</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if ai_enabled %}
+    <!-- AI Chat Panel -->
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h5 mb-0">AI Assistant</h3>
+                <button type="button" class="btn-close" id="closeChatBtn" aria-label="Close chat"></button>
+            </div>
+            <p class="small text-ufr-muted mb-0 mt-2">Ask me to filter your results or get recommendations</p>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-message ai">
+                👋 Hi! I can help you filter your Instagram followers. Try asking:
+                <br><br>
+                • "Hide celebrities and brands"
+                <br>
+                • "Show real friends who don't follow back"
+                <br>
+                • "Show spam accounts"
+                <br>
+                • "Show high suggestion scores"
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <div class="d-flex gap-2">
+                <textarea class="chat-input" id="chatInput" placeholder="Ask me to filter your results..." rows="1"></textarea>
+                <button class="btn-ufr btn-ufr-primary" id="sendChatBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // View toggle functionality
+        const toggleBtn = document.getElementById('toggleView');
+        const gridView = document.getElementById('gridView');
+        const tableView = document.getElementById('tableView');
+
+        toggleBtn?.addEventListener('click', () => {
+            gridView.classList.toggle('d-none');
+            tableView.classList.toggle('d-none');
+            
+            if (tableView.classList.contains('d-none')) {
+                toggleBtn.innerHTML = '<i class="fas fa-table"></i> Table view';
+            } else {
+                toggleBtn.innerHTML = '<i class="fas fa-th"></i> Grid view';
+            }
+        });
+
+        // Select all functionality
+        document.getElementById('selectAll')?.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        document.getElementById('selectAllTable')?.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.user-checkbox-table');
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        // Copy selected usernames
+        function copySelectedList() {
+            const selectedUsers = getSelectedUsers();
+            if (selectedUsers.length === 0) {
+                alert('Please select at least one user to copy.');
+                return;
+            }
+            
+            const userList = selectedUsers.join('\n');
+            navigator.clipboard.writeText(userList).then(() => {
+                alert(`Copied ${selectedUsers.length} usernames to clipboard.`);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = userList;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert(`Copied ${selectedUsers.length} usernames to clipboard.`);
+            });
+        }
+
+        // Open selected profiles
+        function unfollowSelected() {
+            const selectedUsers = getSelectedUsers();
+            if (selectedUsers.length === 0) {
+                alert('Please select at least one profile to open.');
+                return;
+            }
+            
+            if (selectedUsers.length > 10 && !confirm(`This will open ${selectedUsers.length} tabs. Continue?`)) {
+                return;
+            }
+
+            // Open profiles with slight delay to reduce popup blocking
+            selectedUsers.forEach((username, index) => {
+                setTimeout(() => {
+                    window.open(`https://instagram.com/${encodeURIComponent(username)}`, '_blank', 'noopener');
+                }, index * 150);
+            });
+        }
+
+        // Export functionality
+        function exportUnfollowList() {
+            const allUsers = Array.from(document.querySelectorAll('.user-checkbox, .user-checkbox-table'))
+                .map(cb => cb.value);
+            
+            if (allUsers.length === 0) {
+                alert('No users to export.');
+                return;
+            }
+
+            const csvContent = 'Username\n' + allUsers.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'instagram-non-followers.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Helper function to get selected users
+        function getSelectedUsers() {
+            const gridCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+            const tableCheckboxes = document.querySelectorAll('.user-checkbox-table:checked');
+            
+            const selected = [];
+            gridCheckboxes.forEach(cb => selected.push(cb.value));
+            tableCheckboxes.forEach(cb => selected.push(cb.value));
+            
+            return [...new Set(selected)]; // Remove duplicates
+        }
+
+        // Smooth scrolling for A-Z navigation
+        document.querySelectorAll('.az-nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Auto-scroll to results on page load
+        setTimeout(() => {
+            const resultsSection = document.querySelector('.results-container');
+            if (resultsSection) {
+                resultsSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }, 500);
+
+        {% if ai_enabled %}
+        // AI-powered features
+        class AIAssistant {
+            constructor() {
+                this.chatPanel = document.getElementById('chatPanel');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.chatInput = document.getElementById('chatInput');
+                this.sendBtn = document.getElementById('sendChatBtn');
+                this.chatBtn = document.getElementById('chatBtn');
+                this.closeChatBtn = document.getElementById('closeChatBtn');
+                
+                this.originalData = [...document.querySelectorAll('[data-username]')];
+                this.activeFilters = new Set();
+                
+                this.init();
+            }
+
+            init() {
+                // Chat panel controls
+                this.chatBtn?.addEventListener('click', () => this.openChat());
+                this.closeChatBtn?.addEventListener('click', () => this.closeChat());
+                this.sendBtn?.addEventListener('click', () => this.sendMessage());
+                this.chatInput?.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // Segment filters
+                document.querySelectorAll('.segment-chip:not(.segment-clear)').forEach(chip => {
+                    chip.addEventListener('click', () => this.toggleSegmentFilter(chip));
+                });
+
+                document.getElementById('clearSegments')?.addEventListener('click', () => {
+                    this.clearAllFilters();
+                });
+
+                // View mode toggle
+                document.querySelectorAll('input[name="viewMode"]').forEach(radio => {
+                    radio.addEventListener('change', () => this.toggleViewMode());
+                });
+            }
+
+            openChat() {
+                this.chatPanel.classList.add('open');
+                this.chatInput.focus();
+            }
+
+            closeChat() {
+                this.chatPanel.classList.remove('open');
+            }
+
+            async sendMessage() {
+                const query = this.chatInput.value.trim();
+                if (!query) return;
+
+                // Add user message
+                this.addMessage(query, 'user');
+                this.chatInput.value = '';
+
+                // Show loading
+                const loadingMsg = this.addMessage('Processing your request...', 'ai');
+
+                try {
+                    const response = await fetch('/api/ai/translate-query', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query })
+                    });
+
+                    const result = await response.json();
+                    
+                    // Remove loading message
+                    loadingMsg.remove();
+
+                    if (result.error) {
+                        this.addMessage(`Sorry, I couldn't understand that. ${result.error}`, 'ai');
+                        return;
+                    }
+
+                    // Apply filters
+                    this.applyAIFilters(result);
+                    
+                    // Provide feedback
+                    const filteredCount = document.querySelectorAll('[data-username]:not(.d-none)').length;
+                    this.addMessage(`Applied filters! Showing ${filteredCount} accounts.`, 'ai');
+
+                } catch (error) {
+                    loadingMsg.remove();
+                    this.addMessage('Sorry, there was an error processing your request.', 'ai');
+                }
+            }
+
+            addMessage(text, type) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `chat-message ${type}`;
+                msgDiv.textContent = text;
+                this.chatMessages.appendChild(msgDiv);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                return msgDiv;
+            }
+
+            applyAIFilters(filters) {
+                // Clear existing filters
+                this.originalData.forEach(item => item.classList.remove('d-none'));
+
+                let visibleCount = 0;
+
+                this.originalData.forEach(item => {
+                    let shouldShow = true;
+
+                    // Segment filter
+                    if (filters.segments && filters.segments.length > 0) {
+                        const itemSegment = item.dataset.segment;
+                        if (filters.hideThese) {
+                            shouldShow = shouldShow && !filters.segments.includes(itemSegment);
+                        } else {
+                            shouldShow = shouldShow && filters.segments.includes(itemSegment);
+                        }
+                    }
+
+                    // Suggestion score filters
+                    const score = parseFloat(item.dataset.score || 0);
+                    if (filters.minSuggestion !== undefined) {
+                        shouldShow = shouldShow && score >= filters.minSuggestion;
+                    }
+                    if (filters.maxSuggestion !== undefined) {
+                        shouldShow = shouldShow && score <= filters.maxSuggestion;
+                    }
+
+                    if (shouldShow) {
+                        item.classList.remove('d-none');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('d-none');
+                    }
+                });
+
+                // Update results title
+                document.getElementById('resultsTitle').textContent = `${visibleCount} accounts`;
+            }
+
+            toggleSegmentFilter(chip) {
+                const segment = chip.dataset.segment;
+                
+                if (this.activeFilters.has(segment)) {
+                    this.activeFilters.delete(segment);
+                    chip.classList.remove('active');
+                } else {
+                    this.activeFilters.add(segment);
+                    chip.classList.add('active');
+                }
+
+                this.applySegmentFilters();
+            }
+
+            applySegmentFilters() {
+                if (this.activeFilters.size === 0) {
+                    // Show all
+                    this.originalData.forEach(item => item.classList.remove('d-none'));
+                } else {
+                    // Filter by active segments
+                    this.originalData.forEach(item => {
+                        const itemSegment = item.dataset.segment;
+                        if (this.activeFilters.has(itemSegment)) {
+                            item.classList.remove('d-none');
+                        } else {
+                            item.classList.add('d-none');
+                        }
+                    });
+                }
+
+                const visibleCount = document.querySelectorAll('[data-username]:not(.d-none)').length;
+                document.getElementById('resultsTitle').textContent = `${visibleCount} accounts`;
+            }
+
+            clearAllFilters() {
+                this.activeFilters.clear();
+                document.querySelectorAll('.segment-chip.active').forEach(chip => {
+                    chip.classList.remove('active');
+                });
+                this.originalData.forEach(item => item.classList.remove('d-none'));
+                
+                const totalCount = this.originalData.length;
+                document.getElementById('resultsTitle').textContent = `${totalCount} accounts`;
+            }
+
+            toggleViewMode() {
+                const allView = document.getElementById('allView').checked;
+                
+                if (allView) {
+                    // Show all non-followers
+                    this.originalData.forEach(item => item.classList.remove('d-none'));
+                } else {
+                    // Show only suggested accounts (score > 0.5)
+                    this.originalData.forEach(item => {
+                        const score = parseFloat(item.dataset.score || 0);
+                        if (score > 0.5) {
+                            item.classList.remove('d-none');
+                        } else {
+                            item.classList.add('d-none');
+                        }
+                    });
+                }
+
+                const visibleCount = document.querySelectorAll('[data-username]:not(.d-none)').length;
+                document.getElementById('resultsTitle').textContent = `${visibleCount} accounts`;
+            }
+        }
+
+        // Initialize AI assistant
+        const aiAssistant = new AIAssistant();
+        {% endif %}
+    </script>
+</body>
+</html>

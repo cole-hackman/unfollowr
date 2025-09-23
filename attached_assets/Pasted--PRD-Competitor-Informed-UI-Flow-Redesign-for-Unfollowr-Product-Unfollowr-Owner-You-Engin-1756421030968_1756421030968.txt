@@ -1,0 +1,152 @@
+📄 PRD – Competitor-Informed UI & Flow Redesign for Unfollowr
+
+Product: Unfollowr
+Owner: [You]
+Engineering: [Senior SWE]
+Sources: Cluely.com, UnfollowCheck.com ￼
+
+⸻
+
+1. Objective
+
+Leverage competitive insights from UnfollowCheck (direct category competitor) and Cluely (UI/UX polish inspiration) to:
+	•	Refine homepage flow (emotional CTA, immediate upload).
+	•	Reimagine results page layout (clean, segmented, interactive like UnfollowCheck).
+	•	Enhance UI polish (transparency, gradients, minimalism from Cluely).
+	•	Provide trust signals (privacy-first vs. paid competitors).
+
+⸻
+
+2. Competitor Learnings
+
+From UnfollowCheck ￼
+	•	Clear categories: “New Followers,” “Unfollowers,” “Too-Famous-To-Follow,” “Inner Circle,” “Fan Club.”
+	•	Direct flow: “Download → Upload → Instantly see results.”
+	•	Strong CTAs: “Reveal all Instagram unfollowers,” “Start 14-day free trial.”
+	•	Social proof: “Trusted by 10k+ users,” Product Hunt badge.
+	•	Trust messaging: “No Instagram password required, 100% safe.”
+	•	Monetization wall: Free trial → paid subscription.
+
+From Cluely ￼
+	•	Aesthetic: glassmorphism, soft shadows, gradient text, hover animations.
+	•	Hierarchy: Hero headline + immediate CTA.
+	•	Interactive storytelling: “Scroll to see it in action.”
+	•	Credibility: Enterprise security badges (SOC2, GDPR, etc.).
+	•	Micro-interactions: hover lifts, smooth transitions, animated badges.
+	•	Human-centric messaging: conversational copy (“Thinking is the slowest thing you do”).
+
+⸻
+
+3. Unfollowr Strategy (Differentiators)
+	•	Privacy-first: Local-first, no login, no trial wall.
+	•	Free baseline: Always free for core “who doesn’t follow back.”
+	•	AI assistant: Unique to Unfollowr → natural-language filters.
+	•	Polished but honest: Credibility without inflated numbers.
+
+⸻
+
+4. Feature & UI Requirements
+
+A) Homepage
+	•	Hero
+	•	Headline: “Find out who’s not following back.”
+	•	Subcopy: “Upload your Instagram export — discover unfollowers instantly. 100% private.”
+	•	CTA: Upload my export (scrolls to upload box).
+	•	Upload Section (near top)
+	•	Large glassy card with drag/drop animation.
+	•	Progress bar (Cluely-style smooth line, not spinner).
+	•	Privacy badge: “🔒 Files never leave your device.”
+	•	Social Proof
+	•	Banner: “Hundreds of exports analyzed daily.”
+	•	Placeholder badges (Product Hunt, Indie Hackers).
+	•	Trust Section
+	•	Privacy-first messaging.
+	•	Optional “Why safer than other apps?” comparison (vs UnfollowCheck’s paywall model).
+
+⸻
+
+B) Results Page
+	•	Header Stats
+	•	Cards: Followers, Following, Non-followers, Ratio.
+	•	Style: white glass cards, hover lift (Cluely polish).
+	•	Categories (UnfollowCheck style)
+	•	Tabs or expandable sections:
+	•	New Followers
+	•	Unfollowers
+	•	Not Following Back (Too Famous)
+	•	Inner Circle
+	•	Fan Club
+	•	Filter Bar
+	•	Alphabetical chips (scrollable on mobile).
+	•	Advanced filter button (segments, inactivity, suggestion score).
+	•	AI Assistant Integration
+	•	Floating chat bubble (mobile).
+	•	Button in header bar (desktop).
+	•	Suggested queries: “Hide celebrities,” “Show real friends.”
+	•	Grid & Table Views
+	•	Grid: hover highlight, username + profile link.
+	•	Table: alternating row colors, hover action icons.
+	•	Empty States
+	•	Example: “🎉 No one fits that filter. Try resetting.”
+
+⸻
+
+C) Cross-Platform Polish
+	•	Typography: match homepage (bold headers, muted gray subtext).
+	•	Colors: stick to Unfollowr blue, with subtle gradients for depth.
+	•	Icons: Lucide set for consistency.
+	•	Animations: Framer Motion for section fade/slide, hover lift.
+	•	Mobile: sticky bottom bar for batch actions (Copy, Export).
+
+⸻
+
+D) Admin Dashboard (Internal)
+
+From competitor cues, track:
+	•	Total uploads
+	•	Sessions (DAU/MAU)
+	•	AI queries usage
+	•	Most-used categories (Unfollowers, Not Following Back, etc.)
+	•	System health: average file size, success rate, error counts.
+
+⸻
+
+5. Technical Requirements
+	•	Stack: Next.js + Tailwind + Framer Motion + Supabase.
+	•	State management: Context/Zustand for dataset + filters.
+	•	Data privacy: Client-side parsing only; AI queries send snippets only (bios/usernames).
+	•	Accessibility: All filters/buttons keyboard + screen reader friendly.
+	•	Performance: Lighthouse Perf ≥ 90; CLS < 0.05.
+
+⸻
+
+6. Deliverables
+	•	New homepage (upload-first, social proof, privacy).
+	•	Results page redesign with categories, filters, AI assistant.
+	•	Responsive mobile-first layouts.
+	•	Admin dashboard MVP for usage tracking.
+
+⸻
+
+7. Acceptance Criteria
+	•	✅ Homepage CTA scrolls directly to upload.
+	•	✅ Upload progress bar replaces spinner.
+	•	✅ Results categories mirror UnfollowCheck but styled clean (Cluely).
+	•	✅ Alphabetical + advanced filters functional.
+	•	✅ AI assistant visible & applies filters correctly.
+	•	✅ Grid/table toggles smooth.
+	•	✅ Empty state messages appear when relevant.
+	•	✅ Mobile filter bar scrolls horizontally; sticky action bar works.
+	•	✅ Admin dashboard shows usage metrics.
+	•	✅ All copy avoids “AI-heavy” jargon, instead benefit-driven.
+
+⸻
+
+8. Notes
+	•	Do not copy competitor UI verbatim; use structure as inspiration, but style remains Unfollowr blue/white identity.
+	•	Emphasize privacy-first vs competitor’s trial/paywall model.
+	•	Combine Cluely’s polish with UnfollowCheck’s categorization.
+
+⸻
+
+⚡ This PRD is long & detailed — enough for your SWE to implement homepage + results overhaul with clear competitor-informed direction.

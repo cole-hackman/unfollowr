@@ -1,0 +1,172 @@
+Nice — the homepage is already sharp, but you’re right: there’s **room to make it cleaner, more conversion-focused, and aligned with user intent**. The biggest win will be **moving the Upload box near the top**, since that’s the core action. Let’s formalize this into a PRD.
+
+---
+
+# 📄 PRD – Homepage Refinement & Upload Placement
+
+**Product:** Unfollowr
+**Feature Set:** Homepage UX & Layout Improvements
+**Owner:** \[You]
+**Engineering:** \[Senior SWE]
+
+---
+
+## 1. Objective
+
+Refine the homepage so it:
+
+* **Prioritizes the upload action** (move “Upload your export” higher).
+* Improves **readability and flow** (less scrolling before core action).
+* Balances benefit-driven messaging with trust signals (privacy + AI features).
+* Feels cleaner and smoother, closer to Cluely’s polished vibe.
+
+---
+
+## 2. Scope
+
+### In Scope
+
+* Reorder homepage sections (Upload moved near top).
+* Copy and visual refinements.
+* Layout adjustments for hierarchy.
+* Minor style polish (spacing, typography, hover states).
+
+### Out of Scope
+
+* New AI features (already scoped in Results PRD).
+* Backend/API changes.
+
+---
+
+## 3. Page Structure (Revised)
+
+### Hero (top of page)
+
+* Keep **✨ New: AI Features** badge.
+* **Headline:**
+  *“Clean up your following in minutes.”*
+* **Subhead:**
+  *“Smarter suggestions, easy filters, and a private assistant to help you tidy up faster.”*
+* **CTA Button:**
+  Primary: `Upload my export` (scrolls user directly to upload box).
+  Secondary: `See what’s new`.
+
+---
+
+### Upload Section (moved up — directly under Hero)
+
+* Position upload card **immediately after hero**, before “Smarter insights.”
+* Card:
+
+  * Title: “Upload your export”
+  * Subtext: “We don’t store your files. Processing is session-based and ephemeral.”
+  * Upload box styled prominently (glass card + drop shadow).
+  * Privacy reassurance (green badge + lock icon):
+    ✅ “Private: Files never leave your device without your consent.”
+* CTA under upload box:
+
+  * Primary: `Analyze non-followers` (blue)
+  * Secondary: `Try with sample files` (ghost button)
+  * Text link: `Clear all`
+
+---
+
+### Insights Section
+
+* Heading: “Smarter insights”
+* Subhead: *“Unfollowr helps you spot who matters, who’s inactive, and who’s just noise.”*
+* Feature cards: Smart Groups, Assistant, Clear Suggestions.
+* Keep “Built with Google AI” badge.
+
+---
+
+### How it Works
+
+* Keep 3-step layout: Upload → We sort & analyze → Decide easily.
+* Update copy slightly for clarity (shorter, friendlier).
+
+---
+
+### Privacy & What’s Next
+
+* Keep privacy-first card.
+* Add stronger privacy reassurance with **short tagline**:
+  *“Your files stay private. Always.”*
+* Keep What’s Next roadmap.
+
+---
+
+### FAQ
+
+* Keep existing Qs.
+* Add:
+
+  * **“Why is the upload box near the top?”**
+    *Because uploading is the first step. We want to make it fast and easy to get started.*
+
+---
+
+## 4. Visual / Interaction Improvements
+
+1. **Spacing & hierarchy**
+
+   * More breathing room around hero and upload card.
+   * Reduce dense text.
+2. **Typography**
+
+   * Keep current font but lighten supporting text color (use `text-slate-600`).
+3. **Hover states**
+
+   * Buttons: slight scale + shadow on hover.
+   * Cards: soft lift hover.
+4. **Smooth transitions**
+
+   * Fade/slide for each section reveal (Framer Motion).
+
+---
+
+## 5. Technical Requirements
+
+* Next.js + Tailwind + Framer Motion.
+* Upload card moved up without breaking navigation links.
+* “Upload my export” button in Hero scrolls to upload card (`scrollIntoView`).
+* Ensure responsive design works (mobile-first).
+* Lighthouse perf/accessibility scores remain ≥ 90.
+
+---
+
+## 6. Deliverables
+
+* Homepage with new order: Hero → Upload → Insights → How it works → Privacy → FAQ.
+* Upload box styled prominently + reassurance badge.
+* Updated CTAs.
+* Light copy refinements.
+* Section animations.
+
+---
+
+## 7. Acceptance Criteria
+
+* ✅ Upload card appears directly under Hero.
+* ✅ Hero CTA scrolls smoothly to upload card.
+* ✅ Upload card has privacy reassurance badge.
+* ✅ Page reads in benefit-driven order (upload first, insights second).
+* ✅ Hover and reveal animations working.
+* ✅ All content is responsive and mobile-friendly.
+* ✅ Performance maintained.
+
+---
+
+## 8. Notes
+
+* Priority is **conversion** (upload first).
+* Language must stay **clear + approachable**, not AI-heavy.
+* Visual vibe: clean, light, trustworthy → less clutter, more clarity.
+
+---
+
+⚡This PRD is ready for implementation — your SWE just needs to restructure components and update copy/styles accordingly.
+
+---
+
+Do you want me to **mock up a new wireframe layout in Figma-style (boxes/sections with annotations)** so your SWE has a clear visual reference for how the homepage should flow after moving upload up?

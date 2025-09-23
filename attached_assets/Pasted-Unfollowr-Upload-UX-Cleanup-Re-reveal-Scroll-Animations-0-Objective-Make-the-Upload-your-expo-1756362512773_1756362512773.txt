@@ -1,0 +1,251 @@
+Unfollowr – Upload UX Cleanup + Re-reveal Scroll Animations
+0) Objective
+
+Make the “Upload your export” section feel effortless and premium (Cluely-level polish) and update scroll reveals so sections re-animate when they re-enter the viewport (with reduced-motion support).
+
+1) Scope (what to build)
+
+Replace current upload UI with a single, elegant dropzone + file chips.
+
+Auto-detect Followers vs Following files; validate types (JSON/HTML).
+
+Clear states, helpful errors, sample-files entry point.
+
+CTA hierarchy: Analyze (primary), Sample files (secondary), Clear (tertiary).
+
+Motion polish (hover/focus, chip bounce-in).
+
+Scroll reveals should re-hide on exit and re-animate on re-enter; respect prefers-reduced-motion.
+
+Out of scope: backend parsing or business logic changes (only UI and client-side validation).
+
+2) Tech & Libraries
+
+Next.js + Tailwind (existing stack)
+
+react-dropzone for DnD + file picker
+
+Framer Motion for micro-animations & reveal
+
+Next/Image, Lucide icons
+
+Maintain a11y & performance budgets (see §8)
+
+3) Component Deliverables
+3.1 <UploadCard />
+
+Responsibilities
+
+One large drop target; accepts up to 2 files.
+
+Autodetect slot:
+
+If filename includes followers → Followers
+
+If filename includes following → Following
+
+If ambiguous, fill empty slot; allow manual swap via chips’ context menu (optional, v2).
+
+Validate:
+
+Types: .json or .html only
+
+Size: cap at 50 MB/file (config)
+
+Show state:
+
+Empty → guided placeholder
+
+Partial → one chip present, keep guidance visible
+
+Ready → both chips, enable CTA
+
+Actions:
+
+Analyze (disabled until ready)
+
+Try with sample files (callback, no nav flicker)
+
+Clear all (text link)
+
+Props (API)
+
+type UploadCardProps = {
+  onAnalyze: (files: { followers: File; following: File }) => Promise<void> | void;
+  onUseSample?: () => void;           // optional
+  maxSizeMB?: number;                 // default 50
+};
+
+
+States & Errors
+
+Wrong type → “Only JSON or HTML exports are supported.”
+
+Too large → “Max 50 MB per file.”
+
+Both files already present → “You already added Followers and Following. Remove one to replace.”
+
+Mismatched content (optional advanced): if JSON shape doesn’t contain expected keys, warn: “This doesn’t look like the Followers export.”
+
+UX Copy (use as-is)
+
+Heading (outside card): Upload your export
+
+Subtext (outside): We don’t store your files. Processing is session-based and ephemeral.
+
+Placeholder headline (inside dropzone): Upload your Instagram export
+
+Placeholder subtext: Drop or click to add Followers + Following (JSON/HTML)
+
+Primary CTA: Analyze non-followers
+
+Secondary: Try with sample files
+
+Tertiary: Clear all
+
+Visual / Tailwind spec
+
+Card: bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-[0_10px_30px_-10px_rgba(0,0,0,.2)]
+
+Dropzone idle: border-2 border-dashed border-white/30 rounded-xl p-10 text-center transition
+
+Dropzone hover/drag: border-blue-400/60 bg-white/20 ring-2 ring-blue-400/30
+
+Icon: 40px, brand blue
+
+File chip: inline-flex items-center gap-2 px-3 py-1 bg-white/60 rounded-lg text-sm shadow-sm
+
+Remove button on chip: muted until hover (turns red-500)
+
+Micro-interactions
+
+Dropzone hover/drag: subtle glow + scale 1.01
+
+On drop: chips bounce-in (Framer Motion; spring with low stiffness)
+
+Analyze hover: scale 1.02 + glow shadow
+
+Pseudocode (reference only)
+
+// See previous message for a full working version – keep structure,
+// but slim borders (one dashed container only) and render chips beneath it.
+
+3.2 <Reveal /> utility
+
+Behavior
+
+Animate in when section enters viewport; animate out when it leaves.
+
+Stagger support via parent container variants.
+
+Disable animations entirely if prefers-reduced-motion: reduce.
+
+Spec
+
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+
+export function Reveal({ children, y = 16, delay = 0, once = false }:{
+  children: React.ReactNode; y?: number; delay?: number; once?: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { margin: "-20% 0px -20% 0px", amount: 0.2, once });
+
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (prefersReduced) return <div ref={ref}>{children}</div>;
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
+      transition={{ duration: 0.35, ease: "easeOut", delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+
+Usage
+
+Wrap section cards with <Reveal>; stagger via parent container with staggerChildren: .08.
+
+4) Accessibility
+
+All upload controls keyboard-operable: pressing Enter/Space on dropzone opens file dialog.
+
+aria-label on dropzone: “Upload your Instagram export files.”
+
+Chips expose filename to screen readers; “Remove file” buttons have aria-label.
+
+Color contrast AA for text on glass backgrounds.
+
+Respect prefers-reduced-motion: reduce (no motion).
+
+5) Performance
+
+No layout shift when chips appear (reserve vertical space ~48–64px beneath dropzone).
+
+Avoid heavy box-shadow blur on large containers; keep shadows subtle.
+
+Lazy-load motion libs if not already in bundle (evaluate impact).
+
+Lighthouse targets (mobile): Perf ≥ 90, Acc ≥ 95, CLS < 0.05.
+
+6) Analytics (optional but recommended)
+
+Track: dropzone clicks vs drops, file-type errors, analyze button clicks, sample usage.
+
+Events: upload_start, upload_file_added, upload_error, analyze_click.
+
+7) Test Plan / Acceptance Criteria
+
+Single dropzone accepts drag or click; visually reacts to drag-over.
+
+Upload 1 file → 1 chip appears with correct label guess; CTA remains disabled.
+
+Upload 2 files → both chips show; Analyze becomes enabled.
+
+Wrong type/oversize → inline error message; CTA disabled.
+
+Remove one chip → CTA disables again; guidance text remains.
+
+“Try with sample files” populates both chips and enables CTA.
+
+“Clear all” resets to pristine state.
+
+Scroll down reveals sections; scroll up then back down → sections animate again.
+
+With reduced motion enabled → content appears with no animation, no regressions.
+
+No console errors; no layout jumps during chip entry.
+
+8) Delivery Checklist
+
+ <UploadCard /> implemented and wired to existing onAnalyze.
+
+ <Reveal /> adopted across hero/feature/FAQ sections.
+
+ A11y & reduced-motion verified.
+
+ Visual polish matches tokens (colors, radii, shadows).
+
+ Unit tests for file validation util; light RTL test for enabled/disabled CTA logic.
+
+ Loom of interactions (drag-over, chip add/remove, re-reveal) attached to PR.
+
+9) Nice-to-Have (if time)
+
+Detect JSON “shape” to confirm Followers vs Following (Instagram export keys).
+
+Context menu on chips to Swap to Followers/Following.
+
+Progress indicator if parsing is heavy.
+
+Tooltip link: “Where to find these files?” to mini guide.
+
+Ping me if you want a drop-in code scaffold; I can provide a ready TSX component and small Storybook story to speed you up.

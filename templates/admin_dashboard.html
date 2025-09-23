@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Unfollowr</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='unfollowr-new.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        .admin-dashboard {
+            background: var(--ufr-bg);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .admin-header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--ufr-text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-subtitle {
+            color: var(--ufr-text-muted);
+            font-size: 1.1rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .metric-card {
+            background: var(--ufr-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--ufr-glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px -10px rgba(37, 99, 235, 0.3);
+            border-color: var(--ufr-blue);
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--ufr-blue);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+        
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--ufr-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+        
+        .metric-icon.users { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .metric-icon.uploads { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .metric-icon.ai { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .metric-icon.exports { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .metric-icon.sessions { background: linear-gradient(135deg, #fa709a, #fee140); }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--ufr-text);
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-change {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .metric-change.positive { color: #059669; }
+        .metric-change.negative { color: #dc2626; }
+        .metric-change.neutral { color: var(--ufr-text-muted); }
+        
+        .chart-container {
+            background: var(--ufr-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--ufr-glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            height: 400px;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--ufr-text);
+        }
+        
+        .time-filter {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .time-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--ufr-glass-border);
+            background: transparent;
+            border-radius: 8px;
+            color: var(--ufr-text-muted);
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .time-btn:hover,
+        .time-btn.active {
+            background: var(--ufr-blue);
+            color: white;
+            border-color: var(--ufr-blue);
+        }
+        
+        .data-table {
+            background: var(--ufr-glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--ufr-glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .table-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--ufr-glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .export-btn {
+            padding: 0.5rem 1rem;
+            background: var(--ufr-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .export-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        
+        .admin-table {
+            width: 100%;
+            margin: 0;
+        }
+        
+        .admin-table thead th {
+            background: var(--ufr-glass-bg);
+            border: none;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            color: var(--ufr-text);
+            border-bottom: 1px solid var(--ufr-glass-border);
+        }
+        
+        .admin-table tbody td {
+            border: none;
+            padding: 1rem 2rem;
+            color: var(--ufr-text);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .admin-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-success {
+            background: rgba(5, 150, 105, 0.2);
+            color: #059669;
+        }
+        
+        .status-error {
+            background: rgba(220, 38, 38, 0.2);
+            color: #dc2626;
+        }
+        
+        .logout-btn {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--ufr-text);
+            border: 1px solid var(--ufr-glass-border);
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(220, 38, 38, 0.2);
+            color: #dc2626;
+            border-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-dashboard">
+        <a href="{{ url_for('admin_logout') }}" class="logout-btn">
+            <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
+        
+        <div class="container">
+            <div class="admin-header">
+                <h1>Admin Dashboard</h1>
+                <p class="admin-subtitle">Monitor Unfollowr usage and system health</p>
+            </div>
+            
+            <!-- Metrics Overview -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Total Users</span>
+                        <div class="metric-icon users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value">{{ metrics.total_users }}</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i> {{ metrics.users_change }}% this week
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">File Uploads</span>
+                        <div class="metric-icon uploads">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value">{{ metrics.total_uploads }}</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i> {{ metrics.uploads_change }}% this week
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">AI Analyses</span>
+                        <div class="metric-icon ai">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value">{{ metrics.ai_analyses }}</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i> {{ metrics.ai_change }}% this week
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Exports Generated</span>
+                        <div class="metric-icon exports">
+                            <i class="fas fa-download"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value">{{ metrics.total_exports }}</div>
+                    <div class="metric-change neutral">
+                        <i class="fas fa-minus"></i> {{ metrics.exports_change }}% this week
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Active Sessions</span>
+                        <div class="metric-icon sessions">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="metric-value">{{ metrics.active_sessions }}</div>
+                    <div class="metric-change positive">
+                        <i class="fas fa-arrow-up"></i> {{ metrics.sessions_change }}% today
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Usage Analytics Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Usage Analytics</h3>
+                    <div class="time-filter">
+                        <button class="time-btn active" onclick="updateChart('7d')">7 Days</button>
+                        <button class="time-btn" onclick="updateChart('30d')">30 Days</button>
+                        <button class="time-btn" onclick="updateChart('90d')">90 Days</button>
+                    </div>
+                </div>
+                <canvas id="usageChart"></canvas>
+            </div>
+            
+            <!-- AI Feature Analytics -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">AI Assistant Usage</h3>
+                        </div>
+                        <canvas id="aiChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3 class="chart-title">User Segments</h3>
+                        </div>
+                        <canvas id="segmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Sessions Table -->
+            <div class="data-table">
+                <div class="table-header">
+                    <h3 class="chart-title">Recent Sessions</h3>
+                    <button class="export-btn" onclick="exportData()">
+                        <i class="fas fa-download me-2"></i>Export CSV
+                    </button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in recent_sessions %}
+                        <tr>
+                            <td><code>{{ session.session_id[:8] }}...</code></td>
+                            <td>{{ session.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ session.actions }}</td>
+                            <td>{{ session.duration }}</td>
+                            <td>
+                                <span class="status-badge {{ 'status-success' if session.status == 'completed' else 'status-error' }}">
+                                    {{ session.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize charts
+        const ctx1 = document.getElementById('usageChart').getContext('2d');
+        const usageChart = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.usage_labels | tojson }},
+                datasets: [{
+                    label: 'Daily Uploads',
+                    data: {{ chart_data.usage_data | tojson }},
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        const ctx2 = document.getElementById('aiChart').getContext('2d');
+        const aiChart = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['AI Queries', 'Classifications', 'Suggestions', 'Filters'],
+                datasets: [{
+                    label: 'AI Features Used',
+                    data: {{ chart_data.ai_data | tojson }},
+                    backgroundColor: [
+                        'rgba(79, 172, 254, 0.8)',
+                        'rgba(147, 112, 219, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(75, 192, 192, 0.8)'
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        const ctx3 = document.getElementById('segmentChart').getContext('2d');
+        const segmentChart = new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: ['AI Users', 'Basic Users'],
+                datasets: [{
+                    data: {{ chart_data.segment_data | tojson }},
+                    backgroundColor: [
+                        '#2563eb',
+                        '#e5e7eb'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        function updateChart(timeRange) {
+            // Update active button
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Fetch new data and update chart
+            fetch(`/admin/chart-data?range=${timeRange}`)
+                .then(response => response.json())
+                .then(data => {
+                    usageChart.data.labels = data.labels;
+                    usageChart.data.datasets[0].data = data.data;
+                    usageChart.update();
+                });
+        }
+        
+        function exportData() {
+            window.location.href = '/admin/export-csv';
+        }
+    </script>
+</body>
+</html>

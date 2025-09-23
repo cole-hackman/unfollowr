@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your Instagram non-followers results - clean, clear, and actionable.">
+    <title>Non-followers Results - Unfollowr</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='unfollowr-new.css') }}" rel="stylesheet">
+    <style>
+        /* Results Page Specific Styles - Following Homepage Design Tokens */
+        body {
+            background: radial-gradient(1200px 600px at 50% -100px, #e8efff, transparent), var(--ufr-bg);
+        }
+
+        /* A) Typography & Hierarchy - Match Homepage */
+        .results-page-header {
+            padding-top: 2rem;
+            padding-bottom: 1rem;
+        }
+
+        .results-main-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--ufr-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .results-subtitle {
+            color: var(--ufr-text-muted); /* lighter gray per PRD */
+            font-size: 1.125rem;
+            margin-bottom: 0;
+        }
+
+        .results-count {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #374151; /* text-slate-700 equivalent */
+        }
+
+        /* B) Layout & Spacing - Reduced whitespace, grouped sections */
+        .section-spacing {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .controls-section {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* C) Alphabetical Filter Bar - Soft pills */
+        .alphabet-filter-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .alphabet-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .alphabet-pill {
+            background: #f8fafc; /* bg-slate-50 */
+            color: #64748b; /* text-slate-500 */
+            border: none;
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.25rem 0.75rem; /* py-1 px-3 */
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .alphabet-pill:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .alphabet-pill.active {
+            background: #2563eb; /* bg-blue-600 */
+            color: white;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Mobile: horizontal scroll */
+        @media (max-width: 768px) {
+            .alphabet-pills {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+            .alphabet-pills::-webkit-scrollbar {
+                display: none;
+            }
+        }
+
+        /* D) Search & Filters - Match homepage cards */
+        .search-filter-section {
+            background: white;
+            border: 1px solid var(--ufr-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input-refined {
+            border: 1px solid var(--ufr-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            background: white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .search-input-refined::placeholder {
+            color: #9ca3af; /* placeholder:text-slate-400 */
+        }
+
+        .search-input-refined:focus {
+            outline: none;
+            border-color: var(--ufr-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .pill-button {
+            background: #f8fafc;
+            border: 1px solid var(--ufr-border);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--ufr-text-muted);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            height: 100%;
+        }
+
+        .pill-button:hover {
+            background: var(--ufr-blue-050);
+            border-color: var(--ufr-blue);
+            color: var(--ufr-blue);
+        }
+
+        .pill-button.active {
+            background: var(--ufr-blue);
+            color: white;
+            border-color: var(--ufr-blue);
+        }
+
+        /* E) Grid & Table Views */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .user-card-refined {
+            background: white;
+            border: 1px solid var(--ufr-border);
+            border-radius: 0.75rem; /* rounded-lg */
+            padding: 1.25rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* shadow-sm */
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .user-card-refined:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* hover:shadow-md */
+            transform: translateY(-1px);
+            border-color: var(--ufr-blue);
+        }
+
+        .username-text {
+            font-size: 0.875rem; /* text-sm */
+            color: #374151; /* text-slate-700 */
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-link-refined {
+            color: var(--ufr-blue); /* text-blue-600 */
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            transition: all 0.2s ease;
+        }
+
+        .profile-link-refined:hover {
+            color: var(--ufr-blue-700);
+            text-decoration: none;
+        }
+
+        /* Table styles */
+        .table-refined {
+            background: white;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-refined tbody tr:nth-child(odd) {
+            background: #f8fafc; /* odd:bg-slate-50 */
+        }
+
+        .table-refined tbody tr:hover {
+            background: #f1f5f9;
+        }
+
+        .table-refined th,
+        .table-refined td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .table-refined th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--ufr-text);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        /* F) AI Assistant - Header button for desktop */
+        .ai-assistant-btn {
+            background: linear-gradient(135deg, var(--ufr-blue) 0%, var(--ufr-blue-700) 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .ai-assistant-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            color: white;
+        }
+
+        /* Mobile floating AI button */
+        .ai-floating-mobile {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            width: 56px;
+            height: 56px;
+            background: var(--ufr-blue);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s ease;
+            z-index: 1000;
+            display: none;
+        }
+
+        .ai-floating-mobile:hover {
+            transform: scale(1.1);
+            background: var(--ufr-blue-700);
+        }
+
+        @media (max-width: 768px) {
+            .ai-assistant-btn {
+                display: none !important;
+            }
+            .ai-floating-mobile {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        /* G) Mobile Responsiveness */
+        .sticky-actions-mobile {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--ufr-border);
+            padding: 1rem;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .sticky-actions-mobile.visible {
+            transform: translateY(0);
+        }
+
+        /* View toggle */
+        .view-toggle-refined {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 0.25rem;
+            display: inline-flex;
+        }
+
+        .view-toggle-btn-refined {
+            background: transparent;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--ufr-text-muted);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .view-toggle-btn-refined.active {
+            background: white;
+            color: var(--ufr-text);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Metrics cards - using homepage style */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card-refined {
+            background: white;
+            border: 1px solid var(--ufr-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .metric-card-refined:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-value-refined {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--ufr-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label-refined {
+            color: var(--ufr-text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .metric-icon-refined {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.25rem;
+        }
+
+        .metric-icon-refined.followers {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .metric-icon-refined.following {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .metric-icon-refined.non-followers {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .metric-icon-refined.suggestions {
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+        }
+
+        /* Filter drawer - simplified */
+        .filter-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .filter-drawer.open {
+            right: 0;
+        }
+
+        .filter-drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .filter-drawer-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--ufr-text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stagger-fade-in:nth-child(1) { animation-delay: 0.1s; }
+        .stagger-fade-in:nth-child(2) { animation-delay: 0.2s; }
+        .stagger-fade-in:nth-child(3) { animation-delay: 0.3s; }
+        .stagger-fade-in:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Segment chips */
+        .segment-chip-refined {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: auto;
+        }
+
+        .segment-chip-refined.celebrity {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+        }
+
+        .segment-chip-refined.creator {
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+        }
+
+        .segment-chip-refined.brand {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .segment-chip-refined.friend {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .segment-chip-refined.spam {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .segment-chip-refined.unknown {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-ufr">
+    <!-- Header Section -->
+    <header class="results-page-header">
+        <div class="container" style="max-width: 1200px;">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <!-- A) Typography & Hierarchy -->
+                <div>
+                    <h1 class="results-main-title">Non-followers Results</h1>
+                    <p class="results-subtitle">Accounts you follow who don't follow you back</p>
+                </div>
+                
+                <!-- Primary Actions -->
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <a href="{{ url_for('index') }}" class="pill-button">
+                        <i class="fas fa-arrow-left"></i>
+                        Analyze again
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Metrics Section -->
+    <section class="section-spacing">
+        <div class="container" style="max-width: 1200px;">
+            <div class="metrics-grid">
+                <div class="metric-card-refined fade-in stagger-fade-in">
+                    <div class="metric-icon-refined followers">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="metric-value-refined">{{ "{:,}".format(total_followers) }}</h3>
+                    <p class="metric-label-refined">Followers</p>
+                </div>
+                <div class="metric-card-refined fade-in stagger-fade-in">
+                    <div class="metric-icon-refined following">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3 class="metric-value-refined">{{ "{:,}".format(total_following) }}</h3>
+                    <p class="metric-label-refined">Following</p>
+                </div>
+                <div class="metric-card-refined fade-in stagger-fade-in">
+                    <div class="metric-icon-refined non-followers">
+                        <i class="fas fa-user-minus"></i>
+                    </div>
+                    <h3 class="metric-value-refined">{{ "{:,}".format(total_non_followers) }}</h3>
+                    <p class="metric-label-refined">Non-followers</p>
+                </div>
+                <div class="metric-card-refined fade-in stagger-fade-in">
+                    <div class="metric-icon-refined suggestions">
+                        {% if ai_enabled and suggested_unfollows %}
+                            <i class="fas fa-robot"></i>
+                        {% else %}
+                            <i class="fas fa-percentage"></i>
+                        {% endif %}
+                    </div>
+                    {% if ai_enabled and suggested_unfollows %}
+                        <h3 class="metric-value-refined">{{ "{:,}".format(suggested_unfollows|length) }}</h3>
+                        <p class="metric-label-refined">AI Suggestions</p>
+                    {% else %}
+                        <h3 class="metric-value-refined">{{ "%.1f"|format((total_followers / total_following * 100) if total_following > 0 else 0) }}%</h3>
+                        <p class="metric-label-refined">Follow ratio</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Controls Section -->
+    <section class="section-spacing">
+        <div class="container" style="max-width: 1200px;">
+            <div class="controls-section">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="results-count" id="resultsCount">{{ "{:,}".format(total_non_followers) }} accounts</span>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                            <label class="form-check-label" for="selectAll">Select all</label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <!-- View Toggle -->
+                        <div class="view-toggle-refined">
+                            <button class="view-toggle-btn-refined active" id="gridViewBtn">
+                                <i class="fas fa-th-large me-1"></i>Grid
+                            </button>
+                            <button class="view-toggle-btn-refined" id="tableViewBtn">
+                                <i class="fas fa-table me-1"></i>Table
+                            </button>
+                        </div>
+
+                        <!-- Export Actions -->
+                        <button class="pill-button" onclick="copySelectedList()">
+                            <i class="fas fa-copy"></i>
+                            Copy
+                        </button>
+                        <button class="pill-button" onclick="exportUnfollowList()">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                        <button class="pill-button" onclick="openSelectedProfiles()">
+                            <i class="fas fa-external-link-alt"></i>
+                            Open profiles
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- C) Alphabetical Filter Bar -->
+    <section class="alphabet-filter-container">
+        <div class="container" style="max-width: 1200px;">
+            <div class="alphabet-pills" id="alphabetFilter">
+                <button class="alphabet-pill active" data-letter="all">All</button>
+                <button class="alphabet-pill" data-letter="A">A</button>
+                <button class="alphabet-pill" data-letter="B">B</button>
+                <button class="alphabet-pill" data-letter="C">C</button>
+                <button class="alphabet-pill" data-letter="D">D</button>
+                <button class="alphabet-pill" data-letter="E">E</button>
+                <button class="alphabet-pill" data-letter="F">F</button>
+                <button class="alphabet-pill" data-letter="G">G</button>
+                <button class="alphabet-pill" data-letter="H">H</button>
+                <button class="alphabet-pill" data-letter="I">I</button>
+                <button class="alphabet-pill" data-letter="J">J</button>
+                <button class="alphabet-pill" data-letter="K">K</button>
+                <button class="alphabet-pill" data-letter="L">L</button>
+                <button class="alphabet-pill" data-letter="M">M</button>
+                <button class="alphabet-pill" data-letter="N">N</button>
+                <button class="alphabet-pill" data-letter="O">O</button>
+                <button class="alphabet-pill" data-letter="P">P</button>
+                <button class="alphabet-pill" data-letter="Q">Q</button>
+                <button class="alphabet-pill" data-letter="R">R</button>
+                <button class="alphabet-pill" data-letter="S">S</button>
+                <button class="alphabet-pill" data-letter="T">T</button>
+                <button class="alphabet-pill" data-letter="U">U</button>
+                <button class="alphabet-pill" data-letter="V">V</button>
+                <button class="alphabet-pill" data-letter="W">W</button>
+                <button class="alphabet-pill" data-letter="X">X</button>
+                <button class="alphabet-pill" data-letter="Y">Y</button>
+                <button class="alphabet-pill" data-letter="Z">Z</button>
+                <button class="alphabet-pill" data-letter="0-9">#</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- D) Search & Filters Section -->
+    <section class="section-spacing">
+        <div class="container" style="max-width: 1200px;">
+            <div class="search-filter-section">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-6">
+                        <input type="text" class="search-input-refined" id="searchInput" placeholder="Search usernames...">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2 justify-content-md-end">
+                            {% if ai_enabled %}
+                            <button class="pill-button" id="filtersBtn">
+                                <i class="fas fa-filter"></i>
+                                Filters
+                            </button>
+                            <!-- F) AI Assistant - Desktop Button -->
+                            <button class="ai-assistant-btn" id="aiAssistantBtn" title="Filter your results with AI">
+                                <i class="fas fa-robot"></i>
+                                Ask AI Assistant
+                            </button>
+                            {% else %}
+                            <button class="pill-button" id="filtersBtn">
+                                <i class="fas fa-filter"></i>
+                                Filters
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="section-spacing">
+        <div class="container" style="max-width: 1200px;">
+            <!-- Grid View -->
+            <div id="gridView" class="fade-in">
+                <div class="grid-container" id="userCardsContainer">
+                    {% for username in non_followers %}
+                    <div class="user-card-refined" data-username="{{ username }}" {% if enriched_data.get(username) %}data-segment="{{ enriched_data[username].get('segment', 'unknown') }}" data-score="{{ enriched_data[username].get('suggestionScore', 0) }}"{% endif %}>
+                        <div class="d-flex align-items-start justify-content-between mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input user-checkbox" type="checkbox" value="{{ username }}" aria-label="Select {{ username }}">
+                            </div>
+                            {% if enriched_data.get(username) and enriched_data[username].get('segment') %}
+                                <span class="segment-chip-refined {{ enriched_data[username].get('segment', 'unknown') }}">
+                                    {{ enriched_data[username].get('segment', 'unknown').title() }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <h4 class="username-text">{{ username }}</h4>
+                        
+                        {% if enriched_data.get(username) and enriched_data[username].get('suggestionScore') %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-star text-warning"></i>
+                            <span class="small text-muted">{{ "%.0f"|format(enriched_data[username].get('suggestionScore', 0) * 100) }}% suggestion</span>
+                        </div>
+                        {% endif %}
+
+                        {% if enriched_data.get(username) and enriched_data[username].get('explanations') %}
+                        <p class="small text-muted mb-3">{{ enriched_data[username]['explanations'][0] if enriched_data[username]['explanations'] else '' }}</p>
+                        {% endif %}
+
+                        <a href="https://instagram.com/{{ username }}" target="_blank" rel="noopener" class="profile-link-refined">
+                            <i class="fas fa-external-link-alt"></i>
+                            Open profile
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Table View -->
+            <div id="tableView" class="fade-in" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table table-refined mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">
+                                    <input class="form-check-input" type="checkbox" id="selectAllTable">
+                                </th>
+                                <th>Username</th>
+                                {% if ai_enabled %}
+                                <th>Segment</th>
+                                <th>Score</th>
+                                {% endif %}
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyContainer">
+                            {% for username in non_followers %}
+                            <tr data-username="{{ username }}" {% if enriched_data.get(username) %}data-segment="{{ enriched_data[username].get('segment', 'unknown') }}" data-score="{{ enriched_data[username].get('suggestionScore', 0) }}"{% endif %}>
+                                <td>
+                                    <input class="form-check-input user-checkbox-table" type="checkbox" value="{{ username }}">
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ username }}</strong>
+                                        {% if enriched_data.get(username) and enriched_data[username].get('explanations') %}
+                                        <br><small class="text-muted">{{ enriched_data[username]['explanations'][0] if enriched_data[username]['explanations'] else '' }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                {% if ai_enabled %}
+                                <td>
+                                    {% if enriched_data.get(username) %}
+                                        <span class="segment-chip-refined {{ enriched_data[username].get('segment', 'unknown') }}">
+                                            {{ enriched_data[username].get('segment', 'unknown').title() }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if enriched_data.get(username) and enriched_data[username].get('suggestionScore') %}
+                                        <span class="text-muted">{{ "%.0f"|format(enriched_data[username].get('suggestionScore', 0) * 100) }}%</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td>
+                                    <a href="https://instagram.com/{{ username }}" target="_blank" rel="noopener" class="profile-link-refined">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-search"></i>
+                <h3>No matches found</h3>
+                <p>Try adjusting your search or filters</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- G) Mobile: Sticky Actions Bar -->
+    <div class="sticky-actions-mobile" id="stickyActionsMobile">
+        <div class="d-flex gap-2 justify-content-center">
+            <button class="pill-button" onclick="copySelectedList()">
+                <i class="fas fa-copy"></i>
+                Copy
+            </button>
+            <button class="pill-button" onclick="exportUnfollowList()">
+                <i class="fas fa-download"></i>
+                Export
+            </button>
+            <button class="pill-button" onclick="openSelectedProfiles()">
+                <i class="fas fa-external-link-alt"></i>
+                Open
+            </button>
+        </div>
+    </div>
+
+    <!-- F) Mobile: Floating AI Button -->
+    {% if ai_enabled %}
+    <button class="ai-floating-mobile" id="aiFloatingMobile">
+        <i class="fas fa-robot"></i>
+    </button>
+    {% endif %}
+
+    <!-- Filter Drawer (placeholder for advanced filters) -->
+    <div class="filter-drawer-overlay" id="filterDrawerOverlay"></div>
+    <div class="filter-drawer" id="filterDrawer">
+        <div class="p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h5 mb-0">Advanced Filters</h3>
+                <button class="btn btn-sm btn-outline-secondary" id="closeFilterDrawer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            {% if ai_enabled %}
+            <div class="mb-4">
+                <h4 class="h6 mb-3">Segments</h4>
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="pill-button filter-segment" data-segment="celebrity">
+                        <i class="fas fa-star"></i>
+                        Celebrity
+                    </button>
+                    <button class="pill-button filter-segment" data-segment="creator">
+                        <i class="fas fa-video"></i>
+                        Creator
+                    </button>
+                    <button class="pill-button filter-segment" data-segment="brand">
+                        <i class="fas fa-building"></i>
+                        Brand
+                    </button>
+                    <button class="pill-button filter-segment" data-segment="friend">
+                        <i class="fas fa-user-friends"></i>
+                        Friend
+                    </button>
+                    <button class="pill-button filter-segment" data-segment="spam">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Spam
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="d-flex gap-2">
+                <button class="pill-button" id="applyFilters">Apply Filters</button>
+                <button class="pill-button" id="resetFilters">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global state
+        let currentView = 'grid';
+        let filteredAccounts = [];
+        let allAccounts = {{ non_followers|tojson }};
+        let enrichedData = {{ enriched_data|tojson if enriched_data else {} }};
+        let activeFilters = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            filteredAccounts = [...allAccounts];
+            updateResultsCount();
+            
+            // Initialize animations
+            setTimeout(() => {
+                document.querySelectorAll('.fade-in').forEach(el => {
+                    el.style.opacity = '1';
+                });
+            }, 100);
+        });
+
+        function initializeEventListeners() {
+            // View toggle
+            document.getElementById('gridViewBtn')?.addEventListener('click', () => switchView('grid'));
+            document.getElementById('tableViewBtn')?.addEventListener('click', () => switchView('table'));
+            
+            // Alphabetical filter
+            document.querySelectorAll('.alphabet-pill').forEach(btn => {
+                btn.addEventListener('click', () => handleAlphabetFilter(btn.dataset.letter));
+            });
+            
+            // Search
+            document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+            
+            // Filters
+            document.getElementById('filtersBtn')?.addEventListener('click', openFilterDrawer);
+            document.getElementById('closeFilterDrawer')?.addEventListener('click', closeFilterDrawer);
+            document.getElementById('filterDrawerOverlay')?.addEventListener('click', closeFilterDrawer);
+            
+            // AI Assistant
+            document.getElementById('aiAssistantBtn')?.addEventListener('click', openAiAssistant);
+            document.getElementById('aiFloatingMobile')?.addEventListener('click', openAiAssistant);
+            
+            // Select all
+            document.getElementById('selectAll')?.addEventListener('change', handleSelectAll);
+            document.getElementById('selectAllTable')?.addEventListener('change', handleSelectAll);
+            
+            // Checkbox changes
+            document.addEventListener('change', function(e) {
+                if (e.target.classList.contains('user-checkbox') || e.target.classList.contains('user-checkbox-table')) {
+                    updateMobileActions();
+                }
+            });
+        }
+
+        function switchView(view) {
+            currentView = view;
+            
+            // Update button states
+            document.querySelectorAll('.view-toggle-btn-refined').forEach(btn => btn.classList.remove('active'));
+            if (view === 'grid') {
+                document.getElementById('gridViewBtn').classList.add('active');
+                document.getElementById('gridView').style.display = 'block';
+                document.getElementById('tableView').style.display = 'none';
+            } else {
+                document.getElementById('tableViewBtn').classList.add('active');
+                document.getElementById('gridView').style.display = 'none';
+                document.getElementById('tableView').style.display = 'block';
+            }
+        }
+
+        function handleAlphabetFilter(letter) {
+            // Update active state
+            document.querySelectorAll('.alphabet-pill').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-letter="${letter}"]`).classList.add('active');
+            
+            // Apply filter
+            if (letter === 'all') {
+                activeFilters.alphabet = null;
+            } else if (letter === '0-9') {
+                activeFilters.alphabet = 'number';
+            } else {
+                activeFilters.alphabet = letter.toLowerCase();
+            }
+            
+            applyAllFilters();
+        }
+
+        function handleSearch(event) {
+            activeFilters.search = event.target.value.trim() || null;
+            applyAllFilters();
+        }
+
+        function applyAllFilters() {
+            let filtered = [...allAccounts];
+            
+            // Apply search filter
+            if (activeFilters.search) {
+                filtered = filtered.filter(username => 
+                    username.toLowerCase().includes(activeFilters.search.toLowerCase())
+                );
+            }
+            
+            // Apply alphabetical filter
+            if (activeFilters.alphabet) {
+                if (activeFilters.alphabet === 'number') {
+                    filtered = filtered.filter(username => /^[0-9]/.test(username));
+                } else {
+                    filtered = filtered.filter(username => 
+                        username.toLowerCase().startsWith(activeFilters.alphabet)
+                    );
+                }
+            }
+            
+            filteredAccounts = filtered;
+            updateDisplay();
+            updateResultsCount();
+        }
+
+        function updateDisplay() {
+            const gridContainer = document.getElementById('userCardsContainer');
+            const tableContainer = document.getElementById('tableBodyContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Show/hide empty state
+            if (filteredAccounts.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('gridView').style.display = 'none';
+                document.getElementById('tableView').style.display = 'none';
+                return;
+            } else {
+                emptyState.style.display = 'none';
+                if (currentView === 'grid') {
+                    document.getElementById('gridView').style.display = 'block';
+                    document.getElementById('tableView').style.display = 'none';
+                } else {
+                    document.getElementById('gridView').style.display = 'none';
+                    document.getElementById('tableView').style.display = 'block';
+                }
+            }
+            
+            // Update visibility
+            updateGridView();
+            updateTableView();
+        }
+
+        function updateGridView() {
+            const cards = document.querySelectorAll('#userCardsContainer .user-card-refined');
+            cards.forEach(card => {
+                const username = card.dataset.username;
+                card.style.display = filteredAccounts.includes(username) ? 'block' : 'none';
+            });
+        }
+
+        function updateTableView() {
+            const rows = document.querySelectorAll('#tableBodyContainer tr');
+            rows.forEach(row => {
+                const username = row.dataset.username;
+                row.style.display = filteredAccounts.includes(username) ? 'table-row' : 'none';
+            });
+        }
+
+        function updateResultsCount() {
+            const countElement = document.getElementById('resultsCount');
+            if (countElement) {
+                countElement.textContent = `${filteredAccounts.length.toLocaleString()} accounts`;
+            }
+        }
+
+        function handleSelectAll(e) {
+            const checkboxes = currentView === 'grid' 
+                ? document.querySelectorAll('.user-checkbox:not([style*="none"])')
+                : document.querySelectorAll('.user-checkbox-table:not([style*="none"])');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+            
+            updateMobileActions();
+        }
+
+        function updateMobileActions() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            const mobileActions = document.getElementById('stickyActionsMobile');
+            
+            if (selectedCheckboxes.length > 0) {
+                mobileActions.classList.add('visible');
+            } else {
+                mobileActions.classList.remove('visible');
+            }
+        }
+
+        function openFilterDrawer() {
+            document.getElementById('filterDrawer').classList.add('open');
+            document.getElementById('filterDrawerOverlay').classList.add('open');
+        }
+
+        function closeFilterDrawer() {
+            document.getElementById('filterDrawer').classList.remove('open');
+            document.getElementById('filterDrawerOverlay').classList.remove('open');
+        }
+
+        function openAiAssistant() {
+            // Placeholder for AI assistant functionality
+            alert('AI Assistant functionality will be implemented here');
+        }
+
+        // Export functions (placeholder implementations)
+        function copySelectedList() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            const usernames = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (usernames.length === 0) {
+                alert('Please select accounts to copy');
+                return;
+            }
+            
+            navigator.clipboard.writeText(usernames.join('\n')).then(() => {
+                alert(`Copied ${usernames.length} usernames to clipboard`);
+            });
+        }
+
+        function exportUnfollowList() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            const usernames = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (usernames.length === 0) {
+                alert('Please select accounts to export');
+                return;
+            }
+            
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Username\n" + usernames.join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "selected_non_followers.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openSelectedProfiles() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Please select accounts to open');
+                return;
+            }
+            
+            if (selectedCheckboxes.length > 10) {
+                if (!confirm(`This will open ${selectedCheckboxes.length} tabs. Continue?`)) {
+                    return;
+                }
+            }
+            
+            selectedCheckboxes.forEach(checkbox => {
+                const username = checkbox.value;
+                window.open(`https://instagram.com/${username}`, '_blank');
+            });
+        }
+    </script>
+</body>
+</html>

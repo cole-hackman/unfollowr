@@ -1,0 +1,138 @@
+Perfect — here’s a **production-ready Privacy Policy** (page content) plus a **PRD** your senior SWE can act on immediately.
+
+---
+
+# 📄 Privacy Policy Page (Full Content)
+
+```md
+# Privacy Policy
+_Last updated: August 28, 2025_
+
+Unfollowr (“we,” “our,” “us”) respects your privacy. This page explains what data we handle, how we use it, and what we don’t do.
+
+---
+
+## 1. Local-First Design
+- All of your Instagram export files are processed **directly in your browser**.  
+- We do **not upload, store, or retain** your export files on our servers.  
+
+---
+
+## 2. Use of AI Services
+To improve account classification (e.g., detecting celebrities, spam, or friends), we sometimes send **minimal text snippets** from your export (such as usernames, display names, or bios) to **Google Gemini**, an AI model provided by Google.
+
+- These snippets are used **only for classification**.  
+- Gemini does **not use this data to train models**.  
+- We do **not have access** to the transmitted data beyond what Gemini returns.  
+- No raw export files (followers/following lists) are sent.  
+
+---
+
+## 3. What We Don’t Do
+- We do **not** sell your data.  
+- We do **not** build profiles on you.  
+- We do **not** share your files with third parties.  
+- We do **not** retain any personal data after your session ends.  
+
+---
+
+## 4. Anonymous Analytics (Optional)
+We may collect **anonymous usage statistics** (like total number of uploads or how many accounts are classified as “celebrities”) to improve Unfollowr.
+
+- These analytics never include usernames, bios, or export files.  
+- You can opt out at any time.  
+
+---
+
+## 5. Your Control
+- You can use Unfollowr fully without enabling AI features.  
+- You may opt in/out of AI assist and anonymous analytics at any time.  
+- Clearing your browser cache deletes all local data.  
+
+---
+
+## 6. Changes
+We may update this Privacy Policy from time to time. Any significant changes will be clearly posted here with an updated date.
+
+---
+
+## 7. Contact
+If you have questions, reach out:  
+📧 support@unfollowr.app  
+
+---
+
+**Your data belongs to you. We’ll never store it — period.**
+```
+
+---
+
+# 📌 PRD: Privacy Policy Page
+
+**Feature:** Privacy Policy Page
+**Product:** Unfollowr
+**Owner:** \[You]
+**Engineering:** \[Senior SWE]
+
+---
+
+## 1. Objective
+
+Provide a dedicated **/privacy** page that transparently explains how Unfollowr handles user data, reinforcing trust and compliance with privacy expectations.
+
+---
+
+## 2. Scope
+
+* Implement a static `/privacy` route/page.
+* Display the Privacy Policy (content above).
+* Ensure it is **linked prominently**:
+
+  * Footer navigation (e.g., “Privacy Policy”).
+  * Consent modals/settings panels (link to “Read our Privacy Policy”).
+* Style: consistent with site (Next.js + Tailwind).
+* SEO: Add `<title>Privacy Policy | Unfollowr</title>` and description meta tag.
+
+---
+
+## 3. Requirements
+
+### Functional
+
+* Page must render all sections clearly (headings, paragraphs, lists).
+* Must support mobile and desktop viewports.
+* Links (e.g., `mailto:support@unfollowr.app`) must be clickable.
+
+### Non-functional
+
+* Accessibility: headings follow semantic order (h1 → h2 → h3).
+* Performance: page loads instantly (static).
+* No client-side API calls; fully static render.
+
+---
+
+## 4. Deliverables
+
+* `/pages/privacy.tsx` (Next.js) with Tailwind-styled content.
+* Footer link → `/privacy`.
+* Update `ConsentModal` or AI assist toggle to include link: *“Read our Privacy Policy”*.
+
+---
+
+## 5. Acceptance Criteria
+
+* ✅ `/privacy` renders complete text (sections 1–7).
+* ✅ Footer includes a visible link to `/privacy`.
+* ✅ Consent modals/settings include link to `/privacy`.
+* ✅ Content matches exactly the Privacy Policy provided above.
+* ✅ Page is mobile responsive and readable.
+* ✅ All text is selectable and accessible to screen readers.
+* ✅ SEO metadata is present.
+
+---
+
+This PRD is **ready for instant implementation** — just drop in the content, style with Tailwind, and hook into nav + settings.
+
+---
+
+Want me to also write the **short homepage “AI + Privacy” microcopy** that your SWE can slot under the new ✨ AI badge so it matches the policy but stays simple?

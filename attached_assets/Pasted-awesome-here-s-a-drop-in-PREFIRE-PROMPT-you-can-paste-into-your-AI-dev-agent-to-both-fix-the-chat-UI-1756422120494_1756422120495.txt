@@ -1,0 +1,203 @@
+awesome—here’s a drop-in PREFIRE PROMPT you can paste into your AI dev agent to both fix the chat UI and make the Gemini flow actually work (including the privacy notice). It follows your preferred structure and Replit “Effective Prompting” style.
+
+⸻
+
+PREFIRE PROMPT about: Fixing the AI Assistant chat (UI + Gemini) for Unfollowr
+
+1) Goal / problem
+	•	The AI Assistant chat in Unfollowr is visually inconsistent (“wonky”) and returns generic errors (e.g., “I encountered an error…”).
+	•	We need to:
+	1.	Refactor the chat UI to match the dashboard’s design language (rounded corners, soft navy accents, shadows, clean spacing).
+	2.	Add a privacy notice at the top of the chat: “Your Instagram data will be sent to Google Gemini for analysis.”
+	3.	Implement a reliable server-side Gemini integration with structured inputs (followers/following, engagement stats) and clear fallback logic when Gemini is unavailable.
+	4.	Make the suggestion chips (“Who are my top Inner Circle members?”, etc.) work end-to-end.
+	5.	Support the categories: Too Famous to Follow, Inner Circle, Fan Club, plus Inactive Accounts.
+
+2) Research the codebase first
+	•	Search the repo for components/routes likely named:
+	•	Chat, ChatWidget, Assistant, ChatDrawer, ChatBot, AssistantPanel, SuggestionChips, MessageList
+	•	API routes: /api/assistant, /api/chat, /api/gemini
+	•	Data utilities: getFollowers, getFollowing, analyzeAccounts, classify*, getEngagement*
+	•	Styling tokens: Tailwind config, brand color tokens (note: soft navy is desired going forward).
+	•	Map current data flow: where lists like Unfollowers, Too Famous, Inner Circle, Fan Club are computed/queried and how the chat tries to access them.
+	•	Identify the exact source of the “error” reply: is it thrown in the API route, the Gemini client, or UI timeout/stream parser?
+
+3) Assess issues & propose a plan
+
+Likely issues
+	•	UI: inconsistent padding, z-index conflicts, misaligned radius, no sticky header, suggestion chips wrapping poorly, missing mobile constraints, non-portal render causing overlap with page content.
+	•	API: Gemini call missing schema / overlong payloads / missing key / no timeouts / inadequate error handling / not using structured tool/function calls.
+	•	Data: “inactive accounts” requires last-posted timestamps or fallback heuristics; classification needs deterministic pre-rules + LLM enrichment.
+
+Plan (high level)
+	1.	UI refactor into a single, reusable component with portal + fixed positioning, sticky header, privacy banner, message list, composer, suggestion chips.
+	2.	Privacy notice banner with dismiss + “Learn more” link; store user dismissal in localStorage.
+	3.	Server route /api/assistant that:
+	•	Validates input, pulls cached user data, builds a compact JSON schema, calls Gemini server-side with timeouts & retries, and streams responses.
+	•	When Gemini fails, falls back to rule-based filters so chips like “Show inactive accounts” still return results.
+	4.	Client: streaming UI, typing indicator, retry button, robust error states.
+	5.	Acceptance tests (listed below).
+
+4) Break it down into concrete tasks
+
+A. UI / Component work
+	•	Create/replace component components/assistant/ChatWidget.tsx with:
+	•	Portal mount (e.g., to #portal-root) and position: fixed bottom-right.
+	•	Container: rounded-2xl shadow-xl border border-slate-200 bg-white with max-h-[80vh], w-[360px] (md:w-[420px]), overflow-hidden, z-[60+] (above other UI).
+	•	Header: gradient soft navy background, title “AI Assistant”, close button, and below it a privacy notice bar:
+	•	Copy: “Privacy: Using the assistant sends your Instagram data to Google Gemini for analysis. [Learn more]”
+	•	Small, dismissible (localStorage.setItem('aiPrivacyDismissed','1')).
+	•	Messages list: scrollable area with auto-stick-to-bottom, bubbles for user/bot; support markdown; timestamp optional.
+	•	Suggestion chips row (“TRY ASKING:”) with wrap:
+	•	“Who are my top Inner Circle members?”
+	•	“List accounts that are too famous”
+	•	“Fan Club members to follow back?”
+	•	“Show inactive accounts”
+	•	Composer: input with send button, Shift+Enter for newline; disabled during request; shows remaining tokens if available.
+	•	States: loading spinner, typing indicator, error block with “Retry”.
+
+Style tokens (Tailwind)
+	•	Use CSS variable --brand-navy: #1C2A44; then:
+	•	Header: bg-[var(--brand-navy)] from-[var(--brand-navy)] to-slate-700 text-white
+	•	Primary button: bg-[var(--brand-navy)] hover:brightness-110
+	•	Chips: bg-slate-100 text-slate-700 hover:bg-slate-200
+	•	Match dashboard radii (rounded-2xl), paddings (p-4), shadows (shadow-md|xl).
+
+B. Server: Gemini integration
+	•	Add lib/gemini.ts with a function callGeminiChat({prompt, profile, data}) using the Google Generative AI SDK (or fetch) server-side only.
+	•	Env: GEMINI_API_KEY required; validate on boot.
+	•	Implement structured prompt with system message and JSON schema for outputs:
+	•	Categories supported: too_famous, inner_circle, fan_club, inactive, unfollowers
+	•	Each item in result: { username, reason, score, suggestedAction }
+	•	Guardrails:
+	•	Truncate inputs (send top N=500 accounts with compressed fields).
+	•	Add function-level timeouts (15s), retry (2x with jitter).
+	•	If Gemini returns non-JSON, attempt a safe JSON parse with regex fences; else fallback.
+	•	Privacy: include only fields needed: username, follower_count, following_count, is_verified, last_post_at, you_follow_them, they_follow_you, likes_30d, comments_30d, story_views_30d.
+
+C. Rule-based fallback (must work even if LLM fails)
+	•	Implement utilities in lib/classify.ts:
+	•	tooFamous(a): a.follower_count >= 100_000 || (a.follower_count / max(1,a.following_count)) >= 100 or a.is_verified === true.
+	•	innerCircle(a): they_follow_you && you_follow_them && (likes_30d + comments_30d + story_views_30d) >= ENGAGEMENT_MIN && follow_duration_days >= 180.
+	•	fanClub(a): they_follow_you && !you_follow_them && (likes_30d + comments_30d + story_views_30d) >= FAN_MIN.
+	•	inactive(a): last_post_at == null || daysSince(last_post_at) >= 90 (configurable).
+	•	Export classifyAll(accounts) returning the same JSON shape the Gemini path returns so the UI can treat both paths uniformly.
+
+D. API route
+	•	Create/replace pages/api/assistant.ts (or app/api/assistant/route.ts):
+	•	Accept POST { message, intent?, selection? }.
+	•	Load user’s account dataset from DB/cache.
+	•	If intent is one of: inner_circle | too_famous | fan_club | inactive, apply rule-based filter immediately and optionally enrich with Gemini for explanations.
+	•	For general messages: build a structured prompt and call callGeminiChat.
+	•	Stream response tokens (SSE or chunked), else send JSON result.
+	•	Error handling: always return a user-friendly message + errorId + canRetry: true.
+
+E. Wire the suggestion chips & composer
+	•	Chips send intent values directly to the API.
+	•	Composer free text → intent detection client-side (lightweight regex) and server-side (final check).
+	•	On success: show a list widget under the bot bubble with the matching accounts (username + quick actions: “Open Profile”, “Select”, “Copy”).
+
+F. Tests / acceptance criteria
+	•	Visual:
+	•	Card matches dashboard (rounded-2xl, shadow-xl, soft navy header).
+	•	No overflow or layout shift.
+	•	Works on mobile: full-height drawer mode (w-screen max-w-none h-[85vh]).
+	•	Behavior:
+	•	Privacy banner shows once per user (respects dismissal).
+	•	Suggestion chips return lists instantly via fallback even if Gemini key is missing.
+	•	Free-text “Show me inactive accounts to unfollow” returns results (with reasons) or a clear “no data” message.
+	•	Gemini failure path shows retry CTA and still offers rule-based results.
+	•	Streaming responses render smoothly with typing indicator.
+	•	Tech:
+	•	No API key leakage to the client.
+	•	Timeouts and retries in place.
+	•	Types are shared between client and server for the response shape.
+
+5) Proposed implementation details & snippets
+
+UI: chat shell (TSX sketch)
+
+// components/assistant/ChatWidget.tsx
+export default function ChatWidget() {
+  // portal mount, open/close state, localStorage('aiPrivacyDismissed')
+  // header (soft navy), privacy bar, messages, chips, composer
+}
+
+API contract
+
+// POST /api/assistant
+type AssistantRequest = {
+  message?: string;
+  intent?: 'too_famous'|'inner_circle'|'fan_club'|'inactive'|'unfollowers'|'general';
+  selection?: string[]; // usernames selected in the UI
+};
+
+type AccountLite = {
+  username: string;
+  follower_count?: number;
+  following_count?: number;
+  is_verified?: boolean;
+  last_post_at?: string | null;
+  you_follow_them?: boolean;
+  they_follow_you?: boolean;
+  likes_30d?: number;
+  comments_30d?: number;
+  story_views_30d?: number;
+  follow_duration_days?: number;
+};
+
+type AssistantResponse = {
+  ok: boolean;
+  errorId?: string;
+  canRetry?: boolean;
+  message?: string;
+  items?: Array<{
+    username: string;
+    reason: string;
+    score?: number; // 0–1
+    category?: 'too_famous'|'inner_circle'|'fan_club'|'inactive'|'unfollowers';
+    actions?: Array<{ label: string; href?: string; type?: 'open'|'copy'|'select' }>;
+  }>;
+};
+
+Fallback classification example
+
+// lib/classify.ts
+export function classifyAll(data: AccountLite[]) { /* implement rules above and return items[] */ }
+
+Gemini call (server-side only)
+
+// lib/gemini.ts
+export async function callGeminiChat({prompt, data}: {prompt: string; data: AccountLite[]}) {
+  // trim data, craft system + user messages, request JSON-only output
+  // add timeout & retry, return parsed items[]
+}
+
+Privacy banner copy
+
+Privacy: Using the assistant sends your Instagram data to Google Gemini for analysis. No private messages are shared.
+[Learn more] (link to your policy) — [Dismiss]
+
+6) Test scenarios to run before finishing
+	•	Open/close chat overlay on desktop and mobile.
+	•	First open shows privacy banner; subsequent opens don’t.
+	•	Click chip “Show inactive accounts” → list renders with reasons.
+	•	Turn off or invalidate GEMINI_API_KEY → chips still work via fallback; free-text returns rule-based answers + notice.
+	•	Long free-text prompt streams tokens and never freezes; scrollbar stays pinned to bottom.
+	•	Error from API shows retry; retry succeeds.
+	•	Performance: first paint of widget < 200ms after click (lazy load heavy libs).
+
+7) Deliverables
+	•	Updated components (ChatWidget.tsx + small helpers).
+	•	New/updated server route /api/assistant.
+	•	lib/gemini.ts, lib/classify.ts.
+	•	Readme note: env var GEMINI_API_KEY, privacy copy, how to run locally.
+	•	Short Loom/GIF of working flows.
+
+⸻
+
+Notes for the agent
+	•	Do not send secrets to the client.
+	•	Keep UI tokens aligned with the dashboard: rounded-2xl, shadow-xl, soft navy buttons/headers.
+	•	If any file names differ, adapt but keep the same architecture.
+	•	Provide a concise plan first, then apply changes in small commits, and run the acceptance checks.

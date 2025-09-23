@@ -1,0 +1,179 @@
+ChatGPT said:
+
+Got it ✅ — here’s a full PRD for building an Admin Dashboard for Unfollowr, so you can track usage metrics and other key system data.
+
+📄 PRD – Admin Dashboard for Unfollowr
+
+Product: Unfollowr
+Feature Set: Admin Dashboard (Internal)
+Owner: [You]
+Engineering: [Senior SWE]
+Date: [Today’s Date]
+
+1. Objective
+
+Provide a secure Admin Dashboard where you (and other admins) can monitor key metrics about Unfollowr’s usage. The dashboard should centralize data like total number of users, sessions, file uploads, and AI feature usage.
+
+The goal: give visibility into growth, feature adoption, and system health.
+
+2. Scope
+In Scope
+
+Dashboard UI (internal-only, behind admin authentication).
+
+Metrics: usage counts, file uploads, AI usage, exports, etc.
+
+Data visualizations (charts + tables).
+
+Basic filters (time range: day, week, month, all-time).
+
+Secure login for admin access.
+
+Out of Scope
+
+User-level analytics (e.g., per-user tracking beyond aggregate).
+
+External integrations (Google Analytics, etc.) — optional later.
+
+3. Features & Requirements
+A) Authentication
+
+Admin-only access (protected route).
+
+Password-protected login (later: SSO optional).
+
+B) Dashboard Overview
+
+Header Stats Cards (similar style to Results page):
+
+Total users (unique sessions)
+
+Total uploads (files processed)
+
+AI-assisted analyses run
+
+Exports generated (CSV/PDF)
+
+Average daily active users (DAU)
+
+C) Usage Analytics
+
+Line/Bar Chart: total uploads per day/week/month.
+
+Pie/Donut Chart: % of users who used AI Assistant vs only heuristics.
+
+Bar Chart: Top filter types used (Alphabetical, Segment, AI queries).
+
+D) AI Feature Insights
+
+Count of AI Assistant queries processed.
+
+Top 5 most common queries (aggregated, anonymized).
+
+Average queries per session.
+
+E) System Health
+
+Track and display:
+
+Average file size uploaded.
+
+Processing success rate (%).
+
+Average processing time per export.
+
+Error logs summary (count of failures).
+
+F) Data Table
+
+Exportable table view of sessions:
+
+Date
+
+Session ID (hashed/anonymous)
+
+Actions performed (upload, AI query, export)
+
+Duration of session
+
+G) Filters
+
+Time range selector: Today | Last 7 days | Last 30 days | All-time
+
+Option to download CSV snapshot of analytics.
+
+H) UI / UX
+
+Consistent with Unfollowr branding (blue highlights, glassy cards).
+
+Responsive (desktop-first, but usable on mobile/tablet).
+
+Use charts (Recharts, Chart.js, or similar).
+
+4. Technical Requirements
+
+Frontend: Next.js + Tailwind + Recharts (charts).
+
+Backend: Supabase or similar for storing usage logs.
+
+Authentication: Supabase Auth or NextAuth (admin-only).
+
+Data Collection:
+
+Log usage events client-side → push to Supabase analytics table.
+
+Example events: upload_start, ai_query, export_generated, session_start.
+
+Privacy:
+
+No raw Instagram data stored.
+
+Only anonymous session-level metrics collected.
+
+5. Deliverables
+
+Admin login page.
+
+Dashboard with:
+
+Header stats cards.
+
+Usage charts.
+
+AI feature analytics.
+
+System health metrics.
+
+Session data table.
+
+CSV export for analytics.
+
+6. Acceptance Criteria
+
+✅ Only admins can log in and view dashboard.
+
+✅ Header cards display total counts correctly.
+
+✅ Charts render with selectable time ranges.
+
+✅ AI queries tracked, aggregated, and displayed.
+
+✅ System health shows average file size, processing speed, error count.
+
+✅ Session table lists actions by anonymous session ID.
+
+✅ CSV export works.
+
+✅ Responsive and styled to match brand.
+
+7. Future Enhancements (Out of Scope for v1)
+
+Add real-time metrics (live sessions online).
+
+User cohort analysis (returning vs new users).
+
+Push notifications/alerts (e.g., spike in errors).
+
+Admin role management.
+
+⚡ This PRD is ready for implementation. It keeps things anonymous + aggregate so privacy is preserved, while still giving you growth and system insights.

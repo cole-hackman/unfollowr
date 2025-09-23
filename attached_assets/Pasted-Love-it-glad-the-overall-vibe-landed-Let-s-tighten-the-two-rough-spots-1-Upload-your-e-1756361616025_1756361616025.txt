@@ -1,0 +1,238 @@
+Love it — glad the overall vibe landed. Let’s tighten the two rough spots:
+
+---
+
+# 1) “Upload your export” — make it dead simple
+
+### UX goals
+
+* **One obvious action** (drop or click) with clear labels for each required file.
+* **Autodetect + validate** (followers vs following, JSON/HTML only).
+* **Show state** (selected files as chips), quick **Clear**.
+* **Only enable “Analyze”** when we have what we need.
+* **Helpful errors** and a small **“Download sample”** for testing.
+* Mobile-friendly, keyboard accessible.
+
+### Layout (recommended)
+
+* A single **glass card** with a big drop area.
+* Inside: two “slots” (Followers / Following) that fill when a file is dropped or picked.
+* Below: tiny line about privacy, a link to “How to export”, and a “Use sample files” button.
+
+### Implementation (React + Tailwind + Dropzone)
+
+```tsx
+// components/UploadCard.tsx
+import { useCallback, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import clsx from "clsx";
+
+type Slot = "followers" | "following";
+type FileState = { followers?: File; following?: File; error?: string };
+
+const ACCEPT = { "application/json": [".json"], "text/html": [".html"] };
+
+export default function UploadCard({ onAnalyze }:{
+  onAnalyze: (files: {followers: File; following: File}) => void;
+}) {
+  const [files, setFiles] = useState<FileState>({});
+  const [hover, setHover] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const setFile = (slot: Slot, f: File) =>
+    setFiles((s) => ({ ...s, [slot]: f, error: undefined }));
+
+  const clearSlot = (slot: Slot) =>
+    setFiles((s) => ({ ...s, [slot]: undefined }));
+
+  const onDrop = useCallback((accepted: File[]) => {
+    if (!accepted.length) return;
+    // Try to auto-route file to slot using filename heuristics
+    for (const f of accepted) {
+      const name = f.name.toLowerCase();
+      const isFollowers = /followers/.test(name);
+      const isFollowing = /following/.test(name);
+      if (isFollowers && !files.followers) setFile("followers", f);
+      else if (isFollowing && !files.following) setFile("following", f);
+      else if (!files.followers) setFile("followers", f);
+      else if (!files.following) setFile("following", f);
+      else setFiles((s)=>({ ...s, error: "Already have both files. Clear one to replace."}));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files.followers, files.following]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop, accept: ACCEPT, multiple: true, maxFiles: 2
+  });
+
+  const ready = !!files.followers && !!files.following && !busy;
+
+  const analyze = async () => {
+    if (!ready) return;
+    try {
+      setBusy(true);
+      await onAnalyze({ followers: files.followers!, following: files.following! });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="bg-white/20 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg">
+      <div
+        {...getRootProps()}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        className={clsx(
+          "rounded-xl border-2 border-dashed p-8 text-center transition-all",
+          (isDragActive || hover) ? "border-blue-500 bg-white/30" : "border-white/30 bg-white/10"
+        )}
+        aria-label="Upload your Instagram export files"
+      >
+        <input {...getInputProps()} />
+        <p className="text-lg font-medium">Drop files here or <span className="underline">click to upload</span></p>
+        <p className="text-sm text-slate-600 mt-1">Accepted: JSON or HTML • Followers + Following</p>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SlotBox
+            label="Followers file"
+            file={files.followers}
+            onClear={() => clearSlot("followers")}
+          />
+          <SlotBox
+            label="Following file"
+            file={files.following}
+            onClear={() => clearSlot("following")}
+          />
+        </div>
+      </div>
+
+      {files.error && <p role="alert" className="text-red-600 mt-3">{files.error}</p>}
+
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <button
+          onClick={analyze}
+          disabled={!ready}
+          className={clsx(
+            "px-5 py-3 rounded-xl font-semibold transition-all",
+            ready
+              ? "bg-blue-600 text-white shadow-[0_10px_30px_-10px_rgba(37,99,235,.6)] hover:scale-[1.02]"
+              : "bg-slate-300 text-slate-600 cursor-not-allowed"
+          )}
+        >
+          {busy ? "Analyzing…" : "Analyze non-followers"}
+        </button>
+        <button
+          onClick={() => setFiles({})}
+          className="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-white/50"
+        >
+          Clear
+        </button>
+        <button
+          onClick={() => /* inject sample files or navigate to docs */ null}
+          className="text-sm underline text-slate-600"
+        >
+          Try with sample files
+        </button>
+        <span className="ml-auto text-sm text-slate-500">
+          We don’t store your files. Processing is local to your session.
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SlotBox({ label, file, onClear }:{
+  label: string; file?: File; onClear: () => void;
+}) {
+  return (
+    <div className="rounded-lg bg-white/40 border border-white/30 p-4 text-left">
+      <p className="text-sm font-medium text-slate-700">{label}</p>
+      {!file ? (
+        <p className="text-sm text-slate-500 mt-1">Drop or click to select</p>
+      ) : (
+        <div className="mt-2 flex items-center justify-between">
+          <div className="truncate text-sm">
+            <span className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-white/70">
+              <span className="truncate max-w-[200px]">{file.name}</span>
+            </span>
+          </div>
+          <button onClick={onClear} className="text-sm underline text-slate-600">Remove</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+**Notes**
+
+* Accepts JSON/HTML only; filename heuristics route to Followers/Following automatically.
+* “Analyze” disabled until both slots filled.
+* Clear states + sample files entry point.
+* Works with keyboard and screen readers.
+
+---
+
+# 2) Scroll-reveal: re-hide when out of view (but not annoying)
+
+By default Framer Motion’s `viewport={{ once: true }}` keeps components revealed. Swap to **in/out control** so sections gracefully hide when scrolled away (and respect reduced motion).
+
+### Reusable `<Reveal>` helper
+
+```tsx
+// components/Reveal.tsx
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+
+export default function Reveal({ children, y = 16, delay = 0 }:{
+  children: React.ReactNode; y?: number; delay?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { margin: "-20% 0px -20% 0px" }); // enter/exit sooner
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y }}
+      transition={{ duration: 0.35, ease: "easeOut", delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+Usage:
+
+```tsx
+<Reveal><SectionCard /></Reveal>
+<Reveal delay={0.08}><SectionCard /></Reveal>
+<Reveal delay={0.16}><SectionCard /></Reveal>
+```
+
+### Accessibility
+
+Wrap the behavior with a motion preference:
+
+```tsx
+const prefersReduced = typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// If reduced, render static (no animate prop).
+```
+
+This gives you: **reveal on enter, fade out on exit**, so when users scroll up then back down, the cards animate again without feeling janky.
+
+---
+
+## Quick QA checklist for this pass
+
+* Upload card: can complete flow **without** drag-and-drop (keyboard only).
+* Wrong file type → inline error explaining allowed types.
+* Only one file uploaded → secondary slot still prompts clearly.
+* Analyze button stays disabled until both present; spinner shows during work.
+* Scroll up/down → sections re-animate (unless reduced motion).
+* Mobile: dropzone turns into clear “Tap to upload” target with enough padding.
+
+If you want, I can tailor the `onAnalyze` handler to your current parser and wire in real-time validation (e.g., verifying the JSON shape contains `relationships_followers` vs `relationships_following`) so the slot detection is 100% accurate.

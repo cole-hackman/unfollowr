@@ -1,0 +1,212 @@
+Perfect — here’s a **structured PRD** based on your notes, cleaned up so your senior SWE can implement without ambiguity.
+
+---
+
+# 📄 PRD – Homepage, Results Page, Mobile, and Branding Improvements
+
+**Product:** Unfollowr
+**Owner:** \[You]
+**Engineering:** \[Senior SWE]
+**Date:** \[Today’s Date]
+
+---
+
+## 1. Objective
+
+Improve **homepage clarity, user engagement, and trust** while making the **results page more interactive and fun**. Ensure the experience works seamlessly on **mobile** and polish branding/UI for a consistent, modern feel.
+
+---
+
+## 2. Scope
+
+### In Scope
+
+* Homepage CTA and upload experience
+* Results page empty states, batch actions, micro-interactions
+* Mobile responsiveness + floating CTAs
+* Branding polish (logo animation, icon consistency, gradients)
+
+### Out of Scope
+
+* Backend changes to data analysis
+* AI model modifications (only UI/UX presentation improvements here)
+
+---
+
+## 3. Features & Requirements
+
+### 🔎 Homepage
+
+**Hero Section (CTA optimization)**
+
+* Replace “Analyze my Instagram” with:
+
+  * **Primary CTA:** “Find out who’s not following back”
+  * **Alternative CTA (optional A/B):** “See who you should unfollow”
+* Ensure CTA text is responsive (no wrapping on mobile).
+
+**Upload Box Engagement**
+
+* Add **subtle drag-and-drop animation**:
+
+  * Hover glow around drop area
+  * Pulsing cloud icon animation
+* After upload → show **smooth horizontal progress bar** (Cluely-style) instead of spinner.
+
+**Social Proof / Trust Signals**
+
+* Add simple banner below upload:
+
+  * *“Trusted by 500+ users in beta”*
+* Placeholder area for logos (Product Hunt / Indie Hackers badges).
+* Should be **dismissible** for future flexibility.
+
+---
+
+### 📊 Results Page
+
+**Empty States**
+
+* When filters remove all accounts, show centered friendly message:
+
+  * 🎉 “Looks like no one fits that filter.”
+* Optional: suggest next filter or add **“Reset filters”** button.
+
+**Batch Actions Bar**
+
+* Add **sticky bottom bar** that appears only when accounts are selected:
+
+  * `Open profiles (X)` | `Copy usernames` | `Export selection`
+* Hide when no accounts are selected.
+
+**Micro-interactions**
+
+* Grid cards:
+
+  * Hover → soft zoom + highlight border.
+* Table rows:
+
+  * Hover → highlight row.
+  * Quick action buttons (e.g., “Open profile”) appear only on hover.
+
+**AI Assistant Enhancements (Phase 2 / Later Iteration)**
+
+* Dynamically suggest prompts:
+
+  * Example: if 40% of accounts are celebrities → show prompt “Hide celebrities.”
+* Add **AI Tip bar** when no user interaction after 10s:
+
+  * 💡 “Try asking me to hide celebrities or spam accounts.”
+
+---
+
+### 📱 Mobile
+
+**Floating Upload CTA**
+
+* Sticky button at bottom of homepage:
+
+  * “Upload export”
+  * On tap → scrolls to Upload box.
+
+**AI Assistant**
+
+* Chat bubble in bottom-right (like Intercom).
+* Expands full screen on mobile → collapses back into bubble.
+
+**Filter Bar**
+
+* Alphabetical filter becomes **horizontally scrollable** with swipe gestures.
+* Sticky at top when scrolling results.
+
+---
+
+### 🎨 Branding & UI polish
+
+**Logo Animation**
+
+* On page load, animate magnifying-glass logo with slight **pulse effect** (1.2s, ease in/out).
+
+**Consistent Iconography**
+
+* Switch all UI icons to **Lucide** (light stroke weight).
+* Example: replace “open profile” icon with Lucide’s `ExternalLink`.
+
+**Color Depth**
+
+* Add **subtle gradient accents** behind metric/stat cards:
+
+  * Radial blue (`#2563eb` at 10% opacity → transparent).
+* Cards retain white base with glassy shadows.
+
+---
+
+## 4. Technical Requirements
+
+* **Frontend:** Next.js + Tailwind + Framer Motion
+* **Animations:** Use Framer Motion for hover, load, and logo pulse.
+* **Responsive design:** All changes must adapt fluidly for mobile & desktop.
+* **Accessibility:**
+
+  * Progress bar must have ARIA role `progressbar`.
+  * Ensure color contrast AA for new gradients/accents.
+
+---
+
+## 5. Deliverables
+
+* Updated homepage with:
+
+  * New CTA text
+  * Upload drag/drop animation + progress loader
+  * Social proof banner/logos
+* Results page with:
+
+  * Empty state messaging
+  * Sticky batch actions bar
+  * Micro-interactions on cards/rows
+* Mobile:
+
+  * Floating upload CTA
+  * Mobile-friendly AI chat bubble
+  * Scrollable alphabetical filter bar
+* Branding:
+
+  * Logo animation
+  * Icon consistency
+  * Gradient depth on stat cards
+
+---
+
+## 6. Acceptance Criteria
+
+* ✅ Homepage CTA is emotionally clear (“Find out who’s not following back”).
+* ✅ Upload card has hover animation + pulsing icon.
+* ✅ Upload shows smooth progress loader after file selection.
+* ✅ Social proof banner is visible under upload.
+* ✅ Results page shows empty state with friendly message + reset option.
+* ✅ Batch actions bar appears only when accounts are selected.
+* ✅ Grid/table hover interactions are smooth.
+* ✅ AI assistant visible via chat bubble (desktop + mobile).
+* ✅ Mobile upload CTA sticky at bottom of screen.
+* ✅ Alphabetical filter scrolls horizontally on mobile.
+* ✅ Logo animates with pulse on page load.
+* ✅ Icons unified under Lucide pack.
+* ✅ Stat cards styled with subtle gradient depth.
+
+---
+
+## 7. Notes
+
+* Prioritize **upload-first clarity** on homepage.
+* Results page should feel **interactive and rewarding**, not just a static list.
+* Mobile parity is key → no features should feel “missing” compared to desktop.
+* Branding/UI polish should remain subtle (avoid clutter).
+
+---
+
+⚡This PRD is ready for immediate implementation by your SWE.
+
+---
+
+Would you like me to also create a **visual wireframe sketch (section layout order + new elements placement)** so your SWE has a blueprint, not just text?

@@ -1,0 +1,80 @@
+Prompt for Agent
+
+Role & Context
+You are acting as a senior software engineer on the Unfollowr project (Next.js + Tailwind + Framer Motion stack). Your task is to implement the following product improvements:
+
+Refactor Upload UX
+
+Replace the current “Upload your export” section with a single, elegant dropzone.
+
+After files are dropped or clicked, render them as chips/cards with filename + ✅ check + ❌ remove.
+
+Auto-detect Followers vs Following from filename (followers → Followers slot, following → Following slot).
+
+Validate only .json or .html files, max size 50MB. Show inline error if invalid.
+
+Disable “Analyze” until both required files are present.
+
+CTA hierarchy:
+
+Primary (blue): Analyze non-followers
+
+Secondary (ghost): Try with sample files
+
+Tertiary (link): Clear all
+
+Add hover/drag-over glow to dropzone, bounce-in animation when chips appear.
+
+Keep copywriting exactly as provided in the spec.
+
+Add Reveal Animations
+
+Wrap content sections in a <Reveal /> component that uses Framer Motion.
+
+Sections animate in when scrolled into view, and fade/slide out when scrolled away.
+
+Respect prefers-reduced-motion: reduce (disable animations in that case).
+
+Implement staggering for groups of cards (e.g. How It Works section).
+
+Accessibility
+
+Dropzone should be operable with keyboard (Enter/Space opens file dialog).
+
+All controls (remove file, clear all, sample) must have aria-labels.
+
+Ensure color contrast meets WCAG AA.
+
+Performance & Polish
+
+No layout shift when chips appear (reserve space).
+
+Use Tailwind utility classes for shadows, radii, transitions as defined.
+
+Test Lighthouse: Perf ≥ 90, Acc ≥ 95, CLS < 0.05.
+
+How to Work
+
+Treat this like a real PR: build composable React components (<UploadCard />, <Reveal />).
+
+Write TypeScript code that is production-grade, clean, and documented.
+
+Use Tailwind for all styling.
+
+Use Framer Motion for motion; fall back gracefully when reduced motion is set.
+
+Test all UI states (empty, partial, error, ready).
+
+After implementation, produce a short Loom-style walkthrough description in text (what you’d show to a PM/designer).
+
+Deliverables
+
+components/UploadCard.tsx (self-contained, uses react-dropzone)
+
+components/Reveal.tsx utility wrapper
+
+Any updates needed in tailwind.config.js (colors, shadows, etc.)
+
+Updated landing page sections wrapped with <Reveal />
+
+⚡️ You should think like a senior engineer shipping a polished feature: prioritize code clarity, composability, accessibility, and performance. Don’t just hack in CSS — implement it in a way that’s maintainable across the project.

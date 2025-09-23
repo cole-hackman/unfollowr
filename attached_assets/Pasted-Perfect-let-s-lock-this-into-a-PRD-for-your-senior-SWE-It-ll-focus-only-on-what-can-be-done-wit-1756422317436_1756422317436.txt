@@ -1,0 +1,137 @@
+Perfect ✅ — let’s lock this into a PRD for your senior SWE. It’ll focus only on what can be done with followers.json + following.json, plus lightweight heuristics.
+
+⸻
+
+PRD: Guaranteed + Heuristic Categories for Unfollowr
+
+1. Overview
+
+We want to enhance the Unfollowr dashboard by adding guaranteed categories (based purely on connections) and heuristic categories (brands, sports, celebrities, creators) derived from usernames and full names. This ensures the product is functional without engagement/private data, while leaving room for future enrichment.
+
+⸻
+
+2. Goals
+	•	Implement base categories:
+	•	Unfollowers (you follow them; they don’t follow back).
+	•	Fans (they follow you; you don’t follow back).
+	•	Mutuals (both follow each other).
+	•	Implement heuristic labels:
+	•	Brands
+	•	Sports
+	•	Celebrities
+	•	Creators
+	•	Ensure the UI can filter/switch tabs by these new categories, consistent with existing dashboard style.
+
+⸻
+
+3. User Stories
+	•	As a user, I want to quickly see who doesn’t follow me back so I can decide whether to unfollow.
+	•	As a user, I want to see which accounts are my fans so I can decide whether to follow them back.
+	•	As a user, I want to filter accounts by type (e.g., Brands, Sports, Celebrities, Creators) so I can make better follow/unfollow decisions.
+
+⸻
+
+4. Data Sources
+	•	followers.json: List of accounts that follow the user.
+	•	following.json: List of accounts the user follows.
+	•	Each entry: { username: string, full_name?: string }.
+	•	Curated allowlists: JSON/CSV maintained in repo for brands, sports, celebrities.
+
+⸻
+
+5. Feature Logic
+
+Base Categories (Guaranteed)
+	1.	Unfollowers:
+	•	Condition: you_follow_them && !they_follow_you
+	2.	Fans:
+	•	Condition: they_follow_you && !you_follow_them
+	3.	Mutuals:
+	•	Condition: they_follow_you && you_follow_them
+
+Heuristic Categories
+	•	Pattern matching on username + full_name (lowercased).
+	•	Brands: match keywords: official, store, inc, brand, shop, co, app, io, hq, labs; plus curated allowlist (brands.json).
+	•	Sports: match dictionary entries (team/league handles) + patterns: fc, cf, f1, ufc, nba, nfl, mlb, nhl, lalakers, realmadrid, etc.
+	•	Celebrities/Creators: match keywords: official, real, theofficial, tv, actor, music, dj, artist; plus curated allowlist (celebrities.json).
+
+Classification Flow
+	•	For each account:
+	1.	Place into Unfollowers, Fans, or Mutuals based on connection rules.
+	2.	Apply keyword/allowlist matching to assign one or more heuristic tags (brand, sports, celebrity, creator).
+	3.	Store results in a unified object:
+
+{
+  username: string,
+  full_name?: string,
+  buckets: ['unfollowers'|'fans'|'mutuals'],
+  tags: ['brand'|'sports'|'celebrity'|'creator'|'other'],
+  reasons: string[] // e.g., ["Matched keyword 'official'", "Found in brands.json"]
+}
+
+
+
+⸻
+
+6. UI Changes
+	•	Dashboard tabs (top bar):
+	•	Existing: Unfollowers, Inner Circle (rename → Mutuals), Fan Club (rename → Fans)
+	•	Add filter chips: Celebrities, Brands, Sports, Creators
+	•	Profile cards:
+	•	Display tags (as small pill badges).
+	•	Consistent with redesigned rounded card style (see prior spec).
+
+⸻
+
+7. Technical Implementation
+	•	Backend / Utils:
+	•	New classifyConnections(followers, following, catalogs) function that:
+	•	Computes guaranteed buckets.
+	•	Applies heuristic tagging.
+	•	Returns unified classification list.
+	•	Curated lists: brands.json, sports.json, celebrities.json. Simple Set<string> of handles.
+	•	Frontend:
+	•	Extend state to include tags.
+	•	Update filtering logic: user can filter by category (chips).
+	•	Update UI to render badges for tags.
+
+⸻
+
+8. Deliverables
+	•	lib/classify.ts: Contains logic for guaranteed buckets + heuristics.
+	•	data/brands.json, data/sports.json, data/celebrities.json: Curated allowlists.
+	•	Updated UI components:
+	•	Tabs/chips for filters.
+	•	Profile cards with badges.
+	•	Documentation in README:
+	•	How to update allowlists.
+	•	How to extend tags.
+
+⸻
+
+9. Success Metrics
+	•	Classification runs 100% locally on followers/following files.
+	•	Tab counts update accurately:
+	•	Unfollowers count matches set difference.
+	•	Fans count matches reverse set difference.
+	•	Mutuals count matches intersection.
+	•	Heuristic tags correctly assigned for ≥80% of test cases from allowlists.
+	•	UI feels consistent with dashboard (clean cards, pill tags, working filters).
+
+⸻
+
+10. Risks & Mitigations
+	•	False positives in heuristics:
+Mitigation: Show confidence reason in dev console; allow user feedback later.
+	•	Maintenance of allowlists:
+Mitigation: Store in data/ folder; lightweight to update and version.
+	•	Scaling:
+With ~10k accounts, classification should remain <500ms (simple set + regex).
+
+⸻
+
+✅ This PRD ensures your SWE can implement a solid, working classification system today, with guaranteed buckets and heuristic categories, all without private or engagement data.
+
+⸻
+
+Want me to also draft the starter allowlists (brands.json, sports.json, celebrities.json) so your SWE has something to test against immediately?

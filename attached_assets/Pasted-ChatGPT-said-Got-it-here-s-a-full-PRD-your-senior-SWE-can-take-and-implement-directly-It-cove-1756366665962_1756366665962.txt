@@ -1,0 +1,184 @@
+ChatGPT said:
+
+Got it ✅ — here’s a full PRD your senior SWE can take and implement directly. It covers the homepage improvements, FAQ additions, and small UX polish items we just discussed.
+
+📄 PRD – Homepage Improvements & FAQ Updates
+
+Product: Unfollowr
+Feature Set: Homepage Copy + Layout Enhancements, FAQ Additions, Trust Signals
+Owner: [You]
+Engineering: [Senior SWE]
+
+1. Objective
+
+Polish the Unfollowr homepage to:
+
+Reduce “AI-heavy” jargon while keeping the ✨ New: AI Features highlight.
+
+Make copy more benefit-driven and user-friendly.
+
+Add FAQs that address device support, login, speed, and privacy.
+
+Add subtle trust signals (privacy reassurance, AI credibility).
+
+Improve UX polish (hover states, transitions, CTA clarity).
+
+2. Scope
+In Scope
+
+Update homepage text (hero, features, FAQ).
+
+Add 3 new FAQ items (mobile support, login, processing speed, privacy).
+
+Enhance upload section with privacy reassurance badge.
+
+Update CTA buttons copy for clarity.
+
+Add hover states and subtle animations for FAQ and info cards.
+
+Add trust signals (“Built with Google AI” badge).
+
+Out of Scope
+
+Major layout redesign.
+
+New backend logic.
+
+New AI features (already covered in other PRDs).
+
+3. Content Updates
+Hero Section
+
+Keep “✨ New: AI Features” badge.
+
+Headline:
+Clean up your following in minutes. (unchanged)
+
+Subhead:
+“Now smarter than ever — clearer suggestions, easy filters, and a new assistant to help you tidy up faster. Upload your Instagram export to discover who doesn’t follow you back.”
+
+CTA Buttons:
+
+Primary: Analyze my Instagram
+
+Secondary: What’s new
+
+“Smarter Analysis” Section
+
+Heading:
+Change from Smarter analysis → Smarter insights
+
+Subhead:
+“Unfollowr helps you spot who matters, who’s inactive, and who’s just noise.”
+
+Feature Cards:
+
+Smart Groups
+Automatically sorts accounts into Celebrities, Friends, Spam, and more.
+
+Assistant
+Type or tap a question — like “Hide celebrities” or “Show real friends” — and the assistant filters instantly.
+
+Clear Suggestions
+See not just who doesn’t follow back, but why they’re suggested for removal.
+
+“How it works” Section
+
+Change steps:
+
+Upload — Add your Instagram files (JSON/HTML).
+
+We sort & analyze — Accounts grouped with extra insights.
+
+Decide easily — See clear suggestions and open profiles directly.
+
+Upload Section
+
+Add privacy reassurance badge under upload box:
+✅ Private: Files never leave your device without your consent.
+
+Add lock icon (Tailwind + Lucide Lock icon).
+
+FAQ Section
+
+Additions:
+
+Does this work on mobile and desktop?
+Yes. Unfollowr is fully responsive — you can upload and analyze your Instagram export on both phones and computers.
+
+Do I need to log in with Instagram?
+No. You only upload your exported files. We never ask for your password or login.
+
+How long does processing take?
+Usually under a minute, depending on the size of your export.
+
+Can I delete my data?
+All processing is local. Closing the tab or clearing your cache removes everything.
+
+4. Visual & Interaction Enhancements
+
+FAQ hover/expand state
+
+Add bg-slate-50 hover background.
+
+Smooth expand/collapse transition (Framer Motion).
+
+Info Cards (Privacy First / What’s next)
+
+Add subtle fade-in on scroll using <Reveal /> component.
+
+Trust Signal
+
+Add “Built with Google AI” badge under “Smarter insights” section.
+
+Small text: “Powered by Gemini AI for fast, reliable classification.”
+
+5. Technical Requirements
+
+Tech stack: Next.js + Tailwind + Framer Motion (already in use).
+
+Responsive design — ensure new FAQ items and lock badge scale on mobile.
+
+Use Lucide icons for lock and Google AI badge (or custom SVG if needed).
+
+Lighthouse performance, accessibility, and SEO scores must remain ≥ 90.
+
+6. Deliverables
+
+Updated homepage copy (hero, features, how it works, FAQ).
+
+New FAQ items added.
+
+Privacy reassurance badge in upload card.
+
+Hover/transition polish for FAQ + cards.
+
+Trust badge under “Smarter insights.”
+
+7. Acceptance Criteria
+
+✅ Hero section shows new subhead and updated CTAs.
+
+✅ Feature section heading updated to “Smarter insights” with revised card text.
+
+✅ Upload card has privacy reassurance badge with lock icon.
+
+✅ FAQ includes new questions/answers (mobile support, login, speed, privacy).
+
+✅ FAQ hover/expand has smooth animation.
+
+✅ “Built with Google AI” badge visible under features.
+
+✅ No regressions on mobile responsiveness.
+
+✅ Lighthouse Perf, Acc, SEO ≥ 90.
+
+8. Notes
+
+Keep tone approachable, benefit-driven, and trust-focused.
+
+AI should be visible but not overwhelming — “smarter” and “insights” are the framing words.
+
+Privacy reassurance is critical — must be visible in multiple spots.
+
+This PRD is ready for immediate implementation.

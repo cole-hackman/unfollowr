@@ -1,0 +1,105 @@
+PRD: AI Agent for Unfollowr (Gemini Integration)
+
+1. Overview
+
+The goal is to integrate an AI-powered assistant (powered by Google Gemini) into the Unfollowr dashboard. The assistant will:
+	•	Analyze a user’s Instagram follow data.
+	•	Classify relationships into categories (“Too Famous to Follow,” “Inner Circle,” “Fan Club”).
+	•	Provide insights and recommendations in a conversational interface.
+	•	Maintain transparency by showing a privacy notice when chat opens.
+
+⸻
+
+2. User Stories
+	•	As a user, I want to understand why certain people don’t follow me back, so I can decide if I should unfollow them.
+	•	As a user, I want clear categories like “Too Famous to Follow,” “Inner Circle,” and “Fan Club” so that I don’t have to manually analyze accounts.
+	•	As a user, I want a privacy disclaimer so I know my data is shared with Gemini for analysis.
+	•	As a user, I want to ask the AI questions like “Who in my Inner Circle unfollowed me recently?”
+
+⸻
+
+3. Privacy Notice
+
+When the chat window opens for the first time (and accessible in settings), show a banner:
+
+⚠️ Privacy Notice: By using this feature, your Instagram follow data will be securely passed to Google Gemini (AI by Google) for analysis. No private messages are shared. You can disable this feature anytime in settings.
+
+	•	Display on first chat open, then collapsible.
+	•	Link to Privacy Policy page.
+
+⸻
+
+4. Feature Logic
+
+a. Too Famous to Follow
+
+Criteria:
+	•	Accounts with >100k followers (configurable threshold).
+	•	Follower-to-following ratio extremely skewed (e.g., 100:1).
+	•	Verified accounts (if metadata available).
+	•	Gemini explains: “These users likely don’t follow many people back due to being public figures.”
+
+b. Inner Circle
+
+Criteria:
+	•	High mutual engagement (likes/comments history if available from Instagram API).
+	•	Followed for >6 months.
+	•	Belongs to user’s personal connections (detected via name matching in contacts or past interactions).
+	•	Gemini explains: “These are your close mutuals who usually engage with your content.”
+
+c. Fan Club
+
+Criteria:
+	•	Accounts that follow you, but you don’t follow back.
+	•	Engage frequently with your posts (likes, comments, story views).
+	•	Gemini explains: “These users are actively following your content even though you don’t follow them back.”
+
+⸻
+
+5. Gemini Agent Capabilities
+	•	Classification: Categorize accounts into “Too Famous,” “Inner Circle,” “Fan Club.”
+	•	Recommendations: Suggest actions like “You may want to follow back active fans” or “Consider unfollowing inactive/unengaged accounts.”
+	•	Conversational Queries: Example prompts:
+	•	“Who are my top Inner Circle members by engagement?”
+	•	“List accounts I follow that are too famous.”
+	•	“Any Fan Club members I should consider following back?”
+
+⸻
+
+6. UX Flow
+	1.	User opens dashboard → sees analytics (current view).
+	2.	Clicks chatbot icon → chat window slides in.
+	3.	Privacy notice displayed (first-time use).
+	4.	User asks questions → Gemini processes follow data and responds.
+	5.	Categorized lists update dynamically in UI tabs.
+
+⸻
+
+7. Technical Implementation
+	•	Frontend:
+	•	Add chatbot UI in bottom-right (already placeholder exists).
+	•	Show privacy banner on first use.
+	•	Display categorized tabs (Too Famous, Inner Circle, Fan Club).
+	•	Backend:
+	•	Securely fetch Instagram data (followers, following, engagement stats).
+	•	Pre-process with rules → pass structured data to Gemini.
+	•	Gemini returns enriched analysis (classifications + explanations).
+	•	Store categories in database for faster reloading.
+	•	Gemini Integration:
+	•	Use Gemini API (server-side) for analysis and natural language responses.
+	•	Send anonymized structured data (no private DMs).
+
+⸻
+
+8. Success Metrics
+	•	% of users who engage with the AI assistant.
+	•	Accuracy of categorizations (based on user feedback).
+	•	Retention: repeat analysis sessions per user.
+	•	Reduction in churn/uninstalls.
+
+⸻
+
+9. Risks & Mitigations
+	•	Privacy concerns: Mitigate with upfront notice + anonymization.
+	•	Misclassification: Allow user feedback (“Not accurate → Reclassify”).
+	•	Instagram API limits: Cache results to reduce API calls.

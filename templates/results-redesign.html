@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your Instagram non-followers analysis results - clean, organized list with AI-powered insights">
+    <title>Non-followers Results - Unfollowr</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='unfollowr-new.css') }}" rel="stylesheet">
+    <style>
+        /* Cluely-inspired Results Page Styles */
+        :root {
+            --results-bg: #fafbfc;
+            --card-bg: #ffffff;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b7280;
+            --border-light: #e5e7eb;
+            --primary-blue: #3b82f6;
+            --success-green: #10b981;
+            --warning-yellow: #f59e0b;
+        }
+
+        body.results-page {
+            background: var(--results-bg);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Header with Clean Navigation - Reduced padding */
+        .results-header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 0;
+        }
+
+        .results-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        /* Clean Metric Cards */
+        .metric-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--card-shadow);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+            border-color: var(--primary-blue);
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-icon.followers { background: rgba(59, 130, 246, 0.1); color: var(--primary-blue); }
+        .metric-icon.following { background: rgba(16, 185, 129, 0.1); color: var(--success-green); }
+        .metric-icon.non-followers { background: rgba(245, 158, 11, 0.1); color: var(--warning-yellow); }
+        .metric-icon.suggestions { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 4px;
+            display: inline-flex;
+        }
+
+        .view-toggle-btn {
+            background: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .view-toggle-btn.active {
+            background: var(--primary-blue);
+            color: white;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Action Bar */
+        .action-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn:hover {
+            background: var(--results-bg);
+            color: var(--text-primary);
+            border-color: var(--primary-blue);
+        }
+
+        .action-btn.primary {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        /* Alphabetical Filter Bar */
+        .alphabetical-filter-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .alphabet-scroll-container {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            scrollbar-width: thin;
+        }
+
+        .alphabet-scroll-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .alphabet-scroll-container::-webkit-scrollbar-track {
+            background: var(--results-bg);
+            border-radius: 2px;
+        }
+
+        .alphabet-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
+
+        .alphabet-btn {
+            min-width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .alphabet-btn:hover {
+            background: var(--results-bg);
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        .alphabet-btn.active {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Search and Filter Bar */
+        .search-filter-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            background: var(--results-bg);
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Advanced Filters Panel */
+        .filter-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .filter-panel-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .filter-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 400px;
+            max-width: 90vw;
+            background: var(--card-bg);
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            overflow-y: auto;
+        }
+
+        .filter-panel.active {
+            transform: translateX(0);
+        }
+
+        .filter-panel-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .filter-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-close-btn:hover {
+            background: var(--results-bg);
+            color: var(--text-primary);
+        }
+
+        .filter-panel-content {
+            padding: 1.5rem;
+        }
+
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .filter-option:last-child {
+            border-bottom: none;
+        }
+
+        .filter-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-light);
+            border-radius: 4px;
+            background: var(--card-bg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .filter-checkbox.checked {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .filter-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* AI Assistant Floating Chat */
+        .ai-chat-launcher {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .ai-chat-launcher:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.5);
+        }
+
+        .ai-chat-drawer {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 400px;
+            max-width: 90vw;
+            height: 600px;
+            max-height: 80vh;
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px 12px 0 0;
+            box-shadow: -4px -4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-chat-drawer.active {
+            transform: translateY(0);
+        }
+
+        .ai-chat-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-chat-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .ai-chat-content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .ai-greeting {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .ai-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .ai-suggestion-btn {
+            background: var(--results-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ai-suggestion-btn:hover {
+            background: var(--card-bg);
+            border-color: var(--primary-blue);
+        }
+
+        .ai-input-bar {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .ai-input {
+            flex: 1;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            background: var(--results-bg);
+        }
+
+        .ai-send-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ai-send-btn:hover {
+            background: #2563eb;
+        }
+
+        /* Applied Filters Summary */
+        .applied-filters-summary {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-blue);
+            font-size: 0.875rem;
+        }
+
+        /* Reveal animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* User Cards Grid */
+        .user-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .user-card-clean {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .user-card-clean:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+            border-color: var(--primary-blue);
+        }
+
+        .user-card-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .username-display {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .segment-chip {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-blue);
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            margin-left: auto;
+        }
+
+        .suggestion-score-clean {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .profile-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .profile-link:hover {
+            color: #2563eb;
+        }
+
+        /* Table View */
+        .results-table {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .results-table table {
+            margin: 0;
+        }
+
+        .results-table th {
+            background: var(--results-bg);
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .results-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+
+        .results-table tr:hover {
+            background: var(--results-bg);
+        }
+
+        /* AI Assistant Drawer */
+        .ai-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-light);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-drawer.open {
+            right: 0;
+        }
+
+        .ai-drawer-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .ai-drawer-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .ai-drawer-body {
+            padding: 1.5rem;
+            height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+
+        .ai-suggestions {
+            margin-bottom: 1.5rem;
+        }
+
+        .ai-suggestion-chip {
+            background: var(--results-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+            margin: 0.25rem;
+        }
+
+        .ai-suggestion-chip:hover {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .ai-input-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-light);
+        }
+
+        .ai-input {
+            width: 100%;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 3rem 0.75rem 1rem;
+            font-size: 0.875rem;
+            background: var(--results-bg);
+        }
+
+        .ai-send-btn {
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Filter Summary */
+        .filter-summary {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--primary-blue);
+        }
+
+        /* AI Floating Bubble */
+        .ai-bubble {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 56px;
+            height: 56px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .ai-bubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .ai-drawer {
+                width: 100vw;
+                right: -100vw;
+            }
+            
+            .user-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metric-card {
+                padding: 1rem;
+            }
+            
+            .ai-bubble {
+                bottom: 1rem;
+                right: 1rem;
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        /* Smooth Transitions */
+        .fade-transition {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+
+        .fade-transition.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Loading States */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* AI Chat Components */
+        .ai-chat-launcher {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-chat-launcher:hover {
+            transform: scale(1.1);
+            background: #2563eb;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .ai-chat-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-light);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-chat-drawer.active {
+            right: 0;
+        }
+
+        .ai-chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+        }
+
+        .ai-chat-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .ai-chat-content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .ai-greeting {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .ai-suggestions {
+            margin-bottom: 1.5rem;
+        }
+
+        .ai-suggestion-btn {
+            background: var(--results-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: block;
+            width: 100%;
+            margin-bottom: 0.5rem;
+            text-align: left;
+        }
+
+        .ai-suggestion-btn:hover {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .ai-messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .ai-message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+        }
+
+        .ai-message.user-message {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            margin-left: 2rem;
+        }
+
+        .ai-message.assistant-message {
+            background: var(--results-bg);
+            border: 1px solid var(--border-light);
+            margin-right: 2rem;
+        }
+
+        .ai-input-bar {
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-light);
+            position: relative;
+        }
+
+        .ai-input {
+            width: 100%;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 3rem 0.75rem 1rem;
+            font-size: 0.875rem;
+            background: var(--results-bg);
+        }
+
+        .ai-send-btn {
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-blue);
+            border: none;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-send-btn:hover {
+            background: #2563eb;
+        }
+
+        @media (max-width: 768px) {
+            .ai-chat-drawer {
+                width: 100vw;
+                right: -100vw;
+            }
+            
+            .ai-chat-launcher {
+                bottom: 1rem;
+                right: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="results-page">
+    <!-- Header -->
+    <header class="results-header">
+        <div class="container" style="max-width: 1200px;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="results-title">Non-followers Results</h1>
+                    <p class="results-subtitle">Accounts you follow who don't follow you back</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                    <!-- View Toggle -->
+                    <div class="view-toggle">
+                        <button class="view-toggle-btn active" id="gridViewBtn">
+                            <i class="fas fa-th-large me-1"></i>Grid
+                        </button>
+                        <button class="view-toggle-btn" id="tableViewBtn">
+                            <i class="fas fa-table me-1"></i>Table
+                        </button>
+                    </div>
+                    <a href="{{ url_for('index') }}" class="action-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Analyze again
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Metrics Section -->
+    <section class="py-2">
+        <div class="container" style="max-width: 1200px;">
+            <div class="row g-3">
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card fade-transition">
+                        <div class="metric-icon followers">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="metric-value">{{ "{:,}".format(total_followers) }}</h3>
+                        <p class="metric-label">Followers</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card fade-transition">
+                        <div class="metric-icon following">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <h3 class="metric-value">{{ "{:,}".format(total_following) }}</h3>
+                        <p class="metric-label">Following</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card fade-transition">
+                        <div class="metric-icon non-followers">
+                            <i class="fas fa-user-minus"></i>
+                        </div>
+                        <h3 class="metric-value">{{ "{:,}".format(total_non_followers) }}</h3>
+                        <p class="metric-label">Non-followers</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="metric-card fade-transition">
+                        <div class="metric-icon suggestions">
+                            {% if ai_enabled and suggested_unfollows %}
+                                <i class="fas fa-robot"></i>
+                            {% else %}
+                                <i class="fas fa-percentage"></i>
+                            {% endif %}
+                        </div>
+                        {% if ai_enabled and suggested_unfollows %}
+                            <h3 class="metric-value">{{ "{:,}".format(suggested_unfollows|length) }}</h3>
+                            <p class="metric-label">AI Suggestions</p>
+                        {% else %}
+                            <h3 class="metric-value">{{ "%.1f"|format((total_followers / total_following * 100) if total_following > 0 else 0) }}%</h3>
+                            <p class="metric-label">Follow ratio</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Applied Filters Summary (hidden by default) -->
+    <section class="container" style="max-width: 1200px;" id="filterSummary" style="display: none;">
+        <div class="filter-summary">
+            <i class="fas fa-filter me-2"></i>
+            <span id="filterSummaryText"></span>
+            <button class="btn btn-sm btn-link p-0 ms-2 text-decoration-none" id="clearFilters">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Results Section -->
+    <section class="py-1">
+        <div class="container" style="max-width: 1200px;">
+            <!-- Action Bar -->
+            <div class="action-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <h2 class="h5 mb-0" id="resultsCount">{{ "{:,}".format(total_non_followers) }} accounts</h2>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label small text-muted" for="selectAll">
+                            Select all
+                        </label>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="action-btn" onclick="copySelectedList()">
+                        <i class="fas fa-copy"></i>
+                        Copy selected
+                    </button>
+                    <button class="action-btn primary" onclick="exportUnfollowList()">
+                        <i class="fas fa-download"></i>
+                        Export list
+                    </button>
+                    <button class="action-btn primary" onclick="unfollowSelected()">
+                        <i class="fas fa-external-link-alt"></i>
+                        Open selected profiles
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alphabetical Filter Bar -->
+            <div class="alphabetical-filter-bar">
+                <div class="alphabet-scroll-container" id="alphabetFilter">
+                    <button class="alphabet-btn active" data-letter="all">All</button>
+                    <button class="alphabet-btn" data-letter="A">A</button>
+                    <button class="alphabet-btn" data-letter="B">B</button>
+                    <button class="alphabet-btn" data-letter="C">C</button>
+                    <button class="alphabet-btn" data-letter="D">D</button>
+                    <button class="alphabet-btn" data-letter="E">E</button>
+                    <button class="alphabet-btn" data-letter="F">F</button>
+                    <button class="alphabet-btn" data-letter="G">G</button>
+                    <button class="alphabet-btn" data-letter="H">H</button>
+                    <button class="alphabet-btn" data-letter="I">I</button>
+                    <button class="alphabet-btn" data-letter="J">J</button>
+                    <button class="alphabet-btn" data-letter="K">K</button>
+                    <button class="alphabet-btn" data-letter="L">L</button>
+                    <button class="alphabet-btn" data-letter="M">M</button>
+                    <button class="alphabet-btn" data-letter="N">N</button>
+                    <button class="alphabet-btn" data-letter="O">O</button>
+                    <button class="alphabet-btn" data-letter="P">P</button>
+                    <button class="alphabet-btn" data-letter="Q">Q</button>
+                    <button class="alphabet-btn" data-letter="R">R</button>
+                    <button class="alphabet-btn" data-letter="S">S</button>
+                    <button class="alphabet-btn" data-letter="T">T</button>
+                    <button class="alphabet-btn" data-letter="U">U</button>
+                    <button class="alphabet-btn" data-letter="V">V</button>
+                    <button class="alphabet-btn" data-letter="W">W</button>
+                    <button class="alphabet-btn" data-letter="X">X</button>
+                    <button class="alphabet-btn" data-letter="Y">Y</button>
+                    <button class="alphabet-btn" data-letter="Z">Z</button>
+                    <button class="alphabet-btn" data-letter="#">#</button>
+                </div>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="search-filter-bar">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search usernames...">
+                <button class="action-btn" id="filtersBtn">
+                    <i class="fas fa-filter"></i>
+                    Filters
+                </button>
+                {% if ai_enabled %}
+                <button class="action-btn" id="askAiBtn">
+                    <i class="fas fa-magic"></i>
+                    Ask AI Assistant
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state text-center" style="display: none;">
+                <div class="empty-state-icon">
+                    🎉
+                </div>
+                <h3 class="empty-state-title">Looks like no one fits that filter!</h3>
+                <p class="empty-state-text">Try adjusting your filters or clearing them to see more accounts.</p>
+                <button class="action-btn" onclick="clearAllFilters()">
+                    <i class="fas fa-refresh"></i>
+                    Reset filters
+                </button>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridView" class="fade-transition visible">
+                <div class="user-cards-grid" id="userCardsContainer">
+                    {% for username in non_followers %}
+                    <div class="user-card-clean card-micro-interaction" data-username="{{ username }}" {% if enriched_data.get(username) %}data-segment="{{ enriched_data[username].get('segment', 'unknown') }}" data-score="{{ enriched_data[username].get('suggestionScore', 0) }}"{% endif %}>
+                        <div class="user-card-header">
+                            <h4 class="username-display">{{ username }}</h4>
+                            {% if enriched_data.get(username) and enriched_data[username].get('segment') %}
+                                <span class="segment-chip segment-{{ enriched_data[username].get('segment', 'unknown') }}">{{ enriched_data[username].get('segment', 'unknown').title() }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if enriched_data.get(username) and enriched_data[username].get('suggestionScore') %}
+                        <div class="suggestion-score-clean">
+                            <i class="fas fa-star"></i>
+                            <span>{{ "%.0f"|format(enriched_data[username].get('suggestionScore', 0) * 100) }}% suggestion</span>
+                        </div>
+                        {% endif %}
+
+                        {% if enriched_data.get(username) and enriched_data[username].get('explanations') %}
+                        <p class="small text-muted mb-3">{{ enriched_data[username]['explanations'][0] if enriched_data[username]['explanations'] else '' }}</p>
+                        {% endif %}
+
+                        <div class="user-actions">
+                            <a href="https://instagram.com/{{ username }}" target="_blank" rel="noopener" class="profile-link quick-action">
+                                <i class="fas fa-external-link-alt"></i>
+                                Open profile
+                            </a>
+                            <div class="form-check">
+                                <input class="form-check-input user-checkbox" type="checkbox" value="{{ username }}" aria-label="Select {{ username }}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Table View -->
+            <div id="tableView" class="fade-transition" style="display: none;">
+                <div class="results-table">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">
+                                    <input class="form-check-input" type="checkbox" id="selectAllTable">
+                                </th>
+                                <th>Username</th>
+                                {% if ai_enabled %}
+                                <th>Segment</th>
+                                <th>Score</th>
+                                {% endif %}
+                                <th style="width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyContainer">
+                            {% for username in non_followers %}
+                            <tr data-username="{{ username }}" {% if enriched_data.get(username) %}data-segment="{{ enriched_data[username].get('segment', 'unknown') }}" data-score="{{ enriched_data[username].get('suggestionScore', 0) }}"{% endif %}>
+                                <td>
+                                    <input class="form-check-input user-checkbox-table" type="checkbox" value="{{ username }}">
+                                </td>
+                                <td>
+                                    <strong>{{ username }}</strong>
+                                    {% if enriched_data.get(username) and enriched_data[username].get('explanations') %}
+                                    <br><small class="text-muted">{{ enriched_data[username]['explanations'][0] if enriched_data[username]['explanations'] else '' }}</small>
+                                    {% endif %}
+                                </td>
+                                {% if ai_enabled %}
+                                <td>
+                                    {% if enriched_data.get(username) %}
+                                        <span class="segment-chip">{{ enriched_data[username].get('segment', 'unknown').title() }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if enriched_data.get(username) and enriched_data[username].get('suggestionScore') %}
+                                        <span class="text-muted">{{ "%.0f"|format(enriched_data[username].get('suggestionScore', 0) * 100) }}%</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td>
+                                    <a href="https://instagram.com/{{ username }}" target="_blank" rel="noopener" class="profile-link">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Filter Panel -->
+    <div class="filter-panel-overlay" id="filterPanelOverlay"></div>
+    <div class="filter-panel" id="filterPanel">
+        <div class="filter-panel-header">
+            <h3 class="filter-panel-title">Filters</h3>
+            <button class="filter-close-btn" id="closeFilterPanel">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="filter-panel-content">
+            {% if ai_enabled %}
+            <div class="filter-section">
+                <h4 class="filter-section-title">Segment</h4>
+                <div class="filter-option" data-filter="segment" data-value="celebrity">
+                    <div class="filter-checkbox" id="segmentCelebrity"></div>
+                    <label>Celebrity</label>
+                </div>
+                <div class="filter-option" data-filter="segment" data-value="friend">
+                    <div class="filter-checkbox" id="segmentFriend"></div>
+                    <label>Friend</label>
+                </div>
+                <div class="filter-option" data-filter="segment" data-value="spam">
+                    <div class="filter-checkbox" id="segmentSpam"></div>
+                    <label>Spam</label>
+                </div>
+                <div class="filter-option" data-filter="segment" data-value="brand">
+                    <div class="filter-checkbox" id="segmentBrand"></div>
+                    <label>Brand</label>
+                </div>
+                <div class="filter-option" data-filter="segment" data-value="unknown">
+                    <div class="filter-checkbox" id="segmentUnknown"></div>
+                    <label>Unknown</label>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h4 class="filter-section-title">Suggestion Score</h4>
+                <div class="filter-option" data-filter="score" data-value="high">
+                    <div class="filter-checkbox" id="scoreHigh"></div>
+                    <label>High (70%+)</label>
+                </div>
+                <div class="filter-option" data-filter="score" data-value="medium">
+                    <div class="filter-checkbox" id="scoreMedium"></div>
+                    <label>Medium (40-70%)</label>
+                </div>
+                <div class="filter-option" data-filter="score" data-value="low">
+                    <div class="filter-checkbox" id="scoreLow"></div>
+                    <label>Low (0-40%)</label>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="filter-section">
+                <div class="d-flex gap-2 mt-4">
+                    <button class="action-btn primary" id="applyFilters">Apply Filters</button>
+                    <button class="action-btn" id="resetFilters">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Batch Actions Bar -->
+    <div class="batch-actions-bar" id="batchActionsBar">
+        <div class="batch-actions-content">
+            <span class="batch-count" id="batchCount">0 selected</span>
+            <div class="batch-actions">
+                <button class="batch-btn" onclick="openSelectedProfiles()">
+                    <i class="fas fa-external-link-alt"></i>
+                    Open profiles (<span id="batchCountBtn">0</span>)
+                </button>
+                <button class="batch-btn" onclick="copySelectedUsernames()">
+                    <i class="fas fa-copy"></i>
+                    Copy usernames
+                </button>
+                <button class="batch-btn" onclick="exportSelection()">
+                    <i class="fas fa-download"></i>
+                    Export selection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Floating Chat -->
+    {% if ai_enabled %}
+    <button class="ai-chat-launcher" id="aiChatLauncher">
+        <i class="fas fa-comments"></i>
+    </button>
+
+    <div class="ai-chat-drawer" id="aiChatDrawer">
+        <div class="ai-chat-header">
+            <h3 class="ai-chat-title">AI Assistant</h3>
+            <button class="filter-close-btn" id="closeAiChat">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="ai-chat-content">
+            <div class="ai-greeting">
+                👋 Hi, I can help filter your results. Try asking:
+            </div>
+            <div class="ai-suggestions">
+                <button class="ai-suggestion-btn" data-query="Hide celebrities">Hide celebrities</button>
+                <button class="ai-suggestion-btn" data-query="Show spam accounts">Show spam accounts</button>
+                <button class="ai-suggestion-btn" data-query="Show real friends who don't follow back">Show real friends who don't follow back</button>
+                <button class="ai-suggestion-btn" data-query="Hide accounts with low suggestion scores">Hide accounts with low suggestion scores</button>
+            </div>
+            <div id="aiMessages" class="ai-messages">
+                <!-- AI conversation will appear here -->
+            </div>
+        </div>
+        <div class="ai-input-bar">
+            <input type="text" class="ai-input" id="aiInput" placeholder="Ask me to filter accounts...">
+            <button class="ai-send-btn" id="aiSendBtn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Enhanced JavaScript -->
+    <script>
+        // Global state
+        let currentView = 'grid';
+        let filteredAccounts = [];
+        let allAccounts = {{ non_followers|tojson }};
+        let enrichedData = {{ enriched_data|tojson if enriched_data else {} }};
+        let activeFilters = {};
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEventListeners();
+            initializeAnimations();
+            filteredAccounts = [...allAccounts];
+            updateResultsCount();
+        });
+
+        function initializeEventListeners() {
+            // View toggle
+            document.getElementById('gridViewBtn')?.addEventListener('click', () => switchView('grid'));
+            document.getElementById('tableViewBtn')?.addEventListener('click', () => switchView('table'));
+            
+            // Alphabetical filter
+            document.querySelectorAll('.alphabet-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleAlphabetFilter(btn.dataset.letter));
+            });
+            
+            // Search
+            document.getElementById('searchInput')?.addEventListener('input', handleSearch);
+            
+            // Advanced filters
+            document.getElementById('filtersBtn')?.addEventListener('click', openFilterPanel);
+            document.getElementById('closeFilterPanel')?.addEventListener('click', closeFilterPanel);
+            
+            // AI Chat functionality
+            document.getElementById('aiChatLauncher')?.addEventListener('click', openAiChat);
+            document.getElementById('closeAiChat')?.addEventListener('click', closeAiChat);
+            
+            // AI suggestion buttons
+            document.querySelectorAll('.ai-suggestion-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleAiSuggestion(btn.dataset.query));
+            });
+            
+            // AI send button
+            document.getElementById('aiSendBtn')?.addEventListener('click', sendAiQuery);
+            document.getElementById('aiInput')?.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendAiQuery();
+                }
+            });
+            document.getElementById('filterPanelOverlay')?.addEventListener('click', closeFilterPanel);
+            document.getElementById('applyFilters')?.addEventListener('click', applyAdvancedFilters);
+            document.getElementById('resetFilters')?.addEventListener('click', resetAdvancedFilters);
+            
+            // Filter checkboxes
+            document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('click', () => toggleFilterCheckbox(checkbox));
+            });
+            
+            // Select all
+            document.getElementById('selectAll')?.addEventListener('change', handleSelectAll);
+            document.getElementById('selectAllTable')?.addEventListener('change', handleSelectAll);
+            
+
+            
+            // Clear filters
+            document.getElementById('clearFilters')?.addEventListener('click', clearAllFilters);
+        }
+
+        // Alphabetical Filter Functions
+        function handleAlphabetFilter(letter) {
+            // Update active state
+            document.querySelectorAll('.alphabet-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-letter="${letter}"]`).classList.add('active');
+            
+            // Apply filter
+            if (letter === 'all') {
+                activeFilters.alphabet = null;
+            } else if (letter === '#') {
+                activeFilters.alphabet = 'number';
+            } else {
+                activeFilters.alphabet = letter.toLowerCase();
+            }
+            
+            applyAllFilters();
+        }
+
+        // Advanced Filter Functions
+        function openFilterPanel() {
+            document.getElementById('filterPanel').classList.add('active');
+            document.getElementById('filterPanelOverlay').classList.add('active');
+        }
+
+        function closeFilterPanel() {
+            document.getElementById('filterPanel').classList.remove('active');
+            document.getElementById('filterPanelOverlay').classList.remove('active');
+        }
+
+        function toggleFilterCheckbox(checkbox) {
+            checkbox.classList.toggle('checked');
+        }
+
+        function applyAdvancedFilters() {
+            // Collect checked filters
+            const segmentFilters = [];
+            const scoreFilters = [];
+            
+            document.querySelectorAll('[data-filter="segment"] .filter-checkbox.checked').forEach(cb => {
+                segmentFilters.push(cb.parentElement.dataset.value);
+            });
+            
+            document.querySelectorAll('[data-filter="score"] .filter-checkbox.checked').forEach(cb => {
+                scoreFilters.push(cb.parentElement.dataset.value);
+            });
+            
+            activeFilters.segments = segmentFilters.length > 0 ? segmentFilters : null;
+            activeFilters.scores = scoreFilters.length > 0 ? scoreFilters : null;
+            
+            applyAllFilters();
+            closeFilterPanel();
+            updateFilterSummary();
+        }
+
+        function resetAdvancedFilters() {
+            document.querySelectorAll('.filter-checkbox').forEach(cb => cb.classList.remove('checked'));
+            activeFilters.segments = null;
+            activeFilters.scores = null;
+            applyAllFilters();
+            updateFilterSummary();
+        }
+
+        // AI Assistant Functions
+        function openAiChat() {
+            document.getElementById('aiChatDrawer').classList.add('active');
+        }
+
+        function closeAiChat() {
+            document.getElementById('aiChatDrawer').classList.remove('active');
+        }
+
+        async function sendAiQuery() {
+            const input = document.getElementById('aiInput');
+            const query = input.value.trim();
+            if (!query) return;
+            
+            // Clear input
+            input.value = '';
+            
+            // Add user message to chat
+            addMessageToChat('user', query);
+            
+            try {
+                // Send to AI endpoint
+                const response = await fetch('/api/ai/translate-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Apply AI filters
+                    if (result.filter) {
+                        applyAiFilter(result.filter);
+                        addMessageToChat('ai', `Applied filter: ${query}`);
+                    } else {
+                        addMessageToChat('ai', result.response || 'Filter applied successfully');
+                    }
+                } else {
+                    addMessageToChat('ai', 'Sorry, I couldn\'t understand that filter request. Try asking something like "Hide celebrities" or "Show spam accounts".');
+                }
+            } catch (error) {
+                console.error('AI query error:', error);
+                addMessageToChat('ai', 'Sorry, there was an error processing your request.');
+            }
+        }
+
+        function addMessageToChat(sender, message) {
+            const messagesContainer = document.getElementById('aiMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ai-message-${sender}`;
+            messageDiv.innerHTML = `
+                <div class="ai-message-content">
+                    ${sender === 'ai' ? '<i class="fas fa-robot me-2"></i>' : '<i class="fas fa-user me-2"></i>'}
+                    ${message}
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function applyAiFilter(filter) {
+            // Apply AI-generated filter
+            if (filter.hideSegments) {
+                activeFilters.hideSegments = filter.hideSegments;
+            }
+            if (filter.showSegments) {
+                activeFilters.showSegments = filter.showSegments;
+            }
+            if (filter.minScore !== undefined) {
+                activeFilters.minScore = filter.minScore;
+            }
+            if (filter.maxScore !== undefined) {
+                activeFilters.maxScore = filter.maxScore;
+            }
+            
+            applyAllFilters();
+            updateFilterSummary();
+        }
+
+        // Core Filter Logic
+        function applyAllFilters() {
+            let filtered = [...allAccounts];
+            
+            // Apply search filter
+            if (activeFilters.search) {
+                filtered = filtered.filter(username => 
+                    username.toLowerCase().includes(activeFilters.search.toLowerCase())
+                );
+            }
+            
+            // Apply alphabetical filter
+            if (activeFilters.alphabet) {
+                if (activeFilters.alphabet === 'number') {
+                    filtered = filtered.filter(username => /^[0-9]/.test(username));
+                } else {
+                    filtered = filtered.filter(username => 
+                        username.toLowerCase().startsWith(activeFilters.alphabet)
+                    );
+                }
+            }
+            
+            // Apply segment filters
+            if (activeFilters.segments || activeFilters.hideSegments || activeFilters.showSegments) {
+                filtered = filtered.filter(username => {
+                    const userSegment = enrichedData[username]?.segment || 'unknown';
+                    
+                    if (activeFilters.hideSegments && activeFilters.hideSegments.includes(userSegment)) {
+                        return false;
+                    }
+                    if (activeFilters.showSegments && !activeFilters.showSegments.includes(userSegment)) {
+                        return false;
+                    }
+                    if (activeFilters.segments && !activeFilters.segments.includes(userSegment)) {
+                        return false;
+                    }
+                    return true;
+                });
+            }
+            
+            // Apply score filters
+            if (activeFilters.scores || activeFilters.minScore !== undefined || activeFilters.maxScore !== undefined) {
+                filtered = filtered.filter(username => {
+                    const userScore = enrichedData[username]?.suggestionScore || 0;
+                    
+                    if (activeFilters.minScore !== undefined && userScore < activeFilters.minScore) {
+                        return false;
+                    }
+                    if (activeFilters.maxScore !== undefined && userScore > activeFilters.maxScore) {
+                        return false;
+                    }
+                    
+                    if (activeFilters.scores) {
+                        let matchesScore = false;
+                        for (const scoreRange of activeFilters.scores) {
+                            if (scoreRange === 'high' && userScore >= 0.7) matchesScore = true;
+                            if (scoreRange === 'medium' && userScore >= 0.4 && userScore < 0.7) matchesScore = true;
+                            if (scoreRange === 'low' && userScore < 0.4) matchesScore = true;
+                        }
+                        return matchesScore;
+                    }
+                    
+                    return true;
+                });
+            }
+            
+            filteredAccounts = filtered;
+            updateDisplay();
+            updateResultsCount();
+        }
+
+        function updateDisplay() {
+            const gridContainer = document.getElementById('userCardsContainer');
+            const tableContainer = document.getElementById('tableBodyContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Show/hide empty state
+            if (filteredAccounts.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('gridView').style.display = 'none';
+                document.getElementById('tableView').style.display = 'none';
+                return;
+            } else {
+                emptyState.style.display = 'none';
+                if (currentView === 'grid') {
+                    document.getElementById('gridView').style.display = 'block';
+                    document.getElementById('tableView').style.display = 'none';
+                } else {
+                    document.getElementById('gridView').style.display = 'none';
+                    document.getElementById('tableView').style.display = 'block';
+                }
+            }
+            
+            // Update grid view
+            if (gridContainer) {
+                gridContainer.innerHTML = '';
+                filteredAccounts.forEach(username => {
+                    const originalCard = document.querySelector(`[data-username="${username}"]`);
+                    if (originalCard) {
+                        const clone = originalCard.cloneNode(true);
+                        clone.classList.add('fade-in');
+                        gridContainer.appendChild(clone);
+                    }
+                });
+            }
+            
+            // Update table view
+            if (tableContainer) {
+                tableContainer.innerHTML = '';
+                filteredAccounts.forEach(username => {
+                    const originalRow = document.querySelector(`tr[data-username="${username}"]`);
+                    if (originalRow) {
+                        const clone = originalRow.cloneNode(true);
+                        clone.classList.add('fade-in');
+                        tableContainer.appendChild(clone);
+                    }
+                });
+            }
+            
+            // Update batch actions visibility
+            updateBatchActions();
+        }
+
+        function updateResultsCount() {
+            const countElement = document.getElementById('resultsCount');
+            if (countElement) {
+                countElement.textContent = `${filteredAccounts.length.toLocaleString()} accounts`;
+            }
+        }
+
+        function updateFilterSummary() {
+            const summaryElement = document.getElementById('filterSummary');
+            const summaryText = document.getElementById('filterSummaryText');
+            
+            const activeFilterCount = Object.values(activeFilters).filter(f => f !== null && f !== undefined).length;
+            
+            if (activeFilterCount === 0) {
+                summaryElement.style.display = 'none';
+                return;
+            }
+            
+            let summary = 'Applied filters: ';
+            const parts = [];
+            
+            if (activeFilters.alphabet) {
+                parts.push(`letter ${activeFilters.alphabet.toUpperCase()}`);
+            }
+            if (activeFilters.segments) {
+                parts.push(`segments: ${activeFilters.segments.join(', ')}`);
+            }
+            if (activeFilters.hideSegments) {
+                parts.push(`hiding: ${activeFilters.hideSegments.join(', ')}`);
+            }
+            if (activeFilters.showSegments) {
+                parts.push(`showing: ${activeFilters.showSegments.join(', ')}`);
+            }
+            
+            summaryText.textContent = summary + parts.join(', ') + `. Showing ${filteredAccounts.length} accounts.`;
+            summaryElement.style.display = 'block';
+        }
+
+        function clearAllFilters() {
+            activeFilters = {};
+            
+            // Reset UI
+            document.querySelectorAll('.alphabet-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-letter="all"]').classList.add('active');
+            document.querySelectorAll('.filter-checkbox').forEach(cb => cb.classList.remove('checked'));
+            document.getElementById('searchInput').value = '';
+            
+            applyAllFilters();
+            updateFilterSummary();
+        }
+
+        // View Switch Function
+        function switchView(view) {
+            currentView = view;
+            
+            // Update button states
+            document.querySelectorAll('.view-toggle-btn').forEach(btn => btn.classList.remove('active'));
+            if (view === 'grid') {
+                document.getElementById('gridViewBtn').classList.add('active');
+                document.getElementById('gridView').style.display = 'block';
+                document.getElementById('tableView').style.display = 'none';
+            } else {
+                document.getElementById('tableViewBtn').classList.add('active');
+                document.getElementById('gridView').style.display = 'none';
+                document.getElementById('tableView').style.display = 'block';
+            }
+            
+            // Trigger fade animation
+            const targetView = document.getElementById(view + 'View');
+            targetView.style.opacity = '0';
+            setTimeout(() => {
+                targetView.style.opacity = '1';
+            }, 100);
+        }
+
+        // Search Function
+        function handleSearch(event) {
+            activeFilters.search = event.target.value.trim() || null;
+            applyAllFilters();
+        }
+
+        function initializeAnimations() {
+            // Animate metric cards on load
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.fade-transition').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function handleSelectAll(e) {
+            const checkboxes = currentView === 'grid' 
+                ? document.querySelectorAll('.user-checkbox:not([style*="none"])')
+                : document.querySelectorAll('.user-checkbox-table:not([style*="none"])');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+            
+            updateBatchActions();
+        }
+
+        // Batch Actions Functions
+        function updateBatchActions() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            const count = selectedCheckboxes.length;
+            const batchBar = document.getElementById('batchActionsBar');
+            const batchCount = document.getElementById('batchCount');
+            const batchCountBtn = document.getElementById('batchCountBtn');
+            
+            if (count > 0) {
+                batchBar.classList.add('visible');
+                batchCount.textContent = `${count} selected`;
+                batchCountBtn.textContent = count;
+            } else {
+                batchBar.classList.remove('visible');
+            }
+        }
+
+        function openSelectedProfiles() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            selectedCheckboxes.forEach(checkbox => {
+                const username = checkbox.value;
+                window.open(`https://instagram.com/${username}`, '_blank');
+            });
+        }
+
+        function copySelectedUsernames() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            const usernames = Array.from(selectedCheckboxes).map(cb => cb.value);
+            navigator.clipboard.writeText(usernames.join('\n')).then(() => {
+                // Show success feedback
+                const batchCount = document.getElementById('batchCount');
+                const originalText = batchCount.textContent;
+                batchCount.textContent = 'Copied to clipboard!';
+                setTimeout(() => {
+                    batchCount.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function exportSelection() {
+            const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked, .user-checkbox-table:checked');
+            const usernames = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Username\n" + usernames.join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "selected_non_followers.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Add event listeners for checkbox changes
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('user-checkbox') || e.target.classList.contains('user-checkbox-table')) {
+                updateBatchActions();
+            }
+        });
+
+        function updateDisplay() {
+            updateResultsCount();
+            updateGridView();
+            updateTableView();
+        }
+
+        function updateResultsCount() {
+            const count = filteredAccounts.length;
+            document.getElementById('resultsCount').textContent = `${count.toLocaleString()} accounts`;
+        }
+
+        function updateGridView() {
+            const container = document.getElementById('userCardsContainer');
+            const cards = container.querySelectorAll('.user-card-clean');
+            
+            cards.forEach(card => {
+                const username = card.dataset.username;
+                card.style.display = filteredAccounts.includes(username) ? 'block' : 'none';
+            });
+        }
+
+        function updateTableView() {
+            const tbody = document.getElementById('tableBodyContainer');
+            const rows = tbody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const username = row.dataset.username;
+                row.style.display = filteredAccounts.includes(username) ? '' : 'none';
+            });
+        }
+
+        function showFilterSummary(query) {
+            const summary = document.getElementById('filterSummary');
+            const text = document.getElementById('filterSummaryText');
+            
+            text.textContent = `Applied: "${query}" - hiding ${allAccounts.length - filteredAccounts.length} accounts. Showing ${filteredAccounts.length} accounts.`;
+            summary.style.display = 'block';
+        }
+
+        function clearAllFilters() {
+            activeFilters = {};
+            document.getElementById('searchInput').value = '';
+            filteredAccounts = [...allAccounts];
+            updateDisplay();
+            document.getElementById('filterSummary').style.display = 'none';
+            
+            // Clear AI messages
+            document.getElementById('aiMessages').innerHTML = '';
+        }
+
+        // Export and copy functions
+        function exportUnfollowList() {
+            const selectedUsers = getSelectedUsers();
+            const usersToExport = selectedUsers.length > 0 ? selectedUsers : filteredAccounts;
+            
+            const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(usersToExport.join('\n'));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "non_followers.txt");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function copySelectedList() {
+            const selectedUsers = getSelectedUsers();
+            const usersToCopy = selectedUsers.length > 0 ? selectedUsers : filteredAccounts;
+            
+            navigator.clipboard.writeText(usersToCopy.join('\n')).then(() => {
+                // Show brief success message
+                const btn = event.target.closest('.action-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        function unfollowSelected() {
+            const selectedUsers = getSelectedUsers();
+            const usersToUnfollow = selectedUsers.length > 0 ? selectedUsers : filteredAccounts;
+            
+            // Open Instagram profiles in new tabs (limit to first 10 to avoid popup blockers)
+            const limit = Math.min(usersToUnfollow.length, 10);
+            
+            usersToUnfollow.slice(0, limit).forEach(username => {
+                window.open(`https://instagram.com/${username}`, '_blank');
+            });
+            
+            if (usersToUnfollow.length > 10) {
+                alert(`Opened first ${limit} profiles. Select fewer accounts to open all at once.`);
+            }
+        }
+
+        // AI Chat functionality
+        {% if ai_enabled %}
+        async function handleAIQuery(query) {
+            const messagesContainer = document.getElementById('aiMessages');
+            const input = document.getElementById('aiChatInput');
+            
+            // Add user message
+            messagesContainer.innerHTML += `
+                <div class="ai-message user-message">
+                    <strong>You:</strong> ${query}
+                </div>
+            `;
+            
+            // Add loading message
+            messagesContainer.innerHTML += `
+                <div class="ai-message assistant-message">
+                    <strong>Assistant:</strong> <i class="fas fa-spinner fa-spin"></i> Analyzing...
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/ai/translate-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    messagesContainer.lastElementChild.innerHTML = `
+                        <strong>Assistant:</strong> ${result.error}. Try asking: "Hide celebrities" or "Show spam accounts."
+                    `;
+                } else {
+                    // Apply filters
+                    activeFilters = result;
+                    applyFilters();
+                    updateDisplay();
+                    
+                    messagesContainer.lastElementChild.innerHTML = `
+                        <strong>Assistant:</strong> Applied filters! Showing ${filteredAccounts.length} accounts based on your request.
+                    `;
+                }
+                
+                input.value = '';
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+            } catch (error) {
+                console.error('AI query failed:', error);
+                messagesContainer.lastElementChild.innerHTML = `
+                    <strong>Assistant:</strong> Something went wrong. Please try again.
+                `;
+            }
+        }
+
+        function toggleAIChat() {
+            const drawer = document.getElementById('aiChatDrawer');
+            drawer.classList.toggle('open');
+        }
+
+        // Handle AI chat input
+        document.addEventListener('keypress', function(e) {
+            if (e.target.id === 'aiChatInput' && e.key === 'Enter') {
+                const query = e.target.value.trim();
+                if (query) {
+                    handleAIQuery(query);
+                }
+            }
+        });
+        {% endif %}
+            for (let i = 0; i < limit; i++) {
+                window.open(`https://instagram.com/${usersToUnfollow[i]}`, '_blank');
+            }
+            
+            if (usersToUnfollow.length > 10) {
+                alert(`Opened first 10 profiles. ${usersToUnfollow.length - 10} more accounts selected.`);
+            }
+        }
+
+        function getSelectedUsers() {
+            const checkboxes = currentView === 'grid' 
+                ? document.querySelectorAll('.user-checkbox:checked')
+                : document.querySelectorAll('.user-checkbox-table:checked');
+            
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Unfollowr - Find, Filter, and Unfollow with Ease. Discover which accounts don't follow you back across Instagram. Twitter & TikTok support coming soon.">
+    <title>Unfollowr - Find, Filter, and Unfollow with Ease</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <style>
+        /* FAQ Section Styling Fixes */
+        .accordion-item {
+            background-color: transparent !important;
+            border: 1px solid var(--bs-border-color) !important;
+        }
+        
+        .accordion-button {
+            background-color: transparent !important;
+            color: var(--bs-body-color) !important;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background-color: transparent !important;
+            color: var(--bs-body-color) !important;
+            box-shadow: none !important;
+        }
+        
+        .accordion-body {
+            background-color: transparent !important;
+            color: var(--bs-body-color) !important;
+        }
+        
+        .accordion-body h6 {
+            color: var(--bs-body-color) !important;
+        }
+        
+        .accordion-body li, .accordion-body ol, .accordion-body ul {
+            color: var(--bs-body-color) !important;
+        }
+        
+        .accordion-body strong {
+            color: var(--bs-body-color) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-3">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <div class="mb-4">
+                        <img src="{{ url_for('static', filename='web-icon.png') }}" alt="Unfollowr Icon" style="height: 120px; width: auto; filter: drop-shadow(0 0 8px rgba(135, 206, 235, 0.6)) drop-shadow(0 0 16px rgba(70, 130, 180, 0.4));" class="mb-3">
+                    </div>
+                    <h1 class="display-4 mb-3">Unfollowr</h1>
+                    <p class="lead mb-2">
+                        <strong>Find, Filter, and Unfollow with Ease</strong>
+                    </p>
+                    <p class="text-muted mb-4">
+                        The simplest way to discover which accounts don't follow you back across Instagram. 
+                        Upload your export files and get an alphabetical list of one-way follows with direct profile links.
+                    </p>
+                    
+
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Upload Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>
+                            Upload Your Instagram Export Files
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="{{ url_for('compare') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label for="followers_file" class="form-label">
+                                        <i class="fas fa-users me-2"></i>
+                                        Followers File
+                                    </label>
+                                    <input type="file" class="form-control" id="followers_file" name="followers_file" accept=".json,.html" required>
+                                    <div class="form-text">Upload your followers export file</div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label for="following_file" class="form-label">
+                                        <i class="fas fa-user-plus me-2"></i>
+                                        Following File
+                                    </label>
+                                    <input type="file" class="form-control" id="following_file" name="following_file" accept=".json,.html" required>
+                                    <div class="form-text">Upload your following export file</div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mt-3">
+                                <button type="submit" class="btn btn-info btn-lg" id="analyzeBtn">
+                                    <i class="fas fa-magic me-2"></i>
+                                    Analyze Non-Followers
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-question-circle me-2"></i>
+                            How to Export Your Instagram Data
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li class="mb-2">
+                                <strong>Go to Instagram Settings:</strong> Open Instagram → Profile → Menu (☰) → Settings and Privacy
+                            </li>
+                            <li class="mb-2">
+                                <strong>Request Data Export:</strong> Go to "Accounts Center" → "Your information and permissions" → "Download your information"
+                            </li>
+                            <li class="mb-2">
+                                <strong>Select Data:</strong> Choose "Select types of information" and check "Followers and following"
+                            </li>
+                            <li class="mb-2">
+                                <strong>Choose Format:</strong> Select either "JSON" or "HTML" format and "Download to device"
+                            </li>
+                            <li class="mb-2">
+                                <strong>Wait for Email:</strong> Instagram will email you when your data is ready (usually within 1 hour)
+                            </li>
+                            <li class="mb-0">
+                                <strong>Download & Upload:</strong> Download the ZIP file, extract it, and upload the files here
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+
+
+                <!-- FAQ Section -->
+                <div class="mt-5">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">
+                                <i class="fas fa-question-circle me-2"></i>
+                                Frequently Asked Questions
+                            </h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="accordion" id="faqAccordion">
+                                
+                                <!-- FAQ 1 -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                            <i class="fas fa-shield-alt me-2 text-success"></i>
+                                            Is my data safe?
+                                        </button>
+                                    </h2>
+                                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            <ul class="list-unstyled mb-3">
+                                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Processing happens in your browser</li>
+                                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>No data stored on our servers</li>
+                                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Files deleted after processing</li>
+                                                <li class="mb-2"><i class="fas fa-check text-success me-2"></i>100% private and secure</li>
+                                            </ul>
+                                            <div class="alert alert-success mb-0">
+                                                <i class="fas fa-lock me-2"></i>
+                                                <strong>Your Instagram data never leaves your device.</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ 2 -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                            <i class="fas fa-external-link-alt me-2 text-warning"></i>
+                                            How do I unfollow people?
+                                        </button>
+                                    </h2>
+                                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            <ol class="mb-3">
+                                                <li>Select users with checkboxes (small batches recommended)</li>
+                                                <li>Click "Unfollow Selected" button</li>
+                                                <li>Instagram profiles open in new tabs</li>
+                                                <li>Click "Following" button on each profile</li>
+                                                <li>Confirm unfollow action</li>
+                                            </ol>
+                                            <div class="alert alert-warning mb-0">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                <strong>Instagram limits: ~200 unfollows per day. Use small batches to avoid issues.</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ 3 -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                            <i class="fas fa-download me-2 text-info"></i>
+                                            How do I get my Instagram data?
+                                        </button>
+                                    </h2>
+                                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            <h6 class="text-info mb-2">Step-by-Step Guide:</h6>
+                                            <ol class="mb-3">
+                                                <li>Go to Instagram → Profile → Menu (☰) → Settings and Privacy</li>
+                                                <li>Navigate to "Accounts Center" → "Your information and permissions"</li>
+                                                <li>Select "Download your information"</li>
+                                                <li>Choose "Select types of information" and check "Followers and following"</li>
+                                                <li>Select format (JSON or HTML) and "Download to device"</li>
+                                            </ol>
+                                            <div class="alert alert-success mb-0">
+                                                <i class="fas fa-clock me-2"></i>
+                                                <strong>Wait for Instagram's email notification (usually under one hour)</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ 4 -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                            <i class="fas fa-bug me-2 text-danger"></i>
+                                            File upload not working?
+                                        </button>
+                                    </h2>
+                                    <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            <h6 class="text-warning mb-2">Common Issues:</h6>
+                                            <ul class="mb-3">
+                                                <li>Make sure files are named correctly: <code>followers_1.json/html</code>, <code>following.json/html</code></li>
+                                                <li>Check file size is under 50MB</li>
+                                                <li>Upload both followers AND following files</li>
+                                                <li>Try re-downloading if files seem corrupted</li>
+                                            </ul>
+                                            <div class="alert alert-info mb-0">
+                                                <i class="fas fa-file-alt me-2"></i>
+                                                <strong>Upload your Instagram data export files</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ 5 -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                            <i class="fas fa-search me-2 text-success"></i>
+                                            How do I use the results?
+                                        </button>
+                                    </h2>
+                                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            <h6 class="text-success mb-2">Available Features:</h6>
+                                            <ul class="mb-3">
+                                                <li><strong>Search:</strong> Find specific usernames quickly</li>
+                                                <li><strong>Alphabetical Groups:</strong> Jump to A-Z sections</li>
+                                                <li><strong>Batch Selection:</strong> Select multiple users with checkboxes</li>
+                                                <li><strong>Direct Links:</strong> Click usernames to visit profiles</li>
+                                                <li><strong>Export Options:</strong> Copy list or download CSV</li>
+                                            </ul>
+                                            <div class="alert alert-warning mb-0">
+                                                <i class="fas fa-lightbulb me-2"></i>
+                                                <strong>Tip: Use small batches when unfollowing to avoid Instagram limits</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ 6 -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                            <i class="fas fa-clock me-2 text-warning"></i>
+                                            How long does processing take?
+                                        </button>
+                                    </h2>
+                                    <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            <h6 class="text-warning mb-2">Processing Speed:</h6>
+                                            <ul class="mb-3">
+                                                <li><strong>Small accounts (under 1,000):</strong> Instant results</li>
+                                                <li><strong>Medium accounts (1,000-10,000):</strong> 1-3 seconds</li>
+                                                <li><strong>Large accounts (10,000+):</strong> 3-10 seconds</li>
+                                                <li><strong>Very large files:</strong> Up to 30 seconds for massive accounts</li>
+                                            </ul>
+                                            <div class="alert alert-info mb-0">
+                                                <i class="fas fa-bolt me-2"></i>
+                                                <strong>All processing happens in your browser for maximum speed and privacy</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ 7 -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                            <i class="fas fa-rocket me-2 text-primary"></i>
+                                            What platforms are supported?
+                                        </button>
+                                    </h2>
+                                    <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            <h6 class="text-primary mb-2">Platform Roadmap:</h6>
+                                            <ul class="mb-3">
+                                                <li><i class="fas fa-check text-success me-2"></i><strong>Instagram:</strong> Fully supported (JSON & HTML)</li>
+                                                <li><i class="fas fa-clock text-warning me-2"></i><strong>Twitter/X:</strong> Coming soon</li>
+                                                <li><i class="fas fa-clock text-warning me-2"></i><strong>TikTok:</strong> In development</li>
+                                                <li><i class="fas fa-clock text-warning me-2"></i><strong>LinkedIn:</strong> Under consideration</li>
+                                            </ul>
+                                            <div class="alert alert-primary mb-0">
+                                                <i class="fas fa-star me-2"></i>
+                                                <strong>Instagram is the current focus, but we aim to launch support for more platforms</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tooltips removed for cleaner interface -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form submission handler with loading state
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const followersFile = document.getElementById('followers_file').files[0];
+            const followingFile = document.getElementById('following_file').files[0];
+            
+            // Basic client-side validation
+            if (!followersFile || !followingFile) {
+                e.preventDefault();
+                alert('Please select both files before submitting.');
+                return;
+            }
+            
+            // Check file sizes (50MB max)
+            const maxSize = 50 * 1024 * 1024;
+            if (followersFile.size > maxSize || followingFile.size > maxSize) {
+                e.preventDefault();
+                alert('File size too large. Maximum size is 50MB per file.');
+                return;
+            }
+            
+            // Show loading state
+            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            analyzeBtn.disabled = true;
+        });
+        
+        // File input change handlers to show selected files
+        function handleFileChange(input) {
+            const fileName = input.files[0] ? input.files[0].name : '';
+            const label = input.nextElementSibling;
+            if (label && label.classList.contains('form-text')) {
+                if (fileName) {
+                    label.textContent = `Selected: ${fileName}`;
+                    label.classList.add('text-success');
+                } else {
+                    label.textContent = input.id === 'followers_file' ? 
+                        'Upload your followers export file' : 
+                        'Upload your following export file';
+                    label.classList.remove('text-success');
+                }
+            }
+        }
+        
+        document.getElementById('followers_file').addEventListener('change', function() {
+            handleFileChange(this);
+        });
+        
+        document.getElementById('following_file').addEventListener('change', function() {
+            handleFileChange(this);
+        });
+
+        // Onboarding system removed for cleaner interface
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+📄 PRD – Results Page Visual & UX Refinement
+
+Product: Unfollowr
+Feature Set: Results Page Redesign
+Owner: [You]
+Engineering: [Senior SWE]
+Date: [Today’s Date]
+
+⸻
+
+1. Objective
+
+Align the Non-followers Results page design with the homepage’s calm, modern, and minimal aesthetic. Current layout feels too “utility-like” with heavy whitespace, mismatched typography, and unpolished filters. This update will unify fonts, colors, spacing, and interactions across the product.
+
+⸻
+
+2. Scope
+
+In Scope
+	•	Typography & hierarchy (match homepage font weights & color system).
+	•	Layout spacing adjustments.
+	•	Redesign of alphabetical filter bar.
+	•	Restyling of search + filters area.
+	•	Improved grid cards & table rows (hover, shadows, spacing).
+	•	AI Assistant accessibility and placement improvements.
+	•	Mobile responsive improvements.
+
+Out of Scope
+	•	Backend changes to analysis or AI logic.
+	•	New feature development beyond UI/UX polish.
+
+⸻
+
+3. Features & Requirements
+
+A) Typography & Hierarchy
+	•	Page header: text-3xl font-bold tracking-tight (same as homepage hero).
+	•	Subheader: lighter gray (text-slate-500) instead of dark gray/black.
+	•	Count text (e.g., 126 accounts): consistent with homepage card typography (text-lg font-medium text-slate-700).
+
+⸻
+
+B) Layout & Spacing
+	•	Reduce top whitespace under “Non-followers Results” by ~40%.
+	•	Group content into clear sections:
+	•	Header (title + subtext).
+	•	Controls (Grid/Table, Analyze again, Export, Filters, AI Assistant).
+	•	Search & filter bar.
+	•	Results grid/table.
+	•	Apply consistent padding (py-4) across sections.
+
+⸻
+
+C) Alphabetical Filter Bar
+	•	Restyle pills:
+	•	Default: bg-slate-50 text-slate-500.
+	•	Active: bg-blue-600 text-white.
+	•	Shape: rounded-lg px-3 py-1.
+	•	Reduce border heaviness — only subtle shadow or none.
+	•	Mobile: make scrollable horizontally with swipe gestures.
+
+⸻
+
+D) Search & Filters
+	•	Restyle search input to match homepage upload/FAQ card:
+	•	Rounded corners, subtle shadow, placeholder:text-slate-400.
+	•	Place Filters + Ask AI Assistant buttons inline with search bar.
+	•	Style as pill buttons with Lucide icons.
+	•	Consistent height with search input.
+
+⸻
+
+E) Grid & Table Views
+
+Grid Cards:
+	•	White background with soft shadow (shadow-sm hover:shadow-md).
+	•	Rounded corners (rounded-lg).
+	•	Hover: slight lift & border highlight.
+	•	Typography: text-sm text-slate-700 for usernames, text-blue-600 for links.
+
+Table Rows:
+	•	Remove heavy borders.
+	•	Add alternating row background (odd:bg-slate-50).
+	•	Hover highlight entire row.
+	•	Action column buttons: icon-only, appear on hover.
+
+⸻
+
+F) AI Assistant
+	•	Desktop:
+	•	Remove reliance on floating bubble.
+	•	Place Ask AI Assistant button in the header controls bar.
+	•	Tooltip: “Filter your results with AI.”
+	•	Mobile:
+	•	Keep floating chat bubble in bottom-right (sticky).
+
+⸻
+
+G) Mobile Responsiveness
+	•	Sticky bottom bar for bulk actions (Copy, Export, Open) when items selected.
+	•	Alphabetical filter bar scrolls horizontally.
+	•	Search & filter bar stack vertically with consistent spacing.
+
+⸻
+
+4. Technical Requirements
+	•	Frontend: Next.js + Tailwind + Framer Motion.
+	•	Icons: Lucide (consistent stroke weight).
+	•	Animations:
+	•	Grid card hover lift (Framer Motion).
+	•	Section fade-in transitions on scroll.
+	•	Accessibility:
+	•	Ensure buttons/inputs meet WCAG AA contrast.
+	•	All filters/buttons keyboard accessible.
+
+⸻
+
+5. Deliverables
+	•	Updated results page UI with:
+	•	Unified typography & spacing.
+	•	Cleaned filter bar.
+	•	Redesigned search + filter section.
+	•	Polished grid & table layouts.
+	•	AI Assistant accessible via button.
+	•	Mobile-friendly responsive adjustments.
+
+⸻
+
+6. Acceptance Criteria
+	•	✅ Results header matches homepage font/weight.
+	•	✅ Subtext uses lighter gray tone.
+	•	✅ Top whitespace reduced (content starts higher).
+	•	✅ Alphabetical filter bar restyled (soft pills, blue active state, horizontal scroll on mobile).
+	•	✅ Search input styled consistently with homepage cards.
+	•	✅ Filters + AI Assistant buttons inline with search bar, styled as pills.
+	•	✅ Grid cards have shadows, rounded corners, hover lift.
+	•	✅ Table rows alternate background, hover highlight, minimal borders.
+	•	✅ AI Assistant accessible via header button (desktop) + floating bubble (mobile).
+	•	✅ Responsive: sticky action bar on mobile, horizontal filter scroll.
+	•	✅ Performance unchanged (Lighthouse Perf ≥ 90).
+
+⸻
+
+7. Notes
+	•	Goal: make the results page feel like a natural continuation of the homepage.
+	•	Emphasize clarity, lightness, and modern polish (not dense or dashboard-like).
+	•	Use homepage visual tokens (blue highlights, soft shadows, rounded pills).
+
+⸻
+
+⚡ This PRD is ready for immediate implementation.
