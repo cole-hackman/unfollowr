@@ -66,6 +66,27 @@ export function StatusPie({ items }: { items: Item[] }) {
       const { top, bottom, left, right } = chartArea;
       const x = (left + right) / 2;
       const y = (top + bottom) / 2;
+
+      // Recompute percentage from chart data so it updates on each render
+      try {
+        const ds = (chart?.config?.data?.datasets?.[0]?.data ?? []) as number[];
+        const remaining = Number(ds[0] || 0);
+        const unf = Number(ds[1] || 0);
+        const denom = Math.max(remaining + unf, 1);
+        // eslint-disable-next-line @typescript-eslint/no-shadow
+        const pct = Math.round((unf / denom) * 100);
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#0F172A";
+        ctx.font = "600 20px system-ui, -apple-system, Segoe UI, Roboto";
+        ctx.fillText(`${pct}%`, x, y - 6);
+        ctx.fillStyle = "#64748B";
+        ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto";
+        ctx.fillText("Done", x, y + 12);
+        ctx.restore();
+        return;
+      } catch {}
       ctx.save();
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
