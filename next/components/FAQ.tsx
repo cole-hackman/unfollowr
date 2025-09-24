@@ -17,6 +17,38 @@ const GENERAL_QAS: QA[] = [
 
 export function FAQ() {
   const [open, setOpen] = useState<Set<string>>(new Set(["p-0", "p-1", "g-0"]));
+  // Inject FAQPage JSON-LD for SEO
+  if (typeof window !== 'undefined') {
+    const id = 'faq-schema';
+    if (!document.getElementById(id)) {
+      const script = document.createElement('script');
+      script.id = id;
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "How can I see who unfollowed me on Instagram?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Unfollowr helps you track Instagram unfollowers instantly, without needing to log in."
+            }
+          },
+          {
+            "@type": "Question",
+            name: "Is Unfollowr safe to use?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Yes, Unfollowr never asks for your Instagram login. It’s 100% privacy-first."
+            }
+          }
+        ]
+      });
+      document.head.appendChild(script);
+    }
+  }
   function toggle(key: string) {
     setOpen((prev) => {
       const next = new Set(prev);

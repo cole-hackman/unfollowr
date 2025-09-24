@@ -1,23 +1,54 @@
 export const metadata = {
-  title: "Unfollowr — Find who doesn’t follow back (private, fast)",
+  metadataBase: new URL("https://unfollowr.app"),
+  title: "Instagram Unfollower Tool – Track & Remove Unfollowers Safely",
   description:
-    "Drop your Instagram export to discover unfollowers instantly. Private, local-first analysis with optional AI labels.",
+    "Unfollowr is the safe Instagram unfollower tool. Track who unfollowed you, remove followers, and monitor growth — private, fast, no login required.",
   openGraph: {
-    title: "Unfollowr — Private unfollower analysis",
+    title: "Instagram Unfollower Tool – Unfollowr",
     description:
-      "Drop your Instagram export to discover unfollowers instantly. Private, local-first analysis with optional AI labels.",
-    type: "website"
+      "Track Instagram unfollowers privately and safely. No login required.",
+    url: "https://unfollowr.app",
+    type: "website",
+    images: [
+      {
+        url: "/unfollowr-logo-new.png",
+        width: 1200,
+        height: 630,
+        alt: "Unfollowr"
+      }
+    ]
   },
-  twitter: { card: "summary_large_image" }
+  twitter: {
+    card: "summary_large_image",
+    title: "Instagram Unfollower Tool – Unfollowr",
+    description:
+      "Track Instagram unfollowers privately and safely. No login required.",
+    images: ["/unfollowr-logo-new.png"]
+  },
+  verification: {
+    google: "O0MJUk7yjFtJMun5hsE-ZaV87yNPEAmidP6JjidrAY8"
+  }
 };
 
 import './globals.css';
+import Script from 'next/script';
 import Header from "@/components/Header";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="antialiased">
       <body className="bg-[#F7FAFC] text-[#0F172A]">
+        <Script id="webapp-schema" type="application/ld+json" strategy="beforeInteractive">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "Unfollowr",
+            url: "https://unfollowr.app",
+            description: "Instagram unfollower tool. Track unfollowers privately without login.",
+            applicationCategory: "SocialNetworkingApplication",
+            operatingSystem: "Web"
+          })}
+        </Script>
         <div id="top" />
         <Header />
         {children}
