@@ -1,69 +1,89 @@
-unfollowr 2.0
+# unfollowr 
 
 Find out who doesn’t follow you back on Instagram — fast, private, and without logging in.
 
-**Features**
-	•	Upload your exported Instagram Followers and Following lists (HTML).
-	•	Instantly see:
-	•	Not following back (you follow them, they don’t follow you)
-	•	Fans (they follow you, you don’t follow them)
-	•	Mutuals (you both follow each other)
-	•	Works completely offline with your own files — no Instagram login or API.
-	•	Sample HTML files included for testing.
+[![Standard Readme compliant](https://img.shields.io/badge/readme-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](#install)
 
-Try it now: unfollowr.app
+## Table of Contents
 
-⸻
+- [Security](#security)
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+- [Maintainers](#maintainers)
+- [Contributing](#contributing)
+- [License](#license)
 
-**Local Setup**
+## Security
 
-Requirements
-	•	Python 3.10+ (3.11 recommended)
+- No Instagram login required; you upload saved **Followers** and **Following** HTML files.
+- All parsing and comparison run locally on your machine.
+- Avoid uploading personal data to third-party services you don’t trust.
 
-1. Clone
+## Background
 
+**unfollowr ** compares your Instagram **Followers** and **Following** lists and highlights:
+- **Not following back** – you follow them, they don’t follow you
+- **Fans** – they follow you, but you don’t follow them
+- **Mutuals** – you follow each other
+
+Use it instantly at **https://unfollowr.app**.
+
+
+## Install
+
+Requires **Python 3.10+** (3.11 recommended).
+
+```bash
 git clone https://github.com/cole-hackman/unfollowr-2.o
 cd unfollowr-2.o
-
-2. Create virtual environment & install
-
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
+# Windows (PowerShell)
+# .venv\Scripts\Activate.ps1
 pip install -e .
+```
 
-3. Run
+### Dependencies
+- Standard Python tooling only; installs from `pyproject.toml` if present.
 
+## Usage
+
+Run the app locally:
+
+```bash
 python main.py
-# or python app.py (depending on your setup)
+# or
+python app.py
+```
 
 Then open the local URL shown in your terminal.
 
-⸻
+### Getting Instagram Data
 
-Exporting Your Data
-	1.	Log into Instagram on desktop.
-	2.	Open Followers and Following lists, scroll until fully loaded.
-	3.	Save each page as Webpage, HTML only.
-	4.	Upload them into unfollowr.
+1. Log into Instagram on desktop.
+2. Open **Followers** and **Following**, scroll until fully loaded.
+3. Save each page as **Webpage, HTML only**.
+4. Upload both files into the app.
 
-⸻
+Sample files in the repo:
+- `instagram_followers_sample.html`
+- `instagram_following_sample.html`
 
-Project Structure
+## Maintainers
 
-unfollowr-2.0/
-├─ app.py / main.py     # app entrypoints
-├─ templates/           # HTML templates
-├─ static/              # CSS/JS assets
-├─ lib/                 # parsing helpers
-├─ instagram_followers_sample.html
-├─ instagram_following_sample.html
-├─ pyproject.toml
-└─ uv.lock
+- [@cole-hackman](https://github.com/cole-hackman)
 
+## Contributing
 
-⸻
+Questions? Open an [issue](https://github.com/cole-hackman/unfollowr-2.o/issues).
+Pull requests are welcome — please keep changes focused, documented, and tested where feasible.
 
-Privacy
-	•	You never log in with your Instagram account.
-	•	Everything runs locally with your own files.
+If your change affects parsing, include (sanitized) HTML snippets that reproduce the issue.
 
+## License
+
+MIT (SPDX: MIT). © 2025 Cole Hackman.
