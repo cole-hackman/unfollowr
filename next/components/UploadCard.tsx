@@ -17,6 +17,7 @@ export function UploadCard({ onFilesReady }: Props) {
   const [phase, setPhase] = useState<"idle" | "uploading" | "parsing" | "analyzing" | "complete">("idle");
   const [eta, setEta] = useState<number | null>(null);
   const etaTimerRef = useRef<number | null>(null);
+  const analyzingRef = useRef(false);
 
   useEffect(() => {
     // Controlled easing toward phase caps
@@ -51,7 +52,10 @@ export function UploadCard({ onFilesReady }: Props) {
     if (!files || !files.length) return;
     setPhase("uploading");
     setProgress(10);
-    const list = Array.from(files).filter(f => /json|html/.test(f.type) || /\.(json|html)$/i.test(f.name));
+    // Accept common JSON/HTML types and filenames (.json, .html, .htm); don't over-filter to avoid user confusion
+    const list = Array.from(files).filter(f =>
+      /json|html/i.test(f.type) || /\.(json|html?|txt)$/i.test(f.name)
+    );
     setFiles(list);
     setTimeout(() => {
       // stay under cap until Analyze
@@ -63,6 +67,52 @@ export function UploadCard({ onFilesReady }: Props) {
     setProgress(0);
     if (inputRef.current) inputRef.current.value = "";
   }
+
+  // Auto-run analysis once two files are present to avoid getting stuck at 60%
+  useEffect(() => {
+    if (phase === "uploading" && files.length >= 2 && !analyzingRef.current) {
+      (async () => { await handleAnalyze(); })();
+    }
+  }, [files, phase]);
+
+  const handleAnalyze = async () => {
+    if (analyzingRef.current) return;
+    analyzingRef.current = true;
+    try {
+      setPhase("parsing");
+      // simple ETA heuristic based on file sizes
+      const totalBytes = files.reduce((acc, f) => acc + (f.size || 250_000), 0);
+      const estimatedParse = Math.max(2, Math.min(10, Math.round(totalBytes / 750_000))); // ~0.75MB/s
+      setEta(estimatedParse + 2);
+      setProgress((p) => Math.max(p, 62));
+      const textByName: Record<string,string> = {};
+      for (const f of files) {
+        const t = await f.text();
+        textByName[f.name.toLowerCase()] = t;
+      }
+      setPhase("analyzing");
+      setProgress((p) => Math.max(p, 80));
+      const followers = parseFollowers(textByName);
+      const following = parseFollowing(textByName);
+      const nonFollowers = Array.from(following).filter(u => !followers.has(u)).sort((a,b)=>a.localeCompare(b));
+      const notFollowingBack = Array.from(followers).filter(u => !following.has(u)).sort((a,b)=>a.localeCompare(b));
+      const items = nonFollowers.map(u => ({ username: u, customTags: [], unfollowed: false }));
+      const reverseItems = notFollowingBack.map(u => ({ username: u, customTags: [], unfollowed: false }));
+      try { sessionStorage.setItem("unfollowr-items", JSON.stringify(items)); } catch {}
+      try { sessionStorage.setItem("unfollowr-stats", JSON.stringify({ followers: followers.size, following: following.size })); } catch {}
+      try { sessionStorage.setItem("unfollowr-items-reverse", JSON.stringify(reverseItems)); } catch {}
+      setPhase("complete");
+      setProgress(100);
+      setEta(0);
+      window.dispatchEvent(new CustomEvent("unfollowr-dataset", { detail: items }));
+      // brief completion state for UX
+      setTimeout(() => {
+        window.location.href = "/results";
+      }, 250);
+    } finally {
+      analyzingRef.current = false;
+    }
+  };
 
   return (
     <section id="upload" className="mx-auto mt-12 max-w-5xl px-6">
@@ -129,38 +179,7 @@ export function UploadCard({ onFilesReady }: Props) {
             className="justify-center disabled:opacity-50"
             aria-disabled={files.length < 2}
             disabled={files.length < 2}
-            onClick={async () => {
-              setPhase("parsing");
-              // simple ETA heuristic based on file sizes
-              const totalBytes = files.reduce((acc, f) => acc + (f.size || 250_000), 0);
-              const estimatedParse = Math.max(2, Math.min(10, Math.round(totalBytes / 750_000))); // ~0.75MB/s
-              setEta(estimatedParse + 2);
-              setProgress((p) => Math.max(p, 62));
-              const textByName: Record<string,string> = {};
-              for (const f of files) {
-                const t = await f.text();
-                textByName[f.name.toLowerCase()] = t;
-              }
-              setPhase("analyzing");
-              setProgress((p) => Math.max(p, 80));
-              const followers = parseFollowers(textByName);
-              const following = parseFollowing(textByName);
-              const nonFollowers = Array.from(following).filter(u => !followers.has(u)).sort((a,b)=>a.localeCompare(b));
-              const notFollowingBack = Array.from(followers).filter(u => !following.has(u)).sort((a,b)=>a.localeCompare(b));
-              const items = nonFollowers.map(u => ({ username: u, customTags: [], unfollowed: false }));
-              const reverseItems = notFollowingBack.map(u => ({ username: u, customTags: [], unfollowed: false }));
-              try { sessionStorage.setItem("unfollowr-items", JSON.stringify(items)); } catch {}
-              try { sessionStorage.setItem("unfollowr-stats", JSON.stringify({ followers: followers.size, following: following.size })); } catch {}
-              try { sessionStorage.setItem("unfollowr-items-reverse", JSON.stringify(reverseItems)); } catch {}
-              setPhase("complete");
-              setProgress(100);
-              setEta(0);
-              window.dispatchEvent(new CustomEvent("unfollowr-dataset", { detail: items }));
-              // brief completion state for UX
-              setTimeout(() => {
-                window.location.href = "/results";
-              }, 250);
-            }}
+            onClick={async () => { await handleAnalyze(); }}
             iconLeft={<ChartLine className="h-4 w-4" />}
           >
             Analyze
@@ -283,27 +302,53 @@ function parseFollowing(texts: Record<string,string>): Set<string> {
 
 function extractUsernamesFromHtml(html: string): Set<string> {
   const out = new Set<string>();
-  // Anchor hrefs like https://www.instagram.com/username/
-  const hrefRegex = /href=["']https?:\/\/www\.instagram\.com\/([^\/"']+)\/?["']/gi;
+  const RESERVED = new Set([
+    "accounts","about","explore","developer","developers","legal","directory","subscriptions",
+    "privacy","terms","blog","press","api","p","stories","reels","reel","tv","igtv","challenge",
+    "session","ads","help","meta","web","oauth","graphql","notifications","accountscenter",
+    "download","locations","emails","n","policies"
+  ]);
+  const isLikelyUsername = (u: string) => /^[a-z0-9._]{1,30}$/.test(u) && !RESERVED.has(u);
+  // Anchor hrefs like https://www.instagram.com/username or https://www.instagram.com/_u/username (allow optional www, trailing slash, query/fragment)
+  const hrefRegex = /href=["']https?:\/\/(?:www\.)?instagram\.com\/(?:_u\/)?([^\/"'?#]+)[^"']*["']/gi;
   let m: RegExpExecArray | null;
-  while ((m = hrefRegex.exec(html))) out.add(m[1]);
+  while ((m = hrefRegex.exec(html))) {
+    const cand = (m[1] || "").toLowerCase();
+    if (isLikelyUsername(cand)) out.add(cand);
+  }
   // Also @username patterns
   const atRegex = /@([a-zA-Z0-9._]+)/g;
-  while ((m = atRegex.exec(html))) out.add(m[1]);
+  while ((m = atRegex.exec(html))) {
+    const cand = (m[1] || "").toLowerCase();
+    if (isLikelyUsername(cand)) out.add(cand);
+  }
   return out;
 }
 
 function extractUsernameFromValueOrHref(value?: string, href?: string): string | null {
   const val = (value || "").trim();
+  const RESERVED = new Set([
+    "accounts","about","explore","developer","developers","legal","directory","subscriptions",
+    "privacy","terms","blog","press","api","p","stories","reels","reel","tv","igtv","challenge",
+    "session","ads","help","meta","web","oauth","graphql","notifications","accountscenter",
+    "download","locations","emails","n","policies"
+  ]);
+  const isLikelyUsername = (u: string) => /^[a-z0-9._]{1,30}$/.test(u) && !RESERVED.has(u);
   // Common IG export puts the profile URL in href and username in value
   if (href) {
-    const m = /https?:\/\/www\.instagram\.com\/([^\/]+)\/?/i.exec(href);
-    if (m && m[1]) return m[1];
+    const m = /https?:\/\/(?:www\.)?instagram\.com\/(?:_u\/)?([^\/\s?#]+)/i.exec(href);
+    if (m && m[1]) {
+      const cand = m[1].toLowerCase();
+      if (isLikelyUsername(cand)) return cand;
+    }
   }
   if (val) {
     // If value already looks like a username or @username
     const at = /^@?([a-zA-Z0-9._]+)$/.exec(val);
-    if (at && at[1]) return at[1];
+    if (at && at[1]) {
+      const cand = at[1].toLowerCase();
+      if (isLikelyUsername(cand)) return cand;
+    }
   }
   return null;
 }

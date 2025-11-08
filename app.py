@@ -53,6 +53,25 @@ ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH",
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 ALLOWED_EXTENSIONS = {'json', 'html'}
 
+# Reserved Instagram path segments that are not usernames
+RESERVED_USER_SLUGS = {
+    'accounts', 'about', 'explore', 'developer', 'developers', 'legal', 'directory',
+    'subscriptions', 'privacy', 'terms', 'blog', 'press', 'api', 'p', 'stories',
+    'reels', 'reel', 'tv', 'igtv', 'challenge', 'session', 'ads', 'help', 'meta',
+    'web', 'oauth', 'graphql', 'notifications', 'accountscenter', 'download',
+    'locations', 'emails', 'n', 'policies'
+}
+
+def is_likely_username(value: str) -> bool:
+    """Heuristic to ensure extracted token is a plausible Instagram username."""
+    if not value:
+        return False
+    u = value.strip().lower()
+    if u in RESERVED_USER_SLUGS:
+        return False
+    # Instagram usernames: 1-30 chars, letters, numbers, periods and underscores
+    return re.fullmatch(r'[a-z0-9._]{1,30}', u) is not None
+
 def allowed_file(filename):
     """Check if file has allowed extension"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -63,13 +82,29 @@ def parse_followers_json(file_content):
         data = json.loads(file_content)
         usernames = set()
         
+        def extract_username(value, href):
+            # Prefer href when present; support /_u/username variants
+            if href:
+                m = re.search(r'instagram\.com/(?:_u/)?([A-Za-z0-9._]+)', href, flags=re.IGNORECASE)
+                if m:
+                    candidate = m.group(1).lower()
+                    return candidate if is_likely_username(candidate) else None
+            if value:
+                mv = re.match(r'^@?([A-Za-z0-9._]+)$', str(value).strip())
+                if mv:
+                    candidate = mv.group(1).lower()
+                    return candidate if is_likely_username(candidate) else None
+            return None
+        
         # Handle the followers export format (array of objects)
         if isinstance(data, list):
             for item in data:
                 if 'string_list_data' in item:
                     for entry in item['string_list_data']:
-                        if 'value' in entry:
-                            usernames.add(entry['value'])
+                        if isinstance(entry, dict):
+                            username = extract_username(entry.get('value'), entry.get('href'))
+                            if username:
+                                usernames.add(username)
         
         app.logger.debug(f"Parsed {len(usernames)} followers from JSON")
         return usernames
@@ -84,17 +119,44 @@ def parse_following_json(file_content):
         usernames = set()
         user_timestamps = {}
         
+        def extract_username_and_ts(entry):
+            username = None
+            ts = None
+            if isinstance(entry, dict):
+                href = entry.get('href')
+                value = entry.get('value')
+                if href:
+                    m = re.search(r'instagram\.com/(?:_u/)?([A-Za-z0-9._]+)', href, flags=re.IGNORECASE)
+                    if m:
+                        username = m.group(1)
+                if not username and value:
+                    mv = re.match(r'^@?([A-Za-z0-9._]+)$', str(value).strip())
+                    if mv:
+                        username = mv.group(1)
+                if 'timestamp' in entry and isinstance(entry.get('timestamp'), (int, float)):
+                    ts = entry.get('timestamp')
+            return username, ts
+        
         # Handle the following export format (object with relationships_following)
         if isinstance(data, dict) and 'relationships_following' in data:
             for item in data['relationships_following']:
                 if 'string_list_data' in item:
                     for entry in item['string_list_data']:
-                        if 'value' in entry:
-                            username = entry['value']
+                        username, ts = extract_username_and_ts(entry)
+                        if username:
                             usernames.add(username)
-                            # Store timestamp if available
-                            if 'timestamp' in entry:
-                                user_timestamps[username] = entry['timestamp']
+                            if ts is not None:
+                                user_timestamps[username] = ts
+        # Some older exports may use a flat list similar to followers
+        elif isinstance(data, list):
+            for item in data:
+                if 'string_list_data' in item:
+                    for entry in item['string_list_data']:
+                        username, ts = extract_username_and_ts(entry)
+                        if username:
+                            usernames.add(username)
+                            if ts is not None:
+                                user_timestamps[username] = ts
         
         app.logger.debug(f"Parsed {len(usernames)} following from JSON")
         return usernames, user_timestamps
@@ -107,26 +169,42 @@ def parse_followers_html(file_content):
     try:
         soup = BeautifulSoup(file_content, 'html.parser')
         usernames = set()
-        
-        # Find all links that contain Instagram profile URLs
-        links = soup.find_all('a', href=re.compile(r'https://www\.instagram\.com/[^/]+/?$'))
-        
+
+        # Robustly scan all anchor tags and extract usernames from any instagram.com URL shape,
+        # including new /_u/username links and optional query/fragment noise.
+        links = soup.find_all('a', href=True)
         for link in links:
-            href = link.get('href')
-            if href:
-                # Extract username from URL like https://www.instagram.com/username/
-                username_match = re.search(r'instagram\.com/([^/]+)/?$', href)
-                if username_match:
-                    username = username_match.group(1)
-                    usernames.add(username)
+            href = link.get('href') or ''
+            if 'instagram.com' not in href:
+                continue
+            # Accept http/https, optional www, optional /_u/, capture username as last segment
+            m = re.search(r'instagram\.com/(?:_u/)?([A-Za-z0-9._]+)(?:/|$|\?|#)', href, flags=re.IGNORECASE)
+            if m:
+                cand = m.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
+                continue
+            # If regex misses, sometimes link text itself is the username
+            text_val = (link.get_text() or '').strip()
+            mt = re.match(r'^@?([A-Za-z0-9._]+)$', text_val)
+            if mt:
+                cand = mt.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
         
         # Also try to find usernames in text content if links are not available
         if not usernames:
-            # Look for @username patterns in text
             text_content = soup.get_text()
-            username_matches = re.findall(r'@([a-zA-Z0-9._]+)', text_content)
-            for username in username_matches:
-                usernames.add(username)
+            # Look for profile URLs embedded as text
+            for m in re.finditer(r'instagram\.com/(?:_u/)?([A-Za-z0-9._]+)', text_content, flags=re.IGNORECASE):
+                cand = m.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
+            # Look for @username patterns
+            for m in re.finditer(r'@([A-Za-z0-9._]+)', text_content):
+                cand = m.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
         
         app.logger.debug(f"Parsed {len(usernames)} followers from HTML")
         return usernames
@@ -141,25 +219,40 @@ def parse_following_html(file_content):
         usernames = set()
         user_timestamps = {}
         
-        # Find all links that contain Instagram profile URLs
-        links = soup.find_all('a', href=re.compile(r'https://www\.instagram\.com/[^/]+/?$'))
-        
+        # Robustly scan all anchor tags and extract usernames from any instagram.com URL shape,
+        # including new /_u/username links and optional query/fragment noise.
+        links = soup.find_all('a', href=True)
         for link in links:
-            href = link.get('href')
-            if href:
-                # Extract username from URL like https://www.instagram.com/username/
-                username_match = re.search(r'instagram\.com/([^/]+)/?$', href)
-                if username_match:
-                    username = username_match.group(1)
-                    usernames.add(username)
+            href = link.get('href') or ''
+            if 'instagram.com' not in href:
+                continue
+            m = re.search(r'instagram\.com/(?:_u/)?([A-Za-z0-9._]+)(?:/|$|\?|#)', href, flags=re.IGNORECASE)
+            if m:
+                cand = m.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
+                continue
+            # Fallback: link text looks like username
+            text_val = (link.get_text() or '').strip()
+            mt = re.match(r'^@?([A-Za-z0-9._]+)$', text_val)
+            if mt:
+                cand = mt.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
         
         # Also try to find usernames in text content if links are not available
         if not usernames:
-            # Look for @username patterns in text
             text_content = soup.get_text()
-            username_matches = re.findall(r'@([a-zA-Z0-9._]+)', text_content)
-            for username in username_matches:
-                usernames.add(username)
+            # Profile URLs as plain text
+            for m in re.finditer(r'instagram\.com/(?:_u/)?([A-Za-z0-9._]+)', text_content, flags=re.IGNORECASE):
+                cand = m.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
+            # @username patterns
+            for m in re.finditer(r'@([A-Za-z0-9._]+)', text_content):
+                cand = m.group(1).lower()
+                if is_likely_username(cand):
+                    usernames.add(cand)
         
         app.logger.debug(f"Parsed {len(usernames)} following from HTML")
         # HTML doesn't have timestamps, return empty dict
@@ -191,7 +284,13 @@ def parse_followers_file(file_content):
     file_format = detect_file_format(file_content)
     
     if file_format == 'json':
-        return parse_followers_json(file_content)
+        try:
+            return parse_followers_json(file_content)
+        except ValueError:
+            # Fallback to HTML if JSON parse fails but content contains HTML markers
+            if '<' in file_content and 'html' in file_content.lower():
+                return parse_followers_html(file_content)
+            raise
     elif file_format == 'html':
         return parse_followers_html(file_content)
     else:
@@ -202,7 +301,12 @@ def parse_following_file(file_content):
     file_format = detect_file_format(file_content)
     
     if file_format == 'json':
-        return parse_following_json(file_content)
+        try:
+            return parse_following_json(file_content)
+        except ValueError:
+            if '<' in file_content and 'html' in file_content.lower():
+                return parse_following_html(file_content)
+            raise
     elif file_format == 'html':
         return parse_following_html(file_content)
     else:
