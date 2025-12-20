@@ -24,3 +24,6 @@ yarn-error.log*
 # Analytics (runtime data)
 analytics_counters.json
 analytics_events.json
+
+# Replit
+.replit
