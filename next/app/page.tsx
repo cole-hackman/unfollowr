@@ -1,28 +1,17 @@
-"use client";
-import { Hero } from "./(site)/components/Hero";
-import { UploadCard } from "@/components/UploadCard";
-// import { GoogleAIBadge } from "@/components/GoogleAIBadge";
-import { Timeline } from "@/components/Timeline";
-import { FAQ } from "@/components/FAQ";
-import { InsightsRow } from "@/components/InsightsRow";
-import { PrivacyNext } from "@/components/PrivacyNext";
+import { HomeClient } from "@/components/HomeClient";
+import { SEOIntro } from "@/components/SEOIntro";
+import { SEOBottom } from "@/components/SEOBottom";
+import { LearnMoreLinks } from "@/components/LearnMoreLinks";
 
 export default function Home() {
   return (
     <>
-      <Hero />
-      <UploadCard onFilesReady={(files) => {
-        const usernames: string[] = [];
-        window.dispatchEvent(new CustomEvent("unfollowr-dataset", { detail: usernames.map(u=>({ username:u })) }));
-        location.href = "/results";
-      }} />
-      {null}
-      <InsightsRow />
-      <Timeline />
-      {null}
-      <FAQ />
-      <PrivacyNext />
-      {null}
+      {/* Interactive client components with server-rendered SEO intro passed as children */}
+      <HomeClient seoIntro={<SEOIntro />} />
+      
+      {/* Server-rendered SEO content at bottom */}
+      <LearnMoreLinks />
+      <SEOBottom />
     </>
   );
 }

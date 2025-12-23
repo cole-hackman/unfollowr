@@ -12,9 +12,9 @@ export function Hero() {
       <motion.h1
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-auto max-w-3xl text-5xl font-extrabold leading-tight tracking-tight text-[#0F172A] md:text-6xl"
+        className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-[#0F172A] md:text-5xl lg:text-6xl"
       >
-        Find out who’s not following back.
+        Track Instagram Unfollowers – See Who Doesn't Follow You Back
       </motion.h1>
 
       <p className="mx-auto mt-4 max-w-2xl text-[#475569]">

@@ -4,7 +4,7 @@ import { Shield, Rocket } from "lucide-react";
 export function PrivacyNext() {
   return (
     <section id="trust-section" className="mx-auto max-w-6xl px-6 py-12">
-      <h2 className="mb-6 text-center text-3xl font-bold text-[#0F172A]">Trust & Roadmap</h2>
+      <h2 className="mb-6 text-center text-3xl font-bold text-[#0F172A]">Privacy & Security</h2>
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="p-5">
           <div className="mb-2 inline-flex rounded-lg bg-[#E8F0FE] p-2 text-[#1D4ED8]">
