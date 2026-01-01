@@ -11,6 +11,10 @@ from werkzeug.security import check_password_hash
 from bs4 import BeautifulSoup
 from admin_analytics import analytics
 
+# Import security utilities
+from lib.rate_limiter import rate_limit
+from lib.input_validator import validator, ValidationError
+
 # Import AI classifier with proper error handling
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 AI_ENABLED = GEMINI_API_KEY is not None and GEMINI_API_KEY.strip() != ""
@@ -42,12 +46,26 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
+
+# SECURITY: Session secret must be set in production
+SESSION_SECRET = os.environ.get("SESSION_SECRET")
+if not SESSION_SECRET:
+    if os.environ.get("FLASK_ENV") == "development":
+        logging.warning("Using default session secret for development. Set SESSION_SECRET in production!")
+        SESSION_SECRET = "dev-secret-key-change-in-production"
+    else:
+        raise ValueError("SESSION_SECRET environment variable must be set in production")
+app.secret_key = SESSION_SECRET
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Admin configuration
-ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH", 
-    "pbkdf2:sha256:600000$TBLSz8DLgFBjBKCe$d4654dcdacf5acd37c60ab2b7b3bf9c93b15e0e0e88e17e5bb9a8c3c3b70e2e5")  # Default: "admin123"
+# SECURITY: Admin password hash must be set in production
+ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH")
+if not ADMIN_PASSWORD_HASH:
+    if os.environ.get("FLASK_ENV") == "development":
+        logging.warning("Using default admin password hash for development. Set ADMIN_PASSWORD_HASH in production!")
+        ADMIN_PASSWORD_HASH = "pbkdf2:sha256:600000$TBLSz8DLgFBjBKCe$d4654dcdacf5acd37c60ab2b7b3bf9c93b15e0e0e88e17e5bb9a8c3c3b70e2e5"  # Default: "admin123"
+    else:
+        raise ValueError("ADMIN_PASSWORD_HASH environment variable must be set in production")
 
 # Configure upload settings
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
@@ -436,6 +454,7 @@ def get_usage_stats():
         }
 
 @app.route('/')
+@rate_limit(max_requests=60, window_seconds=60)  # 60 requests per minute
 def index():
     """Main upload page"""
     # Log page visit
@@ -443,16 +462,28 @@ def index():
     return render_template('index-new.html')
 
 @app.route('/faq')
+@rate_limit(max_requests=60, window_seconds=60)  # 60 requests per minute
 def faq():
     """FAQ page"""
     log_usage_analytics('page_visit', {'page': 'faq'})
     return render_template('faq.html')
 
 @app.route('/admin/stats')
+@rate_limit(max_requests=10, window_seconds=60)  # 10 requests per minute
 def admin_stats():
     """Simple admin page to view usage statistics"""
-    # Simple protection - check for admin query parameter
-    if request.args.get('key') != os.environ.get('ADMIN_KEY', 'admin123'):
+    # SECURITY: Check for admin key (must be set in production)
+    admin_key = os.environ.get('ADMIN_KEY')
+    if not admin_key:
+        if os.environ.get("FLASK_ENV") == "development":
+            admin_key = "admin123"  # Only for development
+            logging.warning("Using default admin key for development. Set ADMIN_KEY in production!")
+        else:
+            return "Access denied - Admin key not configured", 403
+    
+    # SECURITY: Validate and sanitize key parameter
+    provided_key = validator.sanitize_string(request.args.get('key', ''), 200)
+    if provided_key != admin_key:
         return "Access denied", 403
     
     stats = get_usage_stats()
@@ -483,6 +514,7 @@ def admin_stats():
     """
 
 @app.route('/compare', methods=['POST'])
+@rate_limit(max_requests=5, window_seconds=60)  # 5 uploads per minute
 def compare():
     """Process uploaded files and compare followers vs following"""
     try:
@@ -499,12 +531,24 @@ def compare():
             flash('Please select both files.', 'error')
             return redirect(url_for('index'))
         
-        # Validate file types
-        if not (allowed_file(followers_file.filename) and allowed_file(following_file.filename)):
+        # SECURITY: Validate files using input validator
+        try:
+            followers_filename, followers_content = validator.validate_file(
+                followers_file, max_size=50 * 1024 * 1024
+            )
+            following_filename, following_content = validator.validate_file(
+                following_file, max_size=50 * 1024 * 1024
+            )
+        except ValidationError as e:
+            flash(f'File validation error: {str(e)}', 'error')
+            return redirect(url_for('index'))
+        
+        # Validate file types (redundant check)
+        if not (allowed_file(followers_filename) and allowed_file(following_filename)):
             flash('Only JSON and HTML files are allowed.', 'error')
             return redirect(url_for('index'))
         
-        # Validate file sizes
+        # Validate file sizes (redundant check)
         validate_file_size(followers_file)
         validate_file_size(following_file)
         
@@ -512,8 +556,9 @@ def compare():
         app.logger.info("Starting file processing...")
         start_time = time.time()
         
-        followers_content = followers_file.read().decode('utf-8')
-        following_content = following_file.read().decode('utf-8')
+        # Use validated content (already read by validator)
+        followers_content = followers_content.decode('utf-8')
+        following_content = following_content.decode('utf-8')
         
         app.logger.info(f"File reading completed in {time.time() - start_time:.2f}s")
         
@@ -745,79 +790,122 @@ def compare():
 
 
 @app.route('/api/ai/translate-query', methods=['POST'])
+@rate_limit(max_requests=20, window_seconds=60)  # 20 queries per minute
 def translate_query():
     """Translate natural language query to filter parameters"""
     if not AI_ENABLED or not translate_query_to_filter:
         return jsonify({"error": "AI features require API key configuration"}), 503
     
     try:
-        data = request.get_json()
-        query = data.get('query', '')
+        # SECURITY: Validate JSON payload
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({"error": "JSON payload is required"}), 400
         
-        if not query:
-            return jsonify({"error": "Query is required"}), 400
+        try:
+            validator.validate_json_payload(data, max_size=10240)  # 10KB max
+        except ValidationError as e:
+            return jsonify({"error": f"Invalid payload: {str(e)}"}), 400
         
-        # Log AI query event
+        # SECURITY: Validate and sanitize query
+        try:
+            query = validator.validate_query_string(data.get('query', ''))
+        except ValidationError as e:
+            return jsonify({"error": str(e)}), 400
+        
+        # Log AI query event (sanitized query length only, not content)
         session_id = analytics.generate_session_id(request)
         analytics.log_event(session_id, 'ai_query', {'query_length': len(query)})
         
         filter_params = translate_query_to_filter(query)
         return jsonify(filter_params)
         
+    except ValidationError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         app.logger.error(f"Query translation error: {e}")
         return jsonify({"error": "Failed to process query"}), 500
 
 
 @app.route('/api/ai/classify-batch', methods=['POST'])
+@rate_limit(max_requests=10, window_seconds=60)  # 10 batches per minute
 def classify_batch():
     """Classify a batch of accounts using AI"""
     if not AI_ENABLED or not classifier:
         return jsonify({"error": "AI features require API key configuration"}), 503
     
     try:
-        data = request.get_json()
-        accounts = data.get('accounts', [])
+        # SECURITY: Validate JSON payload
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({"error": "JSON payload is required"}), 400
         
-        if not accounts:
-            return jsonify({"error": "Accounts are required"}), 400
+        try:
+            validator.validate_json_payload(data, max_size=1024 * 1024)  # 1MB max
+        except ValidationError as e:
+            return jsonify({"error": f"Invalid payload: {str(e)}"}), 400
         
-        # Limit batch size
-        if len(accounts) > 50:
-            accounts = accounts[:50]
+        # SECURITY: Validate accounts list
+        try:
+            accounts = validator.validate_accounts_list(data.get('accounts', []), max_count=50)
+        except ValidationError as e:
+            return jsonify({"error": str(e)}), 400
         
         enriched_accounts = classifier.enrich_accounts(accounts)
         return jsonify({"accounts": enriched_accounts})
         
+    except ValidationError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         app.logger.error(f"Batch classification error: {e}")
         return jsonify({"error": "Failed to classify accounts"}), 500
 
 @app.route('/api/ai/chat', methods=['POST'])
+@rate_limit(max_requests=30, window_seconds=60)  # 30 messages per minute
 def ai_chat():
     """Handle AI chat conversations with context awareness"""
     if not AI_ENABLED:
         return jsonify({"error": "AI features require API key configuration"}), 503
     
     try:
-        data = request.get_json()
-        message = data.get('message', '').strip()
+        # SECURITY: Validate JSON payload
+        data = request.get_json(force=True)
+        if not data:
+            return jsonify({"error": "JSON payload is required"}), 400
+        
+        try:
+            validator.validate_json_payload(data, max_size=51200)  # 50KB max
+        except ValidationError as e:
+            return jsonify({"error": f"Invalid payload: {str(e)}"}), 400
+        
+        # SECURITY: Validate and sanitize message
+        try:
+            message = validator.validate_message(data.get('message', ''))
+        except ValidationError as e:
+            return jsonify({"error": str(e)}), 400
+        
+        # SECURITY: Validate context (sanitize category)
         context = data.get('context', {})
+        if not isinstance(context, dict):
+            context = {}
         
-        if not message:
-            return jsonify({"error": "Message is required"}), 400
+        # Sanitize category
+        category = validator.sanitize_string(context.get('currentCategory', 'unknown'), 50)
+        context['currentCategory'] = category
         
-        # Log AI chat event
+        # Log AI chat event (sanitized data only)
         session_id = analytics.generate_session_id(request)
         analytics.log_event(session_id, 'ai_chat', {
             'message_length': len(message),
-            'category': context.get('currentCategory', 'unknown')
+            'category': category
         })
         
         # Process the chat query
         response_data = process_chat_query(message, context)
         return jsonify(response_data)
         
+    except ValidationError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         app.logger.error(f"AI chat error: {e}")
         return jsonify({
@@ -957,16 +1045,18 @@ if __name__ == '__main__':
 
 
 @app.route('/privacy')
+@rate_limit(max_requests=60, window_seconds=60)  # 60 requests per minute
 def privacy():
     """Privacy policy page"""
     session_id = analytics.generate_session_id(request)
     analytics.log_event(session_id, 'privacy_view')
-    log_usage_analytics('privacy_view')
+    log_usage_analytics('page_visit', {'page': 'privacy'})
     return render_template('privacy.html')
 
 
 # Admin Routes
 @app.route('/admin')
+@rate_limit(max_requests=20, window_seconds=60)  # 20 requests per minute
 def admin_login():
     """Admin login page"""
     if session.get('admin_authenticated'):
@@ -975,6 +1065,7 @@ def admin_login():
 
 
 @app.route('/admin', methods=['POST'])
+@rate_limit(max_requests=5, window_seconds=300)  # 5 login attempts per 5 minutes
 def admin_login_post():
     """Handle admin login"""
     password = request.form.get('password')
@@ -983,8 +1074,20 @@ def admin_login_post():
         flash('Password is required', 'error')
         return render_template('admin_login.html')
     
-    # Check password (using Werkzeug's check_password_hash)
-    if check_password_hash(ADMIN_PASSWORD_HASH, password) or password == "admin123":  # Fallback for dev
+    # SECURITY: Sanitize password input (defensive measure)
+    password = validator.sanitize_string(password, 200)
+    
+    # SECURITY: Check password (using Werkzeug's check_password_hash)
+    # Remove hardcoded fallback in production
+    password_valid = check_password_hash(ADMIN_PASSWORD_HASH, password)
+    
+    # Only allow fallback in development
+    if not password_valid and os.environ.get("FLASK_ENV") == "development":
+        if password == "admin123":
+            logging.warning("Using default admin password for development. Set ADMIN_PASSWORD_HASH in production!")
+            password_valid = True
+    
+    if password_valid:
         session['admin_authenticated'] = True
         session_id = analytics.generate_session_id(request)
         analytics.log_event(session_id, 'admin_login')
@@ -995,6 +1098,7 @@ def admin_login_post():
 
 
 @app.route('/admin/dashboard')
+@rate_limit(max_requests=20, window_seconds=60)  # 20 requests per minute
 def admin_dashboard():
     """Admin dashboard with analytics"""
     if not session.get('admin_authenticated'):
@@ -1012,12 +1116,22 @@ def admin_dashboard():
 
 
 @app.route('/admin/chart-data')
+@rate_limit(max_requests=20, window_seconds=60)  # 20 requests per minute
 def admin_chart_data():
     """API endpoint for chart data"""
     if not session.get('admin_authenticated'):
         return jsonify({'error': 'Unauthorized'}), 401
     
-    range_param = request.args.get('range', '7d')
+    # SECURITY: Validate and sanitize range parameter
+    try:
+        range_param = validator.validate_query_param(
+            request.args.get('range', '7d'),
+            allowed_values=['7d', '30d', '90d'],
+            max_length=10
+        )
+    except Exception:
+        range_param = '7d'  # Default to 7d on validation error
+    
     days_map = {'7d': 7, '30d': 30, '90d': 90}
     days = days_map.get(range_param, 7)
     
@@ -1029,6 +1143,7 @@ def admin_chart_data():
 
 
 @app.route('/admin/export-csv')
+@rate_limit(max_requests=10, window_seconds=60)  # 10 requests per minute
 def admin_export_csv():
     """Export analytics data as CSV"""
     if not session.get('admin_authenticated'):
@@ -1041,6 +1156,7 @@ def admin_export_csv():
 
 
 @app.route('/admin/logout')
+@rate_limit(max_requests=20, window_seconds=60)  # 20 requests per minute
 def admin_logout():
     """Admin logout"""
     session.pop('admin_authenticated', None)
