@@ -1,88 +1,79 @@
-# unfollowr 
-
-Find out who doesn’t follow you back on Instagram — fast, private, and without logging in.
+# Unfollowr
 
 [![Standard Readme compliant](https://img.shields.io/badge/readme-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
-[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](#install)
+[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](#run-locally)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](#run-locally)
 
-## Table of Contents
+## 1. What Is the Project?
 
-- [Security](#security)
-- [Background](#background)
-- [Install](#install)
-- [Usage](#usage)
-- [Maintainers](#maintainers)
-- [Contributing](#contributing)
-- [License](#license)
+Unfollowr is a privacy-first web application that helps users find out who doesn't follow them back on Instagram. Users can upload their official Instagram data exports (HTML or JSON) and instantly view their non-followers, fans, and mutual connections—all without ever logging into their Instagram account.
 
-## Security
+## 2. Why Was This Project Built?
 
-- No Instagram login required; you upload saved **Followers** and **Following** HTML files.
-- All parsing and comparison run locally on your machine.
-- Avoid uploading personal data to third-party services you don’t trust.
+Many third-party Instagram tracker apps require users to hand over their login credentials, which poses significant security risks. Other apps utilize undocumented APIs that can trigger Instagram's anti-bot systems and get user accounts permanently banned. Unfollowr was built to provide a completely secure, local-first alternative that respects user privacy and keeps their Instagram account 100% safe.
 
-## Background
+## 3. What Problems Did It Solve?
 
-**unfollowr ** compares your Instagram **Followers** and **Following** lists and highlights:
-- **Not following back** – you follow them, they don’t follow you
-- **Fans** – they follow you, but you don’t follow them
-- **Mutuals** – you follow each other
+The primary challenge was analyzing Instagram follower data without compromising account security. This was solved by building a robust data parser that reads Instagram's official HTML and JSON data exports directly, meaning no login credentials are required.
 
-Use it instantly at **https://unfollowr.app**.
+A secondary challenge was helping users make sense of their "non-follower" lists. For instance, a user shouldn't be told to unfollow a celebrity or brand just because they don't follow back. This was solved by implementing a hybrid heuristic and LLM-powered classification system (using Google Gemini via `ai_classifier.py`) that intelligently segments accounts and provides "Unfollow Suggestion Scores."
 
+## 4. What Technologies Are Used?
 
-## Install
+- **Frontend**: Next.js 14, React 18, Tailwind CSS, Framer Motion, Chart.js
+- **Backend**: Python 3.11+, Flask
+- **Data Parsing**: BeautifulSoup4 (HTML parsing)
+- **AI Integration**: Google Generative AI (Gemini) for account segmentation and natural language search
+- **Database**: PostgreSQL (psycopg2-binary)
 
-Requires **Python 3.10+** (3.11 recommended).
+## 5. What Did You Implement?
+
+- **Privacy-First Data Parsing**: Local processing of Instagram HTML and JSON exports.
+- **Connection Comparison Engine**: Logic to accurately cross-reference Followers and Following lists to categorize Non-followers, Fans, and Mutuals.
+- **AI Account Segmentation**: Integration with Google Gemini to classify non-followers (e.g., assessing if an account is a brand/celebrity) and score them.
+- **Natural Language Search**: A chatbot interface that translates natural language queries into filter parameters.
+- **Interactive UI**: A modern dashboard with smooth Framer Motion animations and visual analytics using Chart.js.
+
+## 6. How Can Someone Run It Locally?
+
+Running Unfollowr requires Node.js and Python 3.11+. The project is split between a Python backend and a Next.js frontend.
+
+### Step 1: Start the Backend (Flask)
 
 ```bash
-git clone https://github.com/cole-hackman/unfollowr-2.o
-cd unfollowr-2.o
+# Clone the repository
+git clone https://github.com/cole-hackman/unfollowr.git
+cd unfollowr
+
+# Create and activate a virtual environment
 python -m venv .venv
-# macOS/Linux
-source .venv/bin/activate
-# Windows (PowerShell)
-# .venv\Scripts\Activate.ps1
+source .venv/bin/activate  # On Windows (PowerShell) use: .venv\Scripts\Activate.ps1
+
+# Install dependencies and start the server
 pip install -e .
+python app.py  # Runs on http://localhost:5000
 ```
 
-### Dependencies
-- Standard Python tooling only; installs from `pyproject.toml` if present.
+### Step 2: Start the Frontend (Next.js)
 
-## Usage
-
-Run the app locally:
+Open a new terminal window and navigate to the same repository root.
 
 ```bash
-python main.py
-# or
-python app.py
+cd next
+
+# Install frontend dependencies
+npm install
+
+# Start the development server
+npm run dev   # Runs on http://localhost:3001
 ```
 
-Then open the local URL shown in your terminal.
-
-### Getting Instagram Data
-
-1. Log into Instagram on desktop.
-2. Open **Followers** and **Following**, scroll until fully loaded.
-3. Save each page as **Webpage, HTML only**.
-4. Upload both files into the app.
-
-Sample files in the repo:
-- `instagram_followers_sample.html`
-- `instagram_following_sample.html`
-
-## Maintainers
-
-- [@cole-hackman](https://github.com/cole-hackman)
+Once both servers are running, open `http://localhost:3001` in your browser. Upload your Instagram Followers/Following HTML or JSON exports to see it in action!
 
 ## Contributing
 
-Questions? Open an [issue](https://github.com/cole-hackman/unfollowr-2.o/issues).
-Pull requests are welcome — please keep changes focused, documented, and tested where feasible.
-
-If your change affects parsing, include (sanitized) HTML snippets that reproduce the issue.
+Questions? Open an issue. Pull requests are welcome — please keep changes focused, documented, and tested where feasible.
 
 ## License
 

@@ -27,3 +27,8 @@ analytics_events.json
 
 # Replit
 .replit
+attached_assets/
+
+# Misc
+*.tsbuildinfo
+google*.html

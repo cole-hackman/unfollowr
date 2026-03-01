@@ -209,7 +209,12 @@ Respond with valid JSON only, no additional text."""
             return results
             
         except Exception as e:
-            self.logger.error(f"AI classification failed: {e}")
+            # SECURITY: Log error without exposing API keys or sensitive data
+            error_msg = str(e)
+            # Remove any potential API key exposure from error messages
+            if 'api_key' in error_msg.lower() or 'key' in error_msg.lower():
+                error_msg = "AI classification failed"
+            self.logger.error(f"AI classification failed: {error_msg}")
             # Return fallback classifications
             return [ClassificationResult('unknown', 0.3, ['AI unavailable']) for _ in accounts]
     
@@ -346,7 +351,12 @@ Respond with valid JSON only."""
         return json.loads(response.text)
         
     except Exception as e:
-        logging.error(f"Query translation failed: {e}")
+        # SECURITY: Log error without exposing API keys or sensitive data
+        error_msg = str(e)
+        # Remove any potential API key exposure from error messages
+        if 'api_key' in error_msg.lower() or 'key' in error_msg.lower():
+            error_msg = "Query translation failed"
+        logging.error(f"Query translation failed: {error_msg}")
         return {"error": "Could not understand query"}
 
 
