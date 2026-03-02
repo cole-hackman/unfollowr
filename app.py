@@ -50,22 +50,16 @@ app = Flask(__name__)
 # SECURITY: Session secret must be set in production
 SESSION_SECRET = os.environ.get("SESSION_SECRET")
 if not SESSION_SECRET:
-    if os.environ.get("FLASK_ENV") == "development":
-        logging.warning("Using default session secret for development. Set SESSION_SECRET in production!")
-        SESSION_SECRET = "dev-secret-key-change-in-production"
-    else:
-        raise ValueError("SESSION_SECRET environment variable must be set in production")
+    logging.warning("SESSION_SECRET environment variable not set. Using default secret - THIS IS NOT SECURE FOR PRODUCTION!")
+    SESSION_SECRET = "dev-secret-key-change-in-production"
 app.secret_key = SESSION_SECRET
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # SECURITY: Admin password hash must be set in production
 ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH")
 if not ADMIN_PASSWORD_HASH:
-    if os.environ.get("FLASK_ENV") == "development":
-        logging.warning("Using default admin password hash for development. Set ADMIN_PASSWORD_HASH in production!")
-        ADMIN_PASSWORD_HASH = "pbkdf2:sha256:600000$TBLSz8DLgFBjBKCe$d4654dcdacf5acd37c60ab2b7b3bf9c93b15e0e0e88e17e5bb9a8c3c3b70e2e5"  # Default: "admin123"
-    else:
-        raise ValueError("ADMIN_PASSWORD_HASH environment variable must be set in production")
+    logging.warning("ADMIN_PASSWORD_HASH environment variable not set. Using default admin hash - THIS IS NOT SECURE FOR PRODUCTION!")
+    ADMIN_PASSWORD_HASH = "pbkdf2:sha256:600000$TBLSz8DLgFBjBKCe$d4654dcdacf5acd37c60ab2b7b3bf9c93b15e0e0e88e17e5bb9a8c3c3b70e2e5"  # Default: "admin123"
 
 # Configure upload settings
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
