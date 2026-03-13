@@ -1,118 +1,64 @@
 "use client";
 import { useState } from "react";
-import { Card } from "@/components/ui/Card";
+import { ChevronDown } from "lucide-react";
 
-type QA = { q: string; a: string };
-
-const PRIVACY_QAS: QA[] = [
-  { 
-    q: "Is my Instagram data private and secure?", 
-    a: "Yes, absolutely. Unfollowr processes all your Instagram export files locally in your browser. We don't upload, store, or transmit your data to any server. Your follower information never leaves your device, making this the safest way to track Instagram unfollowers." 
-  },
-  { 
-    q: "How is Unfollowr safer than other unfollower apps?", 
-    a: "Unlike most Instagram unfollower tools, we never ask for your Instagram login credentials. Many third-party apps require your password, which violates Instagram's terms of service and puts your account at risk. Unfollowr uses your official Instagram data export instead, keeping your account completely safe." 
-  },
-  { 
-    q: "What information does Unfollowr collect or store?", 
-    a: "None of your Instagram export files or follower data is uploaded or stored. We may collect anonymous usage metrics like button clicks to improve the product, but we never access, store, or have visibility into your Instagram data. Everything is processed client-side in your browser." 
-  }
-];
-
-const GENERAL_QAS: QA[] = [
-  { 
-    q: "How can I see who unfollowed me on Instagram?", 
-    a: "To see who unfollowed you on Instagram, first download your Instagram data export from Settings → Accounts Center → Your information and permissions → Download your information. Select Followers and Following, then upload both files to Unfollowr. We'll instantly show you everyone who doesn't follow you back." 
-  },
-  { 
-    q: "How do I download my Instagram followers data?", 
-    a: "Open Instagram, go to Settings, then Accounts Center. Select \"Your information and permissions\" and tap \"Download your information.\" Choose your Instagram account, select \"Some of your information,\" and pick Followers and Following. Choose JSON or HTML format, then request your download. Instagram will email you when it's ready." 
-  },
-  { 
-    q: "Do I need to log into Instagram to use Unfollowr?", 
-    a: "No, you never need to log into Instagram through Unfollowr. We don't ask for your username, password, or any login credentials. Instead, you simply upload the data export files that Instagram provides directly to you. This keeps your account secure and compliant with Instagram's policies." 
-  },
-  { 
-    q: "Does Unfollowr work on mobile phones and tablets?", 
-    a: "Yes, Unfollowr is fully responsive and works on all devices including iPhones, Android phones, iPads, and desktop browsers. You can upload your Instagram export files from any device and get instant results showing who doesn't follow you back." 
-  },
-  { 
-    q: "Is it safe to use Instagram unfollower tools?", 
-    a: "It depends on the tool. Many unfollower apps ask for your Instagram login, which can get your account flagged or banned. Unfollowr is different—we never access your Instagram account directly. We only analyze the data export that Instagram officially provides, making it completely safe and compliant with Instagram's terms of service." 
-  }
+const FAQ_ITEMS = [
+  { q: "Is my Instagram data private and secure?", a: "Yes. Unfollowr processes your files entirely in your browser. Nothing is uploaded to any server — your data stays on your device." },
+  { q: "How is this safer than other unfollower apps?", a: "Most apps require your Instagram login, which risks your account. Unfollowr uses Instagram's official data export instead — no passwords, no API access, no account risk." },
+  { q: "How do I download my Instagram data?", a: "Go to Instagram Settings → Accounts Center → Your information and permissions → Download your information. Select Followers and Following in JSON or HTML format." },
+  { q: "Do I need to log into Instagram to use this?", a: "No. You never enter your Instagram credentials. You only upload the data export files that Instagram gives you." },
+  { q: "Does it work on mobile?", a: "Yes. The upload and results pages work on any modern mobile browser. Just make sure you can access your Instagram export files on your device." },
 ];
 
 export function FAQ() {
-  const [open, setOpen] = useState<Set<string>>(new Set(["p-0", "g-0"]));
-
-  function toggle(key: string) {
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
-  }
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="mx-auto max-w-5xl px-6 pb-20">
-      <h2 className="mb-2 text-center text-3xl font-bold text-[#0F172A]">Frequently Asked Questions</h2>
-      <p className="mb-4 text-center text-sm text-[#64748B]">Private by design. No logins. No uploads. Everything stays on your device.</p>
-      <div className="mx-auto mt-4 grid max-w-3xl grid-cols-2 gap-3 text-center text-xs text-[#0F172A] sm:text-sm">
-        <div className="rounded-xl border border-[#E2E8F0] bg-white p-3"><span className="text-2xl font-bold text-[#16A34A]">0</span> login attempts required</div>
-        <div className="rounded-xl border border-[#E2E8F0] bg-white p-3"><span className="text-2xl font-bold text-[#16A34A]">100%</span> local processing</div>
+    <section id="faq" className="mx-auto max-w-[720px] px-6 pb-20">
+      <div className="text-center mb-10">
+        <h2 className="text-[28px] font-bold tracking-[-0.03em] text-[color:var(--text)]">
+          Frequently asked questions
+        </h2>
       </div>
-
-      <h3 className="mt-8 text-base font-semibold text-[#0F172A]">Privacy & Security</h3>
-      <div className="mt-3 grid gap-3">
-        {PRIVACY_QAS.map((item, idx) => {
-          const key = `p-${idx}`;
-          const isOpen = open.has(key);
-          return (
-            <Card key={key} className="overflow-hidden">
-              <button
-                className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-[#F7FAFC]"
-                aria-expanded={isOpen}
-                onClick={() => toggle(key)}
-              >
-                <span className="font-medium text-[#0F172A]">{item.q}</span>
-                <span className="text-[#475569]">{isOpen ? "–" : "+"}</span>
-              </button>
-              {isOpen && (
-                <div className="px-4 pb-4 text-[#475569] leading-relaxed">{item.a}</div>
-              )}
-            </Card>
-          );
-        })}
-      </div>
-
-      <h3 className="mt-8 text-base font-semibold text-[#0F172A]">General Questions</h3>
-      <div className="mt-3 grid gap-3">
-        {GENERAL_QAS.map((item, idx) => {
-          const key = `g-${idx}`;
-          const isOpen = open.has(key);
-          return (
-            <Card key={key} className="overflow-hidden">
-              <button
-                className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-[#F7FAFC]"
-                aria-expanded={isOpen}
-                onClick={() => toggle(key)}
-              >
-                <span className="font-medium text-[#0F172A]">{item.q}</span>
-                <span className="text-[#475569]">{isOpen ? "–" : "+"}</span>
-              </button>
-              {isOpen && (
-                <div className="px-4 pb-4 text-[#475569] leading-relaxed">{item.a}</div>
-              )}
-            </Card>
-          );
-        })}
+      <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]">
+        {FAQ_ITEMS.map((item, i) => (
+          <div
+            key={i}
+            className="border-b border-[color:var(--border)] last:border-b-0"
+          >
+            <button
+              type="button"
+              onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              aria-expanded={openFaq === i}
+              className="flex w-full items-center justify-between px-7 py-5 text-left text-base font-medium text-[color:var(--text)] transition-colors hover:text-[color:var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-soft)] focus-visible:ring-inset"
+            >
+              <span>{item.q}</span>
+              <ChevronDown
+                size={18}
+                className="ml-4 shrink-0 text-[color:var(--text-faint)] transition-transform duration-200"
+                style={{ transform: openFaq === i ? "rotate(180deg)" : "rotate(0)" }}
+                aria-hidden
+              />
+            </button>
+            <div
+              className="overflow-hidden transition-all duration-200 ease-out"
+              style={{
+                maxHeight: openFaq === i ? 200 : 0,
+                opacity: openFaq === i ? 1 : 0,
+                padding: openFaq === i ? "0 28px 22px" : "0 28px 0",
+              }}
+            >
+              <p className="text-sm leading-[22px] text-[color:var(--text-muted)]">{item.a}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
-// Export FAQ data for use in server-side schema
-export const FAQ_SCHEMA_DATA = [
-  ...PRIVACY_QAS.map(qa => ({ question: qa.q, answer: qa.a })),
-  ...GENERAL_QAS.map(qa => ({ question: qa.q, answer: qa.a }))
-];
+// Export FAQ data for schema (match visible content)
+export const FAQ_SCHEMA_DATA = FAQ_ITEMS.map((item) => ({
+  question: item.q,
+  answer: item.a,
+}));

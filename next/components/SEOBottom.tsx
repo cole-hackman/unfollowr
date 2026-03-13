@@ -1,14 +1,15 @@
 // Server component - no "use client" directive for SSR SEO content
+import { Card } from "@/components/ui/Card";
 
 export function SEOBottom() {
   return (
     <section className="mx-auto max-w-4xl px-6 py-16">
-      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-8 md:p-10">
-        <h2 className="mb-4 text-2xl font-bold text-[#0F172A]">
+      <Card className="p-8 md:p-10">
+        <h2 className="mb-4 text-2xl font-bold text-[color:var(--text)]">
           How to See Who Doesn't Follow You Back on Instagram
         </h2>
         
-        <div className="space-y-4 text-[#475569] leading-relaxed">
+        <div className="space-y-4 leading-relaxed text-[color:var(--text-muted)]">
           <p>
             Managing your Instagram following list can be frustrating. You might follow hundreds or 
             thousands of accounts, but how many of them actually follow you back? Instagram doesn't 
@@ -25,7 +26,7 @@ export function SEOBottom() {
           </p>
           
           <p>
-            <strong className="text-[#0F172A]">Unfollowr takes a different approach.</strong> Instead 
+            <strong className="text-[color:var(--text)]">Unfollowr takes a different approach.</strong> Instead 
             of accessing your Instagram account directly, we use the official data export that Instagram 
             provides to every user. You download your Followers and Following data from Instagram's 
             settings, then upload those files to Unfollowr. Our tool processes everything locally in 
@@ -44,18 +45,18 @@ export function SEOBottom() {
         <div className="mt-6 flex flex-wrap gap-3">
           <a 
             href="#upload" 
-            className="inline-flex items-center rounded-full bg-[#2f6bff] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#1d5ae0]"
+            className="inline-flex items-center justify-center rounded-[var(--r-md)] bg-[color:var(--primary)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[color:var(--primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
           >
             Try Unfollowr Free
           </a>
           <a 
             href="#how-it-works" 
-            className="inline-flex items-center rounded-full border border-[#E2E8F0] bg-white px-5 py-2.5 text-sm font-medium text-[#475569] transition hover:bg-[#F7FAFC]"
+            className="inline-flex items-center justify-center rounded-[var(--r-md)] border border-[color:var(--border-strong)] bg-[color:var(--surface)] px-5 py-2.5 text-sm font-medium text-[color:var(--text)] transition hover:bg-[color:var(--bg-accent)] hover:border-[color:var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-soft)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--bg)]"
           >
             See How It Works
           </a>
         </div>
-      </div>
+      </Card>
     </section>
   );
 }

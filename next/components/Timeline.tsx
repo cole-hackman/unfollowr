@@ -1,85 +1,75 @@
 "use client";
-import { motion } from "framer-motion";
-import { Card } from "@/components/ui/Card";
+import { Lock, Shield, FileText, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
 
-const steps = [
-  { 
-    n: 1, 
-    icon: "📲", 
-    title: "Download Your Instagram Export", 
-    shortText: "Get your data from Instagram.",
-    longText: "Go to Instagram Settings, then Accounts Center, and select \"Download your information.\" Choose your Followers and Following data in JSON or HTML format. Instagram will email you when your export is ready to download."
-  },
-  { 
-    n: 2, 
-    icon: "📁", 
-    title: "Upload Your Files to Unfollowr", 
-    shortText: "Drag & drop your export files.",
-    longText: "Upload your Followers and Following files from Instagram's data export directly into Unfollowr. Simply drag and drop both files into the upload area above, or click to browse your computer. We accept both JSON and HTML formats."
-  },
-  { 
-    n: 3, 
-    icon: "🔒", 
-    title: "Local Processing Keeps You Safe", 
-    shortText: "Everything stays on your device.",
-    longText: "Unfollowr processes your Instagram data entirely in your browser. Your follower information never leaves your device or gets uploaded to any server. This local-first approach means your data stays private and secure at all times."
-  },
-  { 
-    n: 4, 
-    icon: "🔍", 
-    title: "See Who Doesn't Follow You Back", 
-    shortText: "Get instant, categorized results.",
-    longText: "View a complete list of accounts that don't follow you back, intelligently sorted into categories like brands, celebrities, friends, and potential spam. Use smart filters to quickly find specific accounts and decide who to keep following."
-  }
+const whyFeatures = [
+  { icon: Lock, title: "No Login", desc: "Never enter your Instagram password" },
+  { icon: Shield, title: "100% Private", desc: "All processing happens locally in your browser" },
+  { icon: FileText, title: "Official Data", desc: "Uses Instagram's official data export" },
+  { icon: Zap, title: "Smart Analysis", desc: "Intelligent suggestions on who to unfollow" },
 ];
 
-export function Timeline() {
+export function WhyUnfollowr() {
   return (
-    <section id="how-it-works" className="mx-auto max-w-6xl px-6 py-12">
-      <h2 className="mb-6 text-center text-3xl font-bold text-[#0F172A]">How It Works</h2>
+    <section className="mx-auto max-w-[1080px] px-6 py-24 md:py-[96px]">
+      <div className="grid gap-12 md:grid-cols-2 md:gap-16 lg:items-center">
+        {/* Left — explanation + comparison */}
+        <div>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[color:var(--primary)] mb-3">
+            Why Unfollowr?
+          </p>
+          <h2 className="text-2xl font-bold tracking-[-0.03em] text-[color:var(--text)] mb-4 md:text-[30px]">
+            The safe way to check unfollowers
+          </h2>
+          <p className="text-[15px] leading-6 text-[color:var(--text-muted)] mb-8">
+            Most Instagram follower trackers require your login credentials or use unofficial APIs that can get your account banned. Unfollowr takes a completely different approach.
+          </p>
 
-      <div className="relative hidden gap-14 lg:grid">
-        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-[#E2E8F0] to-transparent" />
-        {steps.map((s, i) => (
-          <motion.div
-            key={s.n}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: .4 }}
-            transition={{ duration: .4, delay: i * 0.05 }}
-            className={`relative flex items-center ${i % 2 === 0 ? "flex-row" : "flex-row-reverse"} mb-16`}
-          >
-            <div className="w-1/2">
-              <Card className="mx-auto max-w-md p-5 text-center">
-                <div className="mb-2 text-3xl">{s.icon}</div>
-                <h3 className="text-lg font-semibold text-[#0F172A]">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[#475569]">{s.longText}</p>
-              </Card>
-            </div>
-            <div className="relative z-10 grid h-12 w-12 place-items-center rounded-full bg-[#2f6bff] text-white shadow-xl">
-              {s.n}
-            </div>
-            <div className="w-1/2" />
-          </motion.div>
-        ))}
-      </div>
-
-      {/* mobile stack */}
-      <div className="grid gap-4 lg:hidden">
-        {steps.map((s, i) => (
-          <Card key={s.n} className="p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2f6bff] text-sm font-bold text-white">
-                {s.n}
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-3.5 items-start">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--danger-soft)]">
+                <AlertTriangle size={18} className="text-[color:var(--danger)]" aria-hidden />
               </div>
-              <div className="flex-1">
-                <div className="text-2xl">{s.icon}</div>
-                <h3 className="mt-1 text-base font-semibold text-[#0F172A]">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[#475569]">{s.longText}</p>
+              <div>
+                <p className="text-[15px] font-semibold text-[color:var(--text)] mb-0.5">Other apps</p>
+                <p className="text-sm leading-[21px] text-[color:var(--text-muted)]">
+                  Require your password or use sketchy APIs that risk account bans
+                </p>
               </div>
             </div>
-          </Card>
-        ))}
+            <div className="flex gap-3.5 items-start">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--success-soft)]">
+                <CheckCircle2 size={18} className="text-[color:var(--success)]" aria-hidden />
+              </div>
+              <div>
+                <p className="text-[15px] font-semibold text-[color:var(--text)] mb-0.5">Unfollowr</p>
+                <p className="text-sm leading-[21px] text-[color:var(--text-muted)]">
+                  Uses Instagram&apos;s official data exports. Zero risk to your account.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right — 2×2 feature grid */}
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          {whyFeatures.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.title}
+                className="rounded-[14px] border-[1.5px] border-[color:var(--border)] bg-[color:var(--surface)] p-6 transition-all hover:border-[color:var(--border-strong)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)]"
+              >
+                <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-[10px] bg-[color:var(--primary-soft)]">
+                  <Icon size={19} className="text-[color:var(--primary)]" aria-hidden />
+                </div>
+                <h4 className="text-[15px] font-semibold tracking-[-0.01em] text-[color:var(--text)] mb-1">
+                  {item.title}
+                </h4>
+                <p className="text-[13px] leading-5 text-[color:var(--text-muted)]">{item.desc}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

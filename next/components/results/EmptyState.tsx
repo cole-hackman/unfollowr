@@ -1,8 +1,17 @@
-export function EmptyState({ msg="🎉 Looks like no one fits that filter.", action }: { msg?: string; action?: React.ReactNode }) {
+export function EmptyState({
+  msg = "No results match your current filters.",
+  action,
+}: {
+  msg?: string;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="rounded-2xl border border-[#E2E8F0] bg-white p-8 text-center text-[#0F172A]">
-      <div className="text-lg text-[#0F172A]">{msg}</div>
-      {action && <div className="mt-3">{action}</div>}
+    <div className="flex flex-col items-center justify-center rounded-[var(--r-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] px-6 py-10 text-center text-[color:var(--text)]">
+      <div className="mb-2 text-sm font-medium uppercase tracking-wide text-[color:var(--text-faint)]">
+        Nothing to show
+      </div>
+      <div className="max-w-md text-sm text-[color:var(--text-muted)]">{msg}</div>
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }

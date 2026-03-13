@@ -1,15 +1,16 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
-import { Upload, Download, CheckCircle2, ChartLine } from "lucide-react";
+import { Upload, FileText, X } from "lucide-react";
 
 type Props = {
   onFilesReady: (files: File[]) => void;
 };
 
 export function UploadCard({ onFilesReady }: Props) {
+  const router = useRouter();
   const [drag, setDrag] = useState(false);
   const [progress, setProgress] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
@@ -63,6 +64,10 @@ export function UploadCard({ onFilesReady }: Props) {
     }, 400);
   }
 
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
   function resetInput() {
     setProgress(0);
     if (inputRef.current) inputRef.current.value = "";
@@ -105,9 +110,13 @@ export function UploadCard({ onFilesReady }: Props) {
       setProgress(100);
       setEta(0);
       window.dispatchEvent(new CustomEvent("unfollowr-dataset", { detail: items }));
-      // brief completion state for UX
+      // brief completion state for UX then client-side navigate
       setTimeout(() => {
-        window.location.href = "/results";
+        try {
+          router.push("/results");
+        } catch {
+          window.location.href = "/results";
+        }
       }, 250);
     } finally {
       analyzingRef.current = false;
@@ -115,125 +124,146 @@ export function UploadCard({ onFilesReady }: Props) {
   };
 
   return (
-    <section id="upload" className="mx-auto mt-12 max-w-5xl px-6">
-      <Card className="p-12 md:p-16 text-center">
-        {/* Header Icon */}
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#E8F0FE] text-[#1D4ED8] shadow-sm">
-          <Upload className="h-8 w-8" />
+    <section id="upload" className="mx-auto max-w-[720px] px-6 pb-0">
+      <div className="rounded-[20px] border-[1.5px] border-[color:var(--border)] bg-[color:var(--surface)] p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_32px_rgba(0,0,0,0.04)] transition-all duration-300 hover:border-[color:var(--border-strong)] hover:shadow-[0_1px_3px_rgba(0,0,0,0.04),0_12px_40px_rgba(0,0,0,0.06)] md:p-12">
+        <div className="mb-6">
+          <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-[color:var(--text)] mb-1.5">
+            Upload your Instagram export
+          </h2>
+          <p className="text-sm text-[color:var(--text-muted)]">
+            Drag & drop your Followers + Following files below
+          </p>
         </div>
-        <h3 className="mt-6 text-3xl font-bold text-[#0F172A]">Upload your Instagram export</h3>
-        <p className="mt-1 text-sm text-[#64748B]">Drag & drop your Followers + Following files</p>
 
-        {/* Drop Zone */}
         <div
-          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDrag(true);
+          }}
           onDragLeave={() => setDrag(false)}
-          onDrop={(e) => { e.preventDefault(); setDrag(false); accept(e.dataTransfer.files); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDrag(false);
+            accept(e.dataTransfer.files);
+          }}
           onClick={() => inputRef.current?.click()}
-          className={`mt-8 w-full cursor-pointer rounded-2xl border-2 border-dashed p-14 transition ${
-            drag ? "border-[#2f6bff] bg-[#F1F5FE]" : files.length ? "border-green-400 bg-green-50" : "border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white"
+          className={`cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-200 ${
+            drag
+              ? "border-[color:var(--primary)] bg-[color:var(--primary-soft)]"
+              : files.length
+                ? "border-[color:var(--success)] bg-[color:var(--success-soft)] py-8"
+                : "border-[color:var(--border)] bg-[color:var(--surface-2)] py-14 px-8 hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface)]"
           }`}
         >
-          <div className="flex flex-col items-center justify-center gap-2">
-            {files.length ? (
-              <>
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
-                <div className="text-lg font-medium text-green-700">Files selected</div>
-                <div className="mt-1 text-xs text-green-700/80">
-                  {files.map(f => f.name).join(" • ")}
-                </div>
-              </>
-            ) : (
-              <>
-                <Upload className="h-8 w-8 text-[#2f6bff]" />
-                <div className="text-lg font-medium text-[#0F172A]">Drop files here</div>
-                <div className="text-xs text-[#64748B]">or click to browse (JSON/HTML files)</div>
-              </>
-            )}
-          </div>
-        </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept=".json,.html,application/json,text/html"
-          className="hidden"
-          onChange={(e) => accept(e.target.files)}
-          aria-label="Upload Instagram export files"
-        />
-
-        {/* Buttons Row */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:gap-4">
-          <Button className="justify-center" onClick={() => inputRef.current?.click()} iconLeft={<Download className="h-4 w-4" />}>
-            Choose files
-          </Button>
-          <button
-            type="button"
-            className="rounded-full bg-[#F1F5F9] px-4 py-2 text-sm text-[#475569] hover:bg-[#E2E8F0]"
-            onClick={async () => { await useSampleFiles(setFiles); resetInput(); }}
-          >
-            Try sample files
-          </button>
-          <Button
-            className="justify-center disabled:opacity-50"
-            aria-disabled={files.length < 2}
-            disabled={files.length < 2}
-            onClick={async () => { await handleAnalyze(); }}
-            iconLeft={<ChartLine className="h-4 w-4" />}
-          >
-            Analyze
-          </Button>
-        </div>
-
-        {/* Stepper + Progress */}
-        <div className="mt-8">
-          <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-[#475569]">
-            <Step label="Uploading files" active={phase === "uploading" || phase === "parsing" || phase === "analyzing" || phase === "complete"} current={phase === "uploading"} />
-            <span>→</span>
-            <Step label="Parsing data" active={phase === "parsing" || phase === "analyzing" || phase === "complete"} current={phase === "parsing"} />
-            <span>→</span>
-            <Step label="Analyzing followers" active={phase === "analyzing" || phase === "complete"} current={phase === "analyzing"} />
-            <span>→</span>
-            <Step label="Complete" active={phase === "complete"} current={phase === "complete"} />
-          </div>
-
-          {progress > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#EEF2FF]"
-            >
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ type: "tween", ease: "easeOut", duration: 0.4 }}
-                className="relative h-2 rounded-full bg-[#2f6bff]"
-              >
-                {/* subtle animated sheen */}
-                <div className="absolute inset-0 animate-[shimmer_1.6s_infinite] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,.35),transparent)] bg-[length:200%_100%]" />
-              </motion.div>
-            </motion.div>
-          )}
-
-          {(progress > 0 || phase !== "idle") && (
-            <div className="mt-2 text-center text-xs text-[#64748B]">
-              <span>{progress}%</span>
-              {eta != null && eta > 0 && <span> • ~{eta}s remaining</span>}
+          <input
+            ref={inputRef}
+            id="file-input"
+            type="file"
+            multiple
+            accept=".json,.html,.htm,application/json,text/html"
+            className="hidden"
+            onChange={(e) => accept(e.target.files)}
+            aria-label="Upload Instagram export files"
+          />
+          {files.length === 0 ? (
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-[color:var(--primary-soft)]">
+                <Upload size={22} className="text-[color:var(--primary)]" aria-hidden />
+              </div>
+              <p className="text-base font-medium text-[color:var(--text)] mb-1.5">
+                Drop your files here
+              </p>
+              <p className="text-[13px] text-[color:var(--text-faint)]">
+                or click to browse · JSON or HTML from Instagram&apos;s export
+              </p>
+            </div>
+          ) : (
+            <div>
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                {files.map((file, index) => (
+                  <div
+                    key={file.name + index}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 pl-3 text-[13px] text-[color:var(--text)]"
+                  >
+                    <FileText size={14} className="text-[color:var(--text-muted)] shrink-0" aria-hidden />
+                    <span className="max-w-[180px] truncate">
+                      {file.name?.length > 28 ? file.name.slice(0, 28) + "…" : file.name || `File ${index + 1}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(index);
+                      }}
+                      aria-label={`Remove ${file.name}`}
+                      className="flex rounded p-0.5 text-[color:var(--text-faint)] transition-colors hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text)]"
+                    >
+                      <X size={14} aria-hidden />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[13px] font-medium text-[color:var(--success)]">
+                {files.length} file{files.length > 1 ? "s" : ""} selected · Click to add more
+              </p>
             </div>
           )}
         </div>
-      </Card>
-    </section>
-  );
-}
 
-function Step({ label, active, current }: { label: string; active: boolean; current: boolean }) {
-  return (
-    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 ${active ? "bg-[#EEF2FF] text-[#1D4ED8]" : "bg-[#F1F5F9] text-[#94A3B8]"}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${current ? "bg-[#1D4ED8]" : active ? "bg-[#93C5FD]" : "bg-[#CBD5E1]"}`} />
-      <span>{label}</span>
-    </div>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => inputRef.current?.click()}
+              className="rounded-xl px-4 text-[13px]"
+            >
+              Choose files
+            </Button>
+            <Button
+              size="lg"
+              disabled={files.length < 2}
+              onClick={async () => await handleAnalyze()}
+              className="rounded-xl px-7 py-3 text-[15px] disabled:opacity-45 disabled:pointer-events-none"
+            >
+              Analyze
+            </Button>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await useSampleFiles(setFiles);
+              resetInput();
+            }}
+            className="text-[13px] font-medium text-[color:var(--text-muted)] underline underline-offset-2 hover:text-[color:var(--text)]"
+          >
+            Try with sample files
+          </button>
+        </div>
+
+        {/* Progress (shown only when analyzing) */}
+        {progress > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[color:var(--primary-soft)]"
+          >
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ type: "tween", ease: "easeOut", duration: 0.4 }}
+              className="h-2 rounded-full bg-[color:var(--primary)]"
+            />
+          </motion.div>
+        )}
+        {progress > 0 && phase !== "idle" && (
+          <p className="mt-2 text-center text-xs text-[color:var(--text-muted)]">
+            {progress}%
+            {eta != null && eta > 0 && <> · ~{eta}s remaining</>}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -309,19 +339,55 @@ function extractUsernamesFromHtml(html: string): Set<string> {
     "download","locations","emails","n","policies"
   ]);
   const isLikelyUsername = (u: string) => /^[a-z0-9._]{1,30}$/.test(u) && !RESERVED.has(u);
-  // Anchor hrefs like https://www.instagram.com/username or https://www.instagram.com/_u/username (allow optional www, trailing slash, query/fragment)
+
+  // 1) Full instagram.com profile URLs
   const hrefRegex = /href=["']https?:\/\/(?:www\.)?instagram\.com\/(?:_u\/)?([^\/"'?#]+)[^"']*["']/gi;
   let m: RegExpExecArray | null;
   while ((m = hrefRegex.exec(html))) {
     const cand = (m[1] || "").toLowerCase();
     if (isLikelyUsername(cand)) out.add(cand);
   }
-  // Also @username patterns
+
+  // 2) Generic anchors – handle relative URLs and other instagram variants
+  const anchorRegex = /<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
+  while ((m = anchorRegex.exec(html))) {
+    const href = (m[1] || "").trim();
+    const text = (m[2] || "").trim();
+    let cand: string | null = null;
+
+    // instagram.com links (including l.instagram.com redirects etc.)
+    const igMatch = href.match(/instagram\.com\/(?:_u\/)?([^\/\s?#"']+)/i);
+    if (igMatch && igMatch[1]) {
+      cand = igMatch[1].toLowerCase();
+    } else if (href.startsWith("instagram://user?username=")) {
+      const u = href.split("instagram://user?username=")[1]?.split(/[&#?]/)[0];
+      if (u) cand = u.toLowerCase();
+    } else if (href.startsWith("/")) {
+      // Relative profile link like /username/ or /username
+      const seg = href.slice(1).split(/[/?#]/)[0];
+      if (seg) cand = seg.toLowerCase();
+    }
+
+    if (cand && isLikelyUsername(cand)) {
+      out.add(cand);
+      continue;
+    }
+
+    // Fallback: visible text inside the anchor looks like a username
+    const textMatch = /^@?([a-zA-Z0-9._]+)$/.exec(text);
+    if (textMatch && textMatch[1]) {
+      const t = textMatch[1].toLowerCase();
+      if (isLikelyUsername(t)) out.add(t);
+    }
+  }
+
+  // 3) Also @username patterns anywhere in the HTML
   const atRegex = /@([a-zA-Z0-9._]+)/g;
   while ((m = atRegex.exec(html))) {
     const cand = (m[1] || "").toLowerCase();
     if (isLikelyUsername(cand)) out.add(cand);
   }
+
   return out;
 }
 

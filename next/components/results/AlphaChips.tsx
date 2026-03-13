@@ -1,18 +1,27 @@
 "use client";
 import clsx from "clsx";
 
-const letters = ["All",..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""), "#"];
+const letters = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""), "#"];
 
-export function AlphaChips({ active, onChange }: { active: string; onChange: (v:string)=>void }) {
+export function AlphaChips({
+  active,
+  onChange,
+}: {
+  active: string;
+  onChange: (v: string) => void;
+}) {
   return (
-    <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto rounded-xl border border-[#E2E8F0] bg-white p-2">
+    <div className="no-scrollbar mt-4 flex gap-1.5 overflow-x-auto rounded-[var(--r-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] p-1.5">
       {letters.map((l) => (
         <button
           key={l}
+          type="button"
           onClick={() => onChange(l)}
           className={clsx(
-            "min-w-[38px] rounded-lg px-3 py-1.5 text-sm text-[#475569] hover:bg-[#F1F5F9]",
-            active === l && "bg-[#E2E8F0] font-medium text-[#0F172A]"
+            "min-w-[38px] rounded-[999px] px-3 py-1.5 text-xs font-medium transition",
+            active === l
+              ? "bg-[color:var(--primary)] text-white shadow-sm"
+              : "text-[color:var(--text-muted)] hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text)]"
           )}
         >
           {l}

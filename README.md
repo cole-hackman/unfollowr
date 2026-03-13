@@ -34,6 +34,15 @@ A secondary challenge was helping users make sense of their "non-follower" lists
 - **AI Account Segmentation**: Integration with Google Gemini to classify non-followers (e.g., assessing if an account is a brand/celebrity) and score them.
 - **Natural Language Search**: A chatbot interface that translates natural language queries into filter parameters.
 - **Interactive UI**: A modern dashboard with smooth Framer Motion animations and visual analytics using Chart.js.
+- **SEO & discoverability improvements (Next.js App Router)**:
+  - Updated homepage title/description to match high-intent “unfollowers tracker/checker” patterns (2026).
+  - Added/expanded metadata for Open Graph + Twitter.
+  - Added structured data JSON-LD (WebApplication, FAQPage, and HowTo).
+  - Included `robots.txt` and `sitemap.xml` routes via `next/app/robots.ts` and `next/app/sitemap.ts`.
+
+### Competitor SEO notes
+
+See `docs/SEO-competitor-comparison.md` for a competitor meta/schema/page-structure comparison and the exact gaps + fixes applied.
 
 ## 6. How Can Someone Run It Locally?
 

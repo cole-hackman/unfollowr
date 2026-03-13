@@ -4,12 +4,41 @@ import { AlphaChips } from "@/components/results/AlphaChips";
 import { SelectionBar } from "@/components/results/SelectionBar";
 import { UserCard } from "@/components/results/UserCard";
 import { EmptyState } from "@/components/results/EmptyState";
-import { AIAssistant } from "@/components/ai/AIAssistant";
 import { Button } from "@/components/ui/Button";
-import { StatusPie } from "@/components/results/StatusPie";
-import { CheckCircle2, Users, UserMinus, Percent } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import {
+  Users,
+  UserMinus,
+  UserPlus,
+  Search,
+  LayoutGrid,
+  List,
+  Sparkles,
+  Heart,
+  TrendingUp,
+  ArrowLeft,
+} from "lucide-react";
 
 type Item = { username: string; score?: number; tags?: string[]; customTags?: string[]; unfollowed?: boolean };
+
+type TabKey = "don't follow back" | "fans" | "mutuals";
+
+function readStableCounts(): { following: number; followers: number; nonfollowers: number; fans: number; mutuals: number } {
+  try {
+    const sraw = sessionStorage.getItem("unfollowr-stats");
+    const raw = sessionStorage.getItem("unfollowr-items");
+    const rraw = sessionStorage.getItem("unfollowr-items-reverse");
+    const stats = sraw ? JSON.parse(sraw) : { followers: 0, following: 0 };
+    const following = stats.following ?? 0;
+    const followers = stats.followers ?? 0;
+    const nonfollowers = raw ? (JSON.parse(raw) as Item[]).length : 0;
+    const fans = rraw ? (JSON.parse(rraw) as Item[]).length : 0;
+    const mutuals = Math.max(following - nonfollowers, 0);
+    return { following, followers, nonfollowers, fans, mutuals };
+  } catch {
+    return { following: 0, followers: 0, nonfollowers: 0, fans: 0, mutuals: 0 };
+  }
+}
 
 export default function ResultsPage() {
   const [items, setItems] = useState<Item[]>([]);
@@ -17,33 +46,29 @@ export default function ResultsPage() {
   const [alpha, setAlpha] = useState("All");
   const [query, setQuery] = useState("");
   const [mounted, setMounted] = useState(false);
-  const [mode, setMode] = useState<"nonfollowers" | "not-following-back">("nonfollowers");
+  const [activeTab, setActiveTab] = useState<TabKey>("don't follow back");
   const [view, setView] = useState<string>(() => {
-    if (typeof window === "undefined") return "grid";
-    return localStorage.getItem("unfollowr-view") || "grid";
+    if (typeof window === "undefined") return "list";
+    const stored = localStorage.getItem("unfollowr-view");
+    return stored === "list" || stored === "grid2" || stored === "grid3" ? stored : "list";
   });
-  const [stats, setStats] = useState<{ followers: number; following: number }>({ followers: 0, following: 0 });
+  const [stableCounts, setStableCounts] = useState(() => ({ following: 0, followers: 0, nonfollowers: 0, fans: 0, mutuals: 0 }));
   const [hideUnfollowed, setHideUnfollowed] = useState(false);
   const [confirm, setConfirm] = useState<{ open: boolean; usernames: string[] }>({ open: false, usernames: [] });
   const [toast, setToast] = useState<{ show: boolean; count: number; usernames: string[]; timer?: number }>({ show: false, count: 0, usernames: [] });
 
+  // Load data and stable counts from sessionStorage; keep counts stable when switching tabs
   useEffect(() => {
-    // Load from sessionStorage first (navigation case)
+    setStableCounts(readStableCounts());
     try {
       const raw = sessionStorage.getItem("unfollowr-items");
       if (raw) setItems(JSON.parse(raw));
-      const sraw = sessionStorage.getItem("unfollowr-stats");
-      if (sraw) setStats(JSON.parse(sraw));
-      const rraw = sessionStorage.getItem("unfollowr-items-reverse");
-      if (!raw && rraw && mode === "not-following-back") setItems(JSON.parse(rraw));
     } catch {}
     function onData(e: any) {
-      setItems(e.detail as Item[]);
-      try { sessionStorage.setItem("unfollowr-items", JSON.stringify(e.detail)); } catch {}
-      try {
-        const sraw = sessionStorage.getItem("unfollowr-stats");
-        if (sraw) setStats(JSON.parse(sraw));
-      } catch {}
+      const list = e.detail as Item[];
+      setItems(list);
+      try { sessionStorage.setItem("unfollowr-items", JSON.stringify(list)); } catch {}
+      setStableCounts(readStableCounts());
     }
     window.addEventListener("unfollowr-dataset", onData as any);
     return () => window.removeEventListener("unfollowr-dataset", onData as any);
@@ -52,17 +77,33 @@ export default function ResultsPage() {
   useEffect(() => { try { localStorage.setItem("unfollowr-view", view); } catch {} }, [view]);
   useEffect(() => { setMounted(true); }, []);
 
+  // When tab changes, load the correct list from sessionStorage
+  useEffect(() => {
+    try {
+      if (activeTab === "don't follow back") {
+        const raw = sessionStorage.getItem("unfollowr-items");
+        setItems(raw ? JSON.parse(raw) : []);
+      } else if (activeTab === "fans") {
+        const rraw = sessionStorage.getItem("unfollowr-items-reverse");
+        setItems(rraw ? JSON.parse(rraw) : []);
+      } else {
+        setItems([]);
+      }
+    } catch {}
+  }, [activeTab]);
+
   // URL params → state (once)
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const letter = params.get("letter");
       const v = params.get("view");
-      const m = params.get("mode");
+      const t = params.get("tab");
       const q = params.get("q");
       if (letter) setAlpha(letter);
-      if (v === "grid" || v === "table") setView(v);
-      if (m === "nonfollowers" || m === "not-following-back") setMode(m);
+      if (v === "list" || v === "grid2" || v === "grid3") setView(v);
+      if (t === "fans" || t === "mutuals") setActiveTab(t);
+      else if (t === "don't follow back" || t === "dont-follow-back") setActiveTab("don't follow back");
       if (q) setQuery(q);
     } catch {}
   }, []);
@@ -72,14 +113,14 @@ export default function ResultsPage() {
     try {
       const params = new URLSearchParams();
       if (alpha !== "All") params.set("letter", alpha);
-      if (view !== "grid") params.set("view", view);
+      if (view !== "list") params.set("view", view);
       if (query) params.set("q", query);
-      if (mode !== "nonfollowers") params.set("mode", mode);
+      if (activeTab !== "don't follow back") params.set("tab", activeTab);
       const search = params.toString();
       const url = search ? `/results?${search}` : "/results";
       window.history.replaceState(null, "", url);
     } catch {}
-  }, [alpha, view, query, mode]);
+  }, [alpha, view, query, activeTab]);
 
   const filtered = useMemo(() => {
     let f = items;
@@ -97,6 +138,11 @@ export default function ResultsPage() {
 
   const selectedCount = Object.values(selected).filter(Boolean).length;
   const processedCount = useMemo(() => items.filter(i => i.unfollowed).length, [items]);
+
+  const gridCols =
+    view === "list" ? "grid-cols-1" :
+    view === "grid2" ? "grid-cols-1 sm:grid-cols-2" :
+    "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
 
   // Select-all (visible) checkbox state
   const headerSelectRef = useRef<HTMLInputElement>(null);
@@ -123,33 +169,18 @@ export default function ResultsPage() {
     setSelected({});
   }
 
-  // Wave-based opener with modal (simple inline implementation)
-  const [opening, setOpening] = useState<{active:boolean; wave:number; totalWaves:number; perWave:number}>({active:false, wave:0, totalWaves:0, perWave:5});
-  const cancelOpenRef = useRef<{cancel:boolean}>({cancel:false});
-  async function openSelectedInWaves() {
-    const usernames = Object.keys(selected).filter(k => selected[k]);
-    const perWave = 5;
-    const totalWaves = Math.ceil(usernames.length / perWave);
-    setOpening({ active: true, wave: 0, totalWaves, perWave });
-    cancelOpenRef.current.cancel = false;
-    for (let w = 0; w < totalWaves; w++) {
-      if (cancelOpenRef.current.cancel) break;
-      const slice = usernames.slice(w*perWave, (w+1)*perWave);
-      // Use anchor clicks within user gesture to avoid popup blocking
-      slice.forEach((u) => {
-        const a = document.createElement("a");
-        a.href = `https://instagram.com/${u}`;
-        a.target = "_blank";
-        a.rel = "noopener";
-        // Must be in DOM in some browsers
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      });
-      setOpening({ active: true, wave: w+1, totalWaves, perWave });
-      if (w < totalWaves - 1) await new Promise(r => setTimeout(r, 2000));
-    }
-    setOpening({ active: false, wave: 0, totalWaves: 0, perWave });
+  // Open all selected profiles in new tabs/windows.
+  // Note: modern browsers may still limit the number of popups allowed per click.
+  function openSelectedInWaves() {
+    const usernames = Object.keys(selected).filter((k) => selected[k]);
+    if (!usernames.length) return;
+    usernames.forEach((u) => {
+      try {
+        window.open(`https://instagram.com/${u}`, "_blank", "noopener,noreferrer");
+      } catch {
+        // ignore popup failures
+      }
+    });
   }
 
   function markSelectedUnfollowed() {
@@ -210,172 +241,205 @@ export default function ResultsPage() {
     a.click();
   }
 
-  // stats helpers
-  function calcStats() {
-    const followers = stats.followers || 0;
-    const following = stats.following || (items.length + stats.followers);
-    const nonfollowers = items.length;
-    return { followers, following, nonfollowers };
-  }
-
-  function calcRatio(a?: number, b?: number) {
-    if (!a || !b) return "–";
-    const r = a / b;
-    return `${(r*100).toFixed(0)}%`;
-  }
-
   if (!mounted) return null;
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-[#0F172A]">{mode === "nonfollowers" ? "Non-followers" : "Not following back"}</h1>
-          <div className="mt-1 text-sm text-[#64748B]">
-            {mode === "nonfollowers"
-              ? `${filtered.length} accounts you follow who don’t follow back.`
-              : `${filtered.length} accounts who follow you that you don’t follow back.`}
+    <main className="mx-auto max-w-7xl px-6 py-8">
+      {/* Back link */}
+      <button
+        type="button"
+        onClick={() => { window.location.href = "/"; }}
+        className="mb-6 inline-flex items-center gap-1.5 border-none bg-transparent text-sm font-medium text-[color:var(--text-muted)] transition-colors hover:text-[color:var(--text)]"
+      >
+        <ArrowLeft size={16} aria-hidden />
+        Upload new file
+      </button>
+
+      {/* Title */}
+      <h1 className="text-[28px] font-bold tracking-[-0.03em] text-[color:var(--text)] mb-6">
+        Your Instagram Insights
+      </h1>
+
+      {/* Stats row - 5 color-coded cards (stable counts) */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 mb-6">
+        <div className="rounded-[14px] border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--text-muted)]">
+            <Users size={16} className="shrink-0" />
+            Following
           </div>
+          <div className="text-2xl font-bold tracking-[-0.02em] text-[color:var(--text)]">{stableCounts.following}</div>
         </div>
-        <div className="flex gap-2">
-          <div className="mr-2 inline-flex rounded-xl border border-[#E2E8F0] bg-white p-1 text-sm">
-            <button className={`rounded-lg px-3 py-1 ${mode === "nonfollowers" ? "bg-[#EEF2FF] text-[#1D4ED8]" : "text-[#475569]"}`} onClick={()=>{
-              setMode("nonfollowers");
-              try {
-                const raw = sessionStorage.getItem("unfollowr-items");
-                if (raw) setItems(JSON.parse(raw));
-              } catch {}
-            }}>Non-followers</button>
-            <button className={`rounded-lg px-3 py-1 ${mode === "not-following-back" ? "bg-[#EEF2FF] text-[#1D4ED8]" : "text-[#475569]"}`} onClick={()=>{
-              setMode("not-following-back");
-              try {
-                const raw = sessionStorage.getItem("unfollowr-items-reverse");
-                if (raw) setItems(JSON.parse(raw));
-                else setItems([]);
-              } catch {}
-            }}>Not following back</button>
+        <div className="rounded-[14px] border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--text-muted)]">
+            <Heart size={16} className="shrink-0" />
+            Followers
           </div>
-          <Button variant={view==="grid"?"primary":"outline"} onClick={()=>setView("grid")}>Grid</Button>
-          <Button variant={view==="table"?"primary":"outline"} onClick={()=>setView("table")}>Table</Button>
-          <Button variant="outline" onClick={()=>{ window.location.href = "/"; }}>Analyze again</Button>
+          <div className="text-2xl font-bold tracking-[-0.02em] text-[color:var(--text)]">{stableCounts.followers}</div>
+        </div>
+        <div className="rounded-[14px] border border-[color:var(--warning-soft)] bg-[color:var(--warning-soft)] p-4">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--warning)]">
+            <UserMinus size={16} className="shrink-0" />
+            Don&apos;t follow back
+          </div>
+          <div className="text-2xl font-bold tracking-[-0.02em] text-[color:var(--warning)]">{stableCounts.nonfollowers}</div>
+        </div>
+        <div className="rounded-[14px] border border-[color:var(--success-soft)] bg-[color:var(--success-soft)] p-4">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--success)]">
+            <UserPlus size={16} className="shrink-0" />
+            Your fans
+          </div>
+          <div className="text-2xl font-bold tracking-[-0.02em] text-[color:var(--success)]">{stableCounts.fans}</div>
+        </div>
+        <div className="rounded-[14px] border border-[color:var(--primary-soft)] bg-[color:var(--primary-soft)] p-4">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--primary)]">
+            <TrendingUp size={16} className="shrink-0" />
+            Mutuals
+          </div>
+          <div className="text-2xl font-bold tracking-[-0.02em] text-[color:var(--primary)]">{stableCounts.mutuals}</div>
         </div>
       </div>
 
-      {/* stats row */}
-      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <Stat label="Followers" value={calcStats().followers} icon={<Users className="h-4 w-4" />} />
-        <Stat label="Following" value={calcStats().following} icon={<Users className="h-4 w-4" />} />
-        <Stat label="Non-followers" value={calcStats().nonfollowers} icon={<UserMinus className="h-4 w-4" />} />
-        <Stat label="Follow ratio" value={calcRatio(calcStats().followers, calcStats().following)} icon={<Percent className="h-4 w-4" />} />
-        <Stat label="Unfollowed" value={processedCount} icon={<CheckCircle2 className="h-4 w-4" />} />
-        <Stat label="Remaining" value={Math.max(calcStats().nonfollowers - processedCount, 0)} icon={<UserMinus className="h-4 w-4" />} />
+      {/* Tab bar: Don't follow back | Your fans | Mutuals */}
+      <div className="flex gap-1 border-b-[1.5px] border-[color:var(--border)] mb-5 overflow-x-auto">
+        {([
+          { key: "don't follow back" as TabKey, icon: UserMinus, label: "Don't follow back", count: stableCounts.nonfollowers },
+          { key: "fans" as TabKey, icon: UserPlus, label: "Your fans", count: stableCounts.fans },
+          { key: "mutuals" as TabKey, icon: TrendingUp, label: "Mutuals", count: stableCounts.mutuals },
+        ]).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+              activeTab === tab.key
+                ? "border-[color:var(--primary)] text-[color:var(--text)]"
+                : "border-transparent text-[color:var(--text-muted)] hover:text-[color:var(--text)]"
+            }`}
+          >
+            <tab.icon size={15} aria-hidden />
+            <span>{tab.label}</span>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+              activeTab === tab.key ? "bg-[color:var(--primary)] text-white" : "bg-[color:var(--surface-2)] text-[color:var(--text-muted)]"
+            }`}>
+              {tab.count}
+            </span>
+          </button>
+        ))}
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
-        <label className="inline-flex items-center gap-2 text-sm text-[#475569]">
-          <input type="checkbox" className="h-4 w-4" checked={hideUnfollowed} onChange={(e)=> setHideUnfollowed(e.target.checked)} />
-          Hide unfollowed
-        </label>
-      </div>
-
-      <div className="mt-6 flex gap-2">
-        <input
-          className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-sm text-[#0F172A] outline-none placeholder:text-[#94a3b8]"
-          placeholder="Search usernames…"
-          value={query}
-          onChange={(e)=>setQuery(e.target.value)}
-        />
-        <Button variant="outline" onClick={()=>{ setAlpha("All"); setQuery(""); }}>Clear all</Button>
-      </div>
-
-      <AlphaChips active={alpha} onChange={setAlpha} />
-
-      {/* grid or table */}
-      {view === "grid" ? (
-        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {filtered.length === 0 ? (
-            <EmptyState msg={items.length ? "No results match your filters." : "Upload your export on the home page to see results."} action={<Button variant="outline" onClick={()=>{ setAlpha("All"); setQuery(""); }}>Reset filters</Button>} />
-          ) : (
-            filtered.map((i) => (
-              <UserCard
-                key={i.username}
-                username={i.username}
-                selected={!!selected[i.username]}
-                onToggle={(v)=>toggle(i.username, v)}
+      {/* Search, Hide unfollowed, view toggle */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-5">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <div className="relative w-full sm:w-auto sm:min-w-[280px] sm:max-w-[340px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--text-faint)]" />
+            <Input
+              className="h-10 pl-9 text-sm"
+              placeholder="Search usernames…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          {activeTab === "don't follow back" && (
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[color:var(--text-muted)]">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-[color:var(--border)] text-[color:var(--primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--primary-soft)]"
+                checked={hideUnfollowed}
+                onChange={(e) => setHideUnfollowed(e.target.checked)}
               />
-            ))
+              Hide unfollowed
+            </label>
           )}
         </div>
-      ) : (
-        <div className="mt-5 overflow-x-auto rounded-2xl border border-[#E2E8F0] bg-white">
-          {filtered.length === 0 ? (
-            <div className="p-6"><EmptyState msg={items.length ? "No results match your filters." : "Upload your export on the home page to see results."} action={<Button variant="outline" onClick={()=>{ setAlpha("All"); setQuery(""); }}>Reset filters</Button>} /></div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between px-4 py-3 text-sm text-[#475569]">
-                <div className="flex items-center gap-3">
-                  <label className="inline-flex items-center gap-2">
-                    <input ref={headerSelectRef} type="checkbox" className="h-4 w-4" onChange={(e)=> selectVisible(e.target.checked)} />
-                    <span>Select all visible</span>
-                  </label>
-                  <button className="rounded-md px-2 py-1 hover:bg-[#F1F5F9]" onClick={()=> selectVisible(true)}>Select page</button>
-                  <button className="rounded-md px-2 py-1 hover:bg-[#F1F5F9]" onClick={clearSelection}>Clear selection</button>
-                </div>
-                <div className="text-[#0F172A]">{selectedCount} accounts selected</div>
-              </div>
-              <table className="w-full text-sm">
-                <thead className="bg-[#F8FAFC] text-left text-[#475569]">
-                  <tr>
-                    <th className="px-4 py-3 w-[42px]">
-                      {/* empty, header select handled above */}
-                    </th>
-                    <th className="px-4 py-3">Username</th>
-                    <th className="px-4 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((i)=> (
-                    <tr key={i.username} className={`border-t border-[#E2E8F0] ${i.unfollowed ? "opacity-60 line-through" : ""}`}>
-                      <td className="px-4 py-3">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4"
-                          checked={!!selected[i.username]}
-                          onChange={(e)=> toggle(i.username, e.target.checked)}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-[#0F172A]">{i.username}</td>
-                      <td className="px-4 py-3">
-                        <a className="text-[#475569] hover:underline" href={`https://instagram.com/${i.username}`} target="_blank">Open</a>
-                        <button className="ml-3 text-[#475569] hover:underline" onClick={()=> setItems(prev => prev.map(x => x.username===i.username ? { ...x, unfollowed: !x.unfollowed } : x ))}>{i.unfollowed ? "Undo" : "Mark unfollowed"}</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          )}
+        <div className="flex items-center gap-4">
+          <div className="inline-flex rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-1.5">
+            {[
+              { v: "list", label: "List", icon: List },
+              { v: "grid2", label: "2 col", icon: LayoutGrid },
+              { v: "grid3", label: "3 col", icon: LayoutGrid },
+            ].map(({ v, label, icon: Icon }) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  view === v ? "bg-[color:var(--primary-soft)] text-[color:var(--primary)]" : "text-[color:var(--text-muted)] hover:bg-[color:var(--surface-2)]"
+                }`}
+                aria-label={label}
+              >
+                <Icon size={16} aria-hidden />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
-
-      {/* Analytics Pie */}
-      <div className="mt-8 rounded-2xl border border-[#E2E8F0] bg-white p-4">
-        <div className="mb-3 text-sm font-medium text-[#0F172A]">Progress</div>
-        <StatusPie items={items} />
       </div>
 
-      <SelectionBar
-        count={selectedCount}
-        onCopy={() => {
-          const list = Object.keys(selected).filter(k => selected[k]).join("\n");
-          navigator.clipboard.writeText(list);
-        }}
-        onExportCSV={exportSelectedCSV}
-        onExportTXT={exportSelectedTXT}
-        onClear={clearSelection}
-        onOpenWaves={openSelectedInWaves}
-        onMarkUnfollowed={mode === "nonfollowers" ? markSelectedUnfollowed : () => {}}
-      />
+      {activeTab === "mutuals" ? (
+        <section className="mt-6 flex flex-col items-center justify-center rounded-[var(--r-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] px-6 py-10 text-center">
+          <div className="mb-2 text-sm font-medium uppercase tracking-wide text-[color:var(--text-faint)]">
+            Nothing to list
+          </div>
+          <p className="max-w-md text-sm text-[color:var(--text-muted)] leading-relaxed">
+            Instagram&apos;s export doesn&apos;t include a detailed mutuals list — it only gives us followers and
+            following. We show the total mutuals count in the stats above, but there isn&apos;t a per-account
+            mutuals view available from the data Instagram provides.
+          </p>
+        </section>
+      ) : (
+        <>
+          <AlphaChips active={alpha} onChange={setAlpha} />
+
+          {/* List/grid cards (1/2/3 columns) */}
+          {(view === "list" || view === "grid2" || view === "grid3") && (
+            <div className={`mt-5 grid gap-3 ${gridCols}`}>
+              {filtered.length === 0 ? (
+                <EmptyState
+                  msg={
+                    items.length
+                      ? "No results match your filters. Try clearing filters or adjusting your search."
+                      : "Upload your export on the home page to see who doesn’t follow you back."
+                  }
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setAlpha("All");
+                        setQuery("");
+                      }}
+                    >
+                      Reset filters
+                    </Button>
+                  }
+                />
+              ) : (
+                filtered.map((i) => (
+                  <UserCard
+                    key={i.username}
+                    username={i.username}
+                    selected={!!selected[i.username]}
+                    onToggle={(v)=>toggle(i.username, v)}
+                  />
+                ))
+              )}
+            </div>
+          )}
+
+          <SelectionBar
+            count={selectedCount}
+            onCopy={() => {
+              const list = Object.keys(selected).filter(k => selected[k]).join("\n");
+              navigator.clipboard.writeText(list);
+            }}
+            onExportCSV={exportSelectedCSV}
+            onExportTXT={exportSelectedTXT}
+            onClear={clearSelection}
+            onOpenWaves={openSelectedInWaves}
+            onMarkUnfollowed={activeTab === "don't follow back" ? markSelectedUnfollowed : () => {}}
+          />
+        </>
+      )}
 
       {null}
 
@@ -412,34 +476,11 @@ export default function ResultsPage() {
           </div>
         </div>
       )}
-
-      <AIAssistant
-        onPrompt={(prompt) => {
-          if (prompt.includes("Hide celebrities")) {
-            setQuery(""); setAlpha("All");
-          }
-        }}
-      />
-      {opening.active && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40">
-          <div className="rounded-2xl bg-white p-6 text-center shadow-xl">
-            <div className="text-lg font-semibold text-[#0F172A]">Opening profiles…</div>
-            <div className="mt-2 text-sm text-[#475569]">Wave {opening.wave} of {opening.totalWaves} ({opening.perWave} per wave)</div>
-            <div className="mt-4">
-              <button className="rounded-lg border px-3 py-1 text-sm" onClick={()=>{ cancelOpenRef.current.cancel = true; setOpening({active:false,wave:0,totalWaves:0,perWave:opening.perWave}); }}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
 
+// legacy Stat component kept for compatibility if imported elsewhere
 function Stat({ label, value, icon }: { label: string; value: number | string; icon?: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-[#64748B]">{icon}{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-[#0F172A]">{value}</div>
-    </div>
-  );
+  return null;
 }

@@ -93,49 +93,20 @@ export default function DownloadInstagramDataGuide() {
           </h2>
           
           <ol className="my-4 list-decimal space-y-4 pl-6 text-[#475569]">
-            <li>
-              <strong>Open Instagram</strong> and tap your profile picture in the bottom right corner.
-            </li>
-            <li>
-              <strong>Tap the menu icon</strong> (three horizontal lines) in the top right corner.
-            </li>
-            <li>
-              <strong>Select "Settings and privacy"</strong> from the menu.
-            </li>
-            <li>
-              <strong>Tap "Accounts Center"</strong> at the top of the settings page.
-            </li>
-            <li>
-              <strong>Select "Your information and permissions"</strong> from the list.
-            </li>
-            <li>
-              <strong>Tap "Download your information"</strong>.
-            </li>
-            <li>
-              <strong>Choose your Instagram account</strong> if you have multiple accounts linked.
-            </li>
-            <li>
-              <strong>Select "Some of your information"</strong> (this lets you choose specific data).
-            </li>
-            <li>
-              <strong>Scroll down and check "Followers and Following"</strong>. You can uncheck other 
-              options if you only need follower data.
-            </li>
-            <li>
-              <strong>Tap "Next"</strong> to continue.
-            </li>
-            <li>
-              <strong>Choose "Download to device"</strong> as your destination.
-            </li>
-            <li>
-              <strong>Select your preferred format</strong>: JSON (recommended) or HTML.
-            </li>
-            <li>
-              <strong>Set the date range</strong> to "All time" for complete data.
-            </li>
-            <li>
-              <strong>Tap "Create files"</strong> to submit your request.
-            </li>
+            <li><strong>Navigate to Instagram Settings</strong> (profile → menu → Settings and privacy).</li>
+            <li><strong>Go to Accounts Center.</strong></li>
+            <li><strong>Tap &quot;Your information and permissions&quot;.</strong></li>
+            <li><strong>Tap &quot;Export your information&quot;.</strong></li>
+            <li><strong>Tap &quot;Create export&quot;.</strong></li>
+            <li><strong>Select your Instagram profile</strong> if you have multiple accounts.</li>
+            <li><strong>Tap &quot;Export to device&quot;.</strong></li>
+            <li><strong>Tap &quot;Customize information&quot;.</strong></li>
+            <li><strong>Tap &quot;Clear all&quot;</strong> for every section/field so only the data you need is selected.</li>
+            <li>Under <strong>Connections</strong>, select only <strong>&quot;Followers and following&quot;</strong>.</li>
+            <li>On the &quot;Confirm your export&quot; page you can set the <strong>date range</strong> for followers/following (e.g. All time).</li>
+            <li>Leave <strong>format as HTML</strong> and <strong>media quality as Medium quality</strong>.</li>
+            <li><strong>Tap &quot;Start export&quot;</strong> to submit your request.</li>
+            <li>When the download is ready, open the ZIP, go to the <strong>connections</strong> folder, then use <strong>followers_1.html</strong> and <strong>following.html</strong> in Unfollowr.</li>
           </ol>
 
           <p className="text-[#475569] leading-relaxed">
@@ -150,45 +121,17 @@ export default function DownloadInstagramDataGuide() {
           </h2>
           
           <ol className="my-4 list-decimal space-y-4 pl-6 text-[#475569]">
-            <li>
-              <strong>Go to instagram.com</strong> and log into your account.
-            </li>
-            <li>
-              <strong>Click "More"</strong> in the left sidebar, then select <strong>"Settings"</strong>.
-            </li>
-            <li>
-              <strong>Click "Accounts Center"</strong> in the left menu.
-            </li>
-            <li>
-              <strong>Select "Your information and permissions"</strong>.
-            </li>
-            <li>
-              <strong>Click "Download your information"</strong>.
-            </li>
-            <li>
-              <strong>Select your Instagram account</strong>.
-            </li>
-            <li>
-              <strong>Choose "Some of your information"</strong>.
-            </li>
-            <li>
-              <strong>Check "Followers and Following"</strong> and uncheck other options.
-            </li>
-            <li>
-              <strong>Click "Next"</strong>.
-            </li>
-            <li>
-              <strong>Select "Download to device"</strong>.
-            </li>
-            <li>
-              <strong>Choose JSON or HTML format</strong>.
-            </li>
-            <li>
-              <strong>Set date range to "All time"</strong>.
-            </li>
-            <li>
-              <strong>Click "Create files"</strong>.
-            </li>
+            <li><strong>Go to instagram.com</strong> and log in, then open <strong>Settings</strong> (More → Settings).</li>
+            <li><strong>Click &quot;Accounts Center&quot;</strong> in the left menu.</li>
+            <li><strong>Click &quot;Your information and permissions&quot;.</strong></li>
+            <li><strong>Click &quot;Export your information&quot;</strong> then <strong>&quot;Create export&quot;</strong>.</li>
+            <li><strong>Select your Instagram profile</strong>.</li>
+            <li><strong>Click &quot;Export to device&quot;</strong>.</li>
+            <li><strong>Click &quot;Customize information&quot;</strong>.</li>
+            <li><strong>Click &quot;Clear all&quot;</strong> for every section, then under <strong>Connections</strong> select only <strong>&quot;Followers and following&quot;</strong>.</li>
+            <li>On &quot;Confirm your export&quot; set the date range for followers/following, leave format as <strong>HTML</strong> and media quality as <strong>Medium quality</strong>.</li>
+            <li><strong>Click &quot;Start export&quot;</strong>.</li>
+            <li>After the download, open the ZIP → <strong>connections</strong> folder → upload <strong>followers_1.html</strong> and <strong>following.html</strong> to Unfollowr.</li>
           </ol>
 
           <h2 className="mt-10 text-2xl font-bold text-[#0F172A]">Downloading Your Export File</h2>
@@ -231,16 +174,16 @@ export default function DownloadInstagramDataGuide() {
           </p>
 
           <div className="my-4 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-4 font-mono text-sm">
-            <p className="text-[#475569]"><strong>JSON format:</strong></p>
+            <p className="text-[#475569]"><strong>In the ZIP, go to the connections folder. For Unfollowr you need:</strong></p>
+            <p className="mt-2 text-[#64748B]">connections/followers_and_following/followers_1.html</p>
+            <p className="text-[#64748B]">connections/followers_and_following/following.html</p>
+            <p className="mt-3 text-[#475569]"><strong>JSON also works:</strong></p>
             <p className="text-[#64748B]">connections/followers_and_following/followers_1.json</p>
             <p className="text-[#64748B]">connections/followers_and_following/following.json</p>
-            <p className="mt-3 text-[#475569]"><strong>HTML format:</strong></p>
-            <p className="text-[#64748B]">connections/followers_and_following/followers_1.html</p>
-            <p className="text-[#64748B]">connections/followers_and_following/following.html</p>
           </div>
 
           <p className="text-[#475569] leading-relaxed">
-            These are the files you'll upload to Unfollowr to see who doesn't follow you back.
+            Upload <strong>followers_1.html</strong> and <strong>following.html</strong> (or the JSON versions) into Unfollowr to see who doesn&apos;t follow you back.
           </p>
 
           <h2 className="mt-10 text-2xl font-bold text-[#0F172A]">Frequently Asked Questions</h2>

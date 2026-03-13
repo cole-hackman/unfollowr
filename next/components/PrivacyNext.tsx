@@ -1,37 +1,26 @@
-import { Card } from "@/components/ui/Card";
-import { Shield, Rocket } from "lucide-react";
+import { Lock, Shield, EyeOff } from "lucide-react";
 
 export function PrivacyNext() {
   return (
-    <section id="trust-section" className="mx-auto max-w-6xl px-6 py-12">
-      <h2 className="mb-6 text-center text-3xl font-bold text-[#0F172A]">Privacy & Security</h2>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="p-5">
-          <div className="mb-2 inline-flex rounded-lg bg-[#E8F0FE] p-2 text-[#1D4ED8]">
-            <Shield aria-hidden="true" className="h-5 w-5" />
-          </div>
-          <h3 className="text-lg font-semibold">Privacy first</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#475569]">
-            <li>No login required</li>
-            <li>Session-based; local analysis</li>
-            <li>We never store your files</li>
-          </ul>
-        </Card>
-        <Card className="p-5">
-          <div className="mb-2 inline-flex rounded-lg bg-[#E8F0FE] p-2 text-[#1D4ED8]">
-            <Rocket aria-hidden="true" className="h-5 w-5" />
-          </div>
-          <h3 className="text-lg font-semibold">What’s next</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[#475569]">
-            <li>Twitter & TikTok exports</li>
-            <li>Saved sessions & diffs</li>
-            <li>CSV export</li>
-            <li>Advanced filters</li>
-          </ul>
-        </Card>
+    <section
+      id="trust-section"
+      className="mx-auto max-w-[1080px] px-6 pb-14"
+      aria-label="Privacy and data handling"
+    >
+      <div className="flex flex-wrap items-center justify-center gap-8 md:gap-10">
+        <div className="flex items-center gap-2.5 text-sm text-[color:var(--text-muted)]">
+          <Lock size={16} aria-hidden className="shrink-0" />
+          No login required
+        </div>
+        <div className="flex items-center gap-2.5 text-sm text-[color:var(--text-muted)]">
+          <Shield size={16} aria-hidden className="shrink-0" />
+          Processed locally
+        </div>
+        <div className="flex items-center gap-2.5 text-sm text-[color:var(--text-muted)]">
+          <EyeOff size={16} aria-hidden className="shrink-0" />
+          Data never stored
+        </div>
       </div>
     </section>
   );
 }
-
-

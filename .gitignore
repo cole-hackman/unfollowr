@@ -6,6 +6,12 @@ __pycache__/
 # macOS
 .DS_Store
 
+# Cursor
+.cursor/
+
+# Node (repo root)
+node_modules/
+
 # Next.js
 next/node_modules/
 next/.next/
