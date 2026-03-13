@@ -3,8 +3,9 @@ import Script from "next/script";
 import { ArrowLeft, Download, Clock, Smartphone, Monitor } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "How to Download Your Instagram Followers Data (2024 Guide) | Unfollowr",
-  description: "Step-by-step instructions for downloading your Instagram data export, including followers and following lists. Works on iPhone, Android, and desktop.",
+  title: "Download Instagram Followers Data (Guide) | Unfollowr",
+  description: "Step-by-step instructions to download your Instagram data export on iPhone, Android, or desktop.",
+  alternates: { canonical: "/guides/download-instagram-followers-data" },
 };
 
 const faqData = [

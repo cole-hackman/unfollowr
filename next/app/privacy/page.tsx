@@ -1,3 +1,11 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy | Unfollowr",
+  description: "How Unfollowr handles your data. Local-first processing with privacy by default.",
+  alternates: { canonical: "/privacy" },
+};
+
 export default function PrivacyPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">

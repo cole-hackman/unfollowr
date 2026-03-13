@@ -3,7 +3,8 @@ import { BookOpen, Shield, Download, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Instagram Guides & Resources | Unfollowr",
-  description: "Learn how to track Instagram unfollowers, download your Instagram data, and safely manage your following list with our comprehensive guides.",
+  description: "Guides on tracking unfollowers, downloading your Instagram export, and using safe tools.",
+  alternates: { canonical: "/guides" },
 };
 
 const guides = [

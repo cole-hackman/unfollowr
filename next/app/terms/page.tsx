@@ -1,3 +1,11 @@
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service | Unfollowr",
+  description: "Terms for using Unfollowr, including acceptable use and disclaimers.",
+  alternates: { canonical: "/terms" },
+};
+
 export default function TermsPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">

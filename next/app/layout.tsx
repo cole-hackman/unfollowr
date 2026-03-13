@@ -1,8 +1,8 @@
 export const metadata = {
-  metadataBase: new URL("https://unfollowr.app"),
-  title: "Instagram Unfollowers Tracker & Checker (2026) – Free & No Login | Unfollowr",
+  metadataBase: new URL("https://www.unfollowr.app"),
+  title: "Instagram Unfollowers Tracker — Free, No Login | Unfollowr",
   description:
-    "Check who unfollowed you on Instagram without login. Free Instagram unfollowers tracker using your data export. 100% private, no bans, local processing.",
+    "See who unfollowed you on Instagram using your data export. Free, no login, private, processed locally in your browser.",
   keywords: [
     "instagram unfollowers",
     "who unfollowed me instagram",
@@ -19,15 +19,14 @@ export const metadata = {
       index: true,
       follow: true,
       "max-image-preview": "large" as const,
-      "max-snippet": -1,
       "max-video-preview": -1,
     },
   },
   openGraph: {
-    title: "Instagram Unfollowers Tracker & Checker (2026) – Free & No Login | Unfollowr",
+    title: "Instagram Unfollowers Tracker — Free, No Login | Unfollowr",
     description:
-      "Check who unfollowed you on Instagram without login. Free tracker using your data export. 100% private, no bans.",
-    url: "https://unfollowr.app",
+      "See who unfollowed you on Instagram with your data export. Free, private, no login.",
+    url: "https://www.unfollowr.app",
     siteName: "Unfollowr",
     locale: "en_US",
     type: "website",
@@ -42,16 +41,13 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Instagram Unfollowers Tracker & Checker (2026) – Free & No Login | Unfollowr",
+    title: "Instagram Unfollowers Tracker — Free, No Login | Unfollowr",
     description:
-      "Check who unfollowed you on Instagram without login. Free, 100% private, no bans.",
+      "See who unfollowed you on Instagram. Free, private, no login.",
     images: ["/unfollowr-logo-new.png"]
   },
   verification: {
     google: "O0MJUk7yjFtJMun5hsE-ZaV87yNPEAmidP6JjidrAY8"
-  },
-  alternates: {
-    canonical: "https://unfollowr.app",
   },
 };
 
@@ -72,6 +68,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="antialiased">
       <head>
+        <link rel="icon" href="/unfollowr-logo-new.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/unfollowr-logo-new.png" />
         <link
           rel="preconnect"
           href="https://fonts.googleapis.com"
@@ -92,7 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             "@context": "https://schema.org",
             "@type": "WebApplication",
             name: "Unfollowr",
-            url: "https://unfollowr.app",
+            url: "https://www.unfollowr.app",
             description: "Check who unfollowed you on Instagram. Free unfollowers tracker & checker, no login, 100% private.",
             applicationCategory: "SocialNetworkingApplication",
             operatingSystem: "Web"

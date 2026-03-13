@@ -3,8 +3,9 @@ import Script from "next/script";
 import { ArrowLeft, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "How to See Who Doesn't Follow You Back on Instagram (2024 Guide) | Unfollowr",
-  description: "Learn the safest way to see who doesn't follow you back on Instagram. Step-by-step guide using Instagram's official data export — no login required, no account risk.",
+  title: "Who Doesn't Follow You Back on Instagram (Guide) | Unfollowr",
+  description: "Step-by-step way to find non-followers using Instagram’s data export. No login required.",
+  alternates: { canonical: "/guides/how-to-see-who-doesnt-follow-you-instagram" },
 };
 
 const faqData = [

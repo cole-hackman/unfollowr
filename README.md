@@ -39,6 +39,7 @@ A secondary challenge was helping users make sense of their "non-follower" lists
   - Added/expanded metadata for Open Graph + Twitter.
   - Added structured data JSON-LD (WebApplication, FAQPage, and HowTo).
   - Included `robots.txt` and `sitemap.xml` routes via `next/app/robots.ts` and `next/app/sitemap.ts`.
+  - Added per-page canonicals, favicon tags, and security headers (HSTS, X-Frame-Options, X-Content-Type-Options) based on SEOmator audits.
 
 ### Competitor SEO notes
 

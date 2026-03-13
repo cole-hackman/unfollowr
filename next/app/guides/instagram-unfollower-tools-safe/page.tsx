@@ -3,8 +3,9 @@ import Script from "next/script";
 import { ArrowLeft, Shield, AlertTriangle, CheckCircle2, XCircle, Clock } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Is It Safe to Use Instagram Unfollower Tools? (2024 Guide) | Unfollowr",
-  description: "Learn which Instagram unfollower tools are safe and which ones can get your account banned. Understand the risks and find the safest way to track unfollowers.",
+  title: "Are Instagram Unfollower Tools Safe? (Guide) | Unfollowr",
+  description: "Learn which unfollower tools are risky, and the safest way to track unfollowers without login.",
+  alternates: { canonical: "/guides/instagram-unfollower-tools-safe" },
 };
 
 const faqData = [
