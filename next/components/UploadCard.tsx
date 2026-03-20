@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { Upload, FileText, X } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 type Props = {
   onFilesReady: (files: File[]) => void;
@@ -103,6 +104,15 @@ export function UploadCard({ onFilesReady }: Props) {
       const notFollowingBack = Array.from(followers).filter(u => !following.has(u)).sort((a,b)=>a.localeCompare(b));
       const items = nonFollowers.map(u => ({ username: u, customTags: [], unfollowed: false }));
       const reverseItems = notFollowingBack.map(u => ({ username: u, customTags: [], unfollowed: false }));
+      const exportFormat = inferExportFormat(files);
+      trackEvent("analysis_run", {
+        accounts_count: following.size,
+        non_followers: nonFollowers.length,
+        fans: notFollowingBack.length,
+        mutuals: Math.max(following.size - nonFollowers.length, 0),
+        export_format: exportFormat,
+        ai_used: false,
+      });
       try { sessionStorage.setItem("unfollowr-items", JSON.stringify(items)); } catch {}
       try { sessionStorage.setItem("unfollowr-stats", JSON.stringify({ followers: followers.size, following: following.size })); } catch {}
       try { sessionStorage.setItem("unfollowr-items-reverse", JSON.stringify(reverseItems)); } catch {}
@@ -265,6 +275,11 @@ export function UploadCard({ onFilesReady }: Props) {
       </div>
     </section>
   );
+}
+
+function inferExportFormat(files: File[]): "HTML" | "JSON" {
+  const hasJson = files.some((file) => /\.json$/i.test(file.name));
+  return hasJson ? "JSON" : "HTML";
 }
 
 // --- Minimal client-side parsers ---

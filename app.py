@@ -10,10 +10,12 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash
 from bs4 import BeautifulSoup
 from admin_analytics import analytics
+from analytics_api import analytics_api
 
 # Import security utilities
 from lib.rate_limiter import rate_limit
 from lib.input_validator import validator, ValidationError
+from lib.postgres_analytics import insert_event as insert_postgres_analytics_event
 
 # Import AI classifier with proper error handling
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -36,7 +38,8 @@ try:
 except ImportError as e:
     logging.error(f"Connection classifier not available: {e}")
     connection_classifier = None
-else:
+
+if not AI_ENABLED:
     logging.info("AI classification disabled - no API key found")
     classifier = None
     translate_query_to_filter = None
@@ -46,6 +49,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Create the app
 app = Flask(__name__)
+app.register_blueprint(analytics_api)
 
 # SECURITY: Session secret must be set in production
 SESSION_SECRET = os.environ.get("SESSION_SECRET")
@@ -610,7 +614,7 @@ def compare():
                 'following': detect_file_format(following_content)
             }
         })
-        
+
         log_usage_analytics('analysis_completed', {
             'followers_count': len(followers_set),
             'following_count': len(following_set),
@@ -681,6 +685,19 @@ def compare():
                     'accounts_processed': len(enriched_accounts),
                     'segments_found': len(set(acc.get('segment', 'unknown') for acc in enriched_accounts))
                 })
+                segment_counts = {}
+                for acc in enriched_accounts:
+                    segment = acc.get('segment', 'unknown')
+                    segment_counts[segment] = segment_counts.get(segment, 0) + 1
+
+                insert_postgres_analytics_event(
+                    request,
+                    'ai_classification',
+                    {
+                        'accounts_classified': len(enriched_accounts),
+                        'categories': segment_counts,
+                    },
+                )
                 
                 # Process enriched data for template
                 enriched_data = {acc['username']: acc for acc in enriched_accounts}
@@ -700,7 +717,6 @@ def compare():
                 suggested_unfollows.sort(key=lambda x: x.get('suggestionScore') or 0, reverse=True)
                 
                 app.logger.info(f"AI classification complete. Segments: {segments_summary}")
-                
             except Exception as e:
                 app.logger.error(f"AI enhancement failed: {e}")
                 # Gracefully fall back to non-AI mode
@@ -713,6 +729,19 @@ def compare():
             app.logger.info(f"AI enhancement skipped - {reason}")
             enriched_data = {}
             suggested_unfollows = []
+
+        insert_postgres_analytics_event(
+            request,
+            'analysis_run',
+            {
+                'accounts_count': len(following_set),
+                'non_followers': len(non_followers_list),
+                'fans': max(len(followers_set - following_set), 0),
+                'mutuals': len(followers_set.intersection(following_set)),
+                'export_format': str(detect_file_format(following_content)).upper(),
+                'ai_used': ai_enabled,
+            },
+        )
 
         # Pass data to results template
         # Apply enhanced connection classification
@@ -846,6 +875,19 @@ def classify_batch():
             return jsonify({"error": str(e)}), 400
         
         enriched_accounts = classifier.enrich_accounts(accounts)
+        category_counts = {}
+        for account in enriched_accounts:
+            segment = account.get('segment', 'unknown')
+            category_counts[segment] = category_counts.get(segment, 0) + 1
+
+        insert_postgres_analytics_event(
+            request,
+            'ai_classification',
+            {
+                'accounts_classified': len(enriched_accounts),
+                'categories': category_counts,
+            },
+        )
         return jsonify({"accounts": enriched_accounts})
         
     except ValidationError as e:

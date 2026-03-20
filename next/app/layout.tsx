@@ -53,7 +53,8 @@ export const metadata = {
 
 import "./globals.css";
 import Script from "next/script";
-import Header from "@/components/Header";
+import { AppChrome } from "@/components/AppChrome";
+import { PageViewTracker } from "@/components/PageViewTracker";
 
 // FAQ data for JSON-LD schema - must match visible FAQ content exactly
 const faqSchemaData = [
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-[color:var(--bg)] text-[color:var(--text)]">
+        <PageViewTracker />
         <Script id="webapp-schema" type="application/ld+json" strategy="beforeInteractive">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -124,28 +126,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ]
           })}
         </Script>
-        <div id="top" />
-        <Header />
-        {children}
-        <footer className="mt-16 border-t border-[color:var(--border)] bg-[color:var(--surface)]">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-6 py-5 text-sm text-[color:var(--text-muted)]">
-            <span>© {new Date().getFullYear()} Unfollowr</span>
-            <div className="flex items-center gap-4">
-              <a href="/privacy" className="transition hover:text-[color:var(--text)] hover:underline">
-                Privacy
-              </a>
-              <a href="/terms" className="transition hover:text-[color:var(--text)] hover:underline">
-                Terms
-              </a>
-              <a
-                href="mailto:hello@unfollowr.app"
-                className="transition hover:text-[color:var(--text)] hover:underline"
-              >
-                Contact
-              </a>
-            </div>
-          </div>
-        </footer>
+        <AppChrome>{children}</AppChrome>
       </body>
     </html>
   );
