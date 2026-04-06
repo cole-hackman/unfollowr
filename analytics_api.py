@@ -1,3 +1,4 @@
+import hmac
 import logging
 import os
 from typing import Any, Dict
@@ -18,18 +19,30 @@ from lib.rate_limiter import rate_limit
 
 analytics_api = Blueprint("analytics_api", __name__)
 
+# SECURITY: Only allow known origins for CORS (prevents credential theft)
+ALLOWED_ORIGINS = {
+    "https://unfollowr.com",
+    "https://www.unfollowr.com",
+    "http://localhost:3001",  # dev only
+    "http://localhost:5000",  # dev only
+}
+
 
 def _cors_origin() -> str:
-    return request.headers.get("Origin", "*")
+    origin = request.headers.get("Origin", "")
+    if origin in ALLOWED_ORIGINS:
+        return origin
+    return ""  # Don't reflect unknown origins
 
 
 @analytics_api.after_request
 def add_cors_headers(response):
     origin = _cors_origin()
-    response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Vary"] = "Origin"
     return response
 
@@ -39,10 +52,17 @@ def _options_response():
 
 
 def _require_admin_secret():
-    # TODO: Replace this query-param secret check with proper authenticated admin access.
+    # SECURITY: Use Authorization header instead of query-param (prevents secret leakage in logs)
     configured = os.environ.get("ADMIN_SECRET", "").strip()
-    provided = request.args.get("secret", "").strip()
-    if not configured or provided != configured:
+    if not configured:
+        return jsonify({"error": "Forbidden - admin secret not configured"}), 403
+
+    auth_header = request.headers.get("Authorization", "").strip()
+    if not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Forbidden"}), 403
+
+    provided = auth_header[7:].strip()
+    if not hmac.compare_digest(provided, configured):  # Constant-time comparison
         return jsonify({"error": "Forbidden"}), 403
     return None
 
@@ -77,6 +97,7 @@ def analytics_event():
         metadata["user_agent"] = request.headers.get("User-Agent", "")[:512]
 
     ok, session_id, should_set_cookie = insert_event(request, event_type, metadata)
+    is_production = os.environ.get("FLASK_ENV") != "development"
     response = make_response(jsonify({"ok": ok}))
     if should_set_cookie and session_id:
         response.set_cookie(
@@ -84,7 +105,7 @@ def analytics_event():
             session_id,
             max_age=60 * 60 * 24 * 365,
             httponly=True,
-            secure=False,
+            secure=is_production,  # HTTPS-only in production
             samesite="Lax",
         )
     return response

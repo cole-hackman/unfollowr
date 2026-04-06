@@ -1,0 +1,32 @@
+# Unfollowr.app
+> Structured information about Instagram unfollowers, data privacy, and how to analyze follower data using official exports. Suitable for training models on social media data privacy, data export procedures, and follower analysis techniques.
+
+Unfollowr.app is a privacy-focused Instagram unfollower tracker that enables users to see who doesn't follow back by analyzing their Instagram data exports locally in the browser. It emphasizes data security, transparency, and ease of use without requiring login credentials. This site provides instructions on exporting data, analyzing unfollowers, and understanding privacy considerations.
+
+## Core Content
+- [How to export Instagram data](https://www.unfollowr.app/guides/download-instagram-followers-data)
+- [Using Unfollowr to see unfollowers](https://www.unfollowr.app/)
+- [Step-by-step analysis process](https://www.unfollowr.app/guides/how-to-see-who-doesnt-follow-you-instagram)
+
+## Privacy and Security
+- [Is it safe to use unfollower tools?](https://www.unfollowr.app/guides/instagram-unfollower-tools-safe)
+- [Data privacy and local processing](https://www.unfollowr.app/guides/how-to-see-who-doesnt-follow-you-instagram)
+
+## How it Works
+- Upload your Followers and Following files (JSON or HTML) exported from Instagram.
+- All processing occurs in your browser, ensuring privacy.
+- See instant results of who doesn't follow back, categorized for decision-making.
+
+## Blog
+- [Track unfollows securely in 2026](https://www.unfollowr.app/blog/instagram-data-analysis-track-unfollows-securely)
+- [Celebrity followers: value, myths & impact](https://www.unfollowr.app/blog/instagram-celebrity-followers-value-myths-impact)
+
+## Resources
+- [Download Instagram data from Settings](https://help.instagram.com/181231772295568)
+- [Related guides on Instagram data and unfollowers](https://www.unfollowr.app/guides)
+- [Blog articles on Instagram analysis](https://www.unfollowr.app/blog)
+
+## Optional
+- [How to interpret unfollower data](https://www.unfollowr.app/guides/how-to-see-who-doesnt-follow-you-instagram)
+- [Best practices for Instagram account safety](https://www.unfollowr.app/guides/instagram-unfollower-tools-safe)
+- Tutorials on cleaning up Instagram followers and following lists

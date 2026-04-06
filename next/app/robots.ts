@@ -8,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
     ],
-    sitemap: 'https://unfollowr.app/sitemap.xml',
+    sitemap: 'https://www.unfollowr.app/sitemap.xml',
   };
 }

@@ -7,10 +7,10 @@ export function SEOIntro() {
         About Unfollowr
       </h2>
       <p className="mb-3 text-sm leading-[22px] text-[color:var(--text-faint)]">
-        Unfollowr is a free Instagram unfollower tool that helps you see who doesn&apos;t follow you back. Unlike other apps, we never ask for your Instagram login or password. Simply upload your Instagram data export, and our tool processes everything locally in your browser — your follower data never leaves your device.
+        Unfollowr is a powerful, free Instagram unfollower tool built explicitly for privacy and account security. Stop asking "who unfollowed me?" and risking your account. Unlike risky third-party apps that demand your Instagram password and jeopardize your account with API bans, we use a 100% local, offline approach. By securely analyzing your official Instagram data export directly inside your browser, your personal follower data is never uploaded to any external server. 
       </p>
       <p className="text-sm leading-[22px] text-[color:var(--text-faint)]">
-        Whether you want to track Instagram unfollowers, clean up your following list, or just see who isn&apos;t following back, Unfollowr makes it easy. Our smart categorization sorts accounts into brands, celebrities, friends, and potential spam — so you can make informed decisions about who to keep following.
+        Whether you want to safely track Instagram unfollowers, comprehensively audit your following list, or finally see who isn&apos;t following back, Unfollowr simplifies the process. Our intelligent engine instantly categorizes accounts into distinct groups—like brands, celebrities, friends, and potential spam—empowering you to make fast, insightful decisions about your Instagram growth strategy without compromising your digital privacy.
       </p>
     </section>
   );

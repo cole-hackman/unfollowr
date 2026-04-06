@@ -54,16 +54,23 @@ app.register_blueprint(analytics_api)
 # SECURITY: Session secret must be set in production
 SESSION_SECRET = os.environ.get("SESSION_SECRET")
 if not SESSION_SECRET:
-    logging.warning("SESSION_SECRET environment variable not set. Using default secret - THIS IS NOT SECURE FOR PRODUCTION!")
-    SESSION_SECRET = "dev-secret-key-change-in-production"
+    if os.environ.get("FLASK_ENV") == "development":
+        SESSION_SECRET = os.urandom(32).hex()  # Random per launch, never static
+        logging.warning("SESSION_SECRET not set; using random ephemeral key (dev only)")
+    else:
+        raise RuntimeError("SESSION_SECRET environment variable is required in production")
 app.secret_key = SESSION_SECRET
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # SECURITY: Admin password hash must be set in production
 ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH")
 if not ADMIN_PASSWORD_HASH:
-    logging.warning("ADMIN_PASSWORD_HASH environment variable not set. Using default admin hash - THIS IS NOT SECURE FOR PRODUCTION!")
-    ADMIN_PASSWORD_HASH = "pbkdf2:sha256:600000$TBLSz8DLgFBjBKCe$d4654dcdacf5acd37c60ab2b7b3bf9c93b15e0e0e88e17e5bb9a8c3c3b70e2e5"  # Default: "admin123"
+    if os.environ.get("FLASK_ENV") == "development":
+        from werkzeug.security import generate_password_hash
+        ADMIN_PASSWORD_HASH = generate_password_hash("admin123")
+        logging.warning("ADMIN_PASSWORD_HASH not set; using default 'admin123' (dev only)")
+    else:
+        raise RuntimeError("ADMIN_PASSWORD_HASH environment variable is required in production")
 
 # Configure upload settings
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
@@ -474,8 +481,8 @@ def admin_stats():
     admin_key = os.environ.get('ADMIN_KEY')
     if not admin_key:
         if os.environ.get("FLASK_ENV") == "development":
-            admin_key = "admin123"  # Only for development
-            logging.warning("Using default admin key for development. Set ADMIN_KEY in production!")
+            admin_key = os.urandom(16).hex()  # Random per launch, never static
+            logging.warning("ADMIN_KEY not set; using random key: %s (dev only)", admin_key)
         else:
             return "Access denied - Admin key not configured", 403
     
@@ -1117,11 +1124,8 @@ def admin_login_post():
     # Remove hardcoded fallback in production
     password_valid = check_password_hash(ADMIN_PASSWORD_HASH, password)
     
-    # Only allow fallback in development
-    if not password_valid and os.environ.get("FLASK_ENV") == "development":
-        if password == "admin123":
-            logging.warning("Using default admin password for development. Set ADMIN_PASSWORD_HASH in production!")
-            password_valid = True
+    # NOTE: Hardcoded dev fallback removed per security audit.
+    # Dev mode uses a dynamically generated hash at startup (see ADMIN_PASSWORD_HASH init above).
     
     if password_valid:
         session['admin_authenticated'] = True

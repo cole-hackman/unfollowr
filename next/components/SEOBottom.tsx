@@ -18,19 +18,19 @@ export function SEOBottom() {
           </p>
           
           <p>
-            This is why Instagram unfollower tools exist. Many people want to clean up their following 
-            list, remove accounts that don't engage with their content, or simply understand their 
-            follower-to-following ratio better. The challenge is finding a tool that's actually safe 
-            to use. Most unfollower apps require your Instagram login, which violates Instagram's 
-            terms of service and can result in your account being flagged, restricted, or even banned.
+            This is why reliable Instagram unfollower tools exist. Creators and everyday users alike want to routinely 
+            clean up their following list, remove inactive accounts that drag down their engagement metrics, or simply understand their 
+            follower-to-following ratio. However, the biggest challenge is finding an unfollower tracker that is actually secure. 
+            The vast majority of unfollower apps illegally demand your Instagram login credentials, directly violating Instagram's 
+            terms of service. This incredibly dangerous practice frequently results in your account being flagged, shadowbanned, or permanently disabled.
           </p>
           
           <p>
-            <strong className="text-[color:var(--text)]">Unfollowr takes a different approach.</strong> Instead 
-            of accessing your Instagram account directly, we use the official data export that Instagram 
-            provides to every user. You download your Followers and Following data from Instagram's 
-            settings, then upload those files to Unfollowr. Our tool processes everything locally in 
-            your browser — your data never touches our servers.
+            <strong className="text-[color:var(--text)]">Unfollowr uses a vastly superior, offline approach.</strong> By eliminating the need 
+            to access your Instagram account via invasive APIs, we built a system that relies solely on the official data export feature 
+            that Meta provides to every user. First, you securely request and download your Followers and Following data archive directly from Instagram's 
+            privacy settings. Next, you load those raw HTML or JSON files into Unfollowr. Our web application runs 100% locally inside 
+            your browser — analyzing the data without uploading anything to a remote database. Total privacy, zero hacking risk.
           </p>
           
           <p>

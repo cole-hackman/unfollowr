@@ -2,7 +2,7 @@ export const metadata = {
   metadataBase: new URL("https://www.unfollowr.app"),
   title: "Instagram Unfollowers Tracker — Free, No Login | Unfollowr",
   description:
-    "See who unfollowed you on Instagram using your data export. Free, no login, private, processed locally in your browser.",
+    "See who unfollows you on Instagram using your own data export. Unfollowr analyzes JSON/HTML offline\u2014no login, 100% private. Upload your Instagram export today.",
   keywords: [
     "instagram unfollowers",
     "who unfollowed me instagram",
@@ -25,14 +25,14 @@ export const metadata = {
   openGraph: {
     title: "Instagram Unfollowers Tracker — Free, No Login | Unfollowr",
     description:
-      "See who unfollowed you on Instagram with your data export. Free, private, no login.",
+      "See who unfollows you on Instagram using your own data export. Unfollowr analyzes JSON/HTML offline\u2014no login, 100% private. Upload your Instagram export today.",
     url: "https://www.unfollowr.app",
     siteName: "Unfollowr",
     locale: "en_US",
     type: "website",
     images: [
       {
-        url: "/unfollowr-logo-new.png",
+        url: "/unfollowr-logo.png",
         width: 1200,
         height: 630,
         alt: "Unfollowr - Instagram Unfollowers Tracker"
@@ -43,8 +43,8 @@ export const metadata = {
     card: "summary_large_image",
     title: "Instagram Unfollowers Tracker — Free, No Login | Unfollowr",
     description:
-      "See who unfollowed you on Instagram. Free, private, no login.",
-    images: ["/unfollowr-logo-new.png"]
+      "See who unfollows you on Instagram using your own data export. Unfollowr analyzes JSON/HTML offline\u2014no login, 100% private.",
+    images: ["/unfollowr-logo.png"]
   },
   verification: {
     google: "O0MJUk7yjFtJMun5hsE-ZaV87yNPEAmidP6JjidrAY8"
@@ -69,8 +69,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="antialiased">
       <head>
-        <link rel="icon" href="/unfollowr-logo-new.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/unfollowr-logo-new.png" />
+        <link rel="icon" href="/unfollowr-logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/unfollowr-logo.png" />
         <link
           rel="preconnect"
           href="https://fonts.googleapis.com"
@@ -87,15 +87,41 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-[color:var(--bg)] text-[color:var(--text)]">
         <PageViewTracker />
+        <Script id="webpage-schema" type="application/ld+json" strategy="beforeInteractive">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": "https://www.unfollowr.app",
+            url: "https://www.unfollowr.app",
+            name: "Instagram Unfollowers Tracker \u2014 Free, No Login | Unfollowr",
+            inLanguage: "en",
+            description: "See who unfollowed you on Instagram using your data export. Free, no login, private, processed locally.",
+            mainEntityOfPage: {
+              "@id": "https://www.unfollowr.app",
+              "@type": "WebPage"
+            }
+          })}
+        </Script>
         <Script id="webapp-schema" type="application/ld+json" strategy="beforeInteractive">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebApplication",
             name: "Unfollowr",
             url: "https://www.unfollowr.app",
-            description: "Check who unfollowed you on Instagram. Free unfollowers tracker & checker, no login, 100% private.",
-            applicationCategory: "SocialNetworkingApplication",
-            operatingSystem: "Web"
+            description: "Instagram unfollowers tracker that analyzes your Instagram data export locally in your browser to show who doesn't follow you back. No login, private, and runs entirely in-browser.",
+            applicationCategory: "Utilities",
+            operatingSystem: "All",
+            featureList: [
+              "Local processing in the browser",
+              "Upload Instagram export (JSON or HTML)",
+              "Instant results",
+              "Smart analysis and categorization"
+            ],
+            provider: {
+              "@type": "Organization",
+              name: "Unfollowr",
+              url: "https://www.unfollowr.app"
+            }
           })}
         </Script>
         <Script id="faq-schema" type="application/ld+json" strategy="beforeInteractive">
