@@ -51,26 +51,27 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.register_blueprint(analytics_api)
 
-# SECURITY: Session secret must be set in production
+# SECURITY: Session secret should be set in production
 SESSION_SECRET = os.environ.get("SESSION_SECRET")
 if not SESSION_SECRET:
+    SESSION_SECRET = os.urandom(32).hex()  # Random per launch, never static
     if os.environ.get("FLASK_ENV") == "development":
-        SESSION_SECRET = os.urandom(32).hex()  # Random per launch, never static
         logging.warning("SESSION_SECRET not set; using random ephemeral key (dev only)")
     else:
-        raise RuntimeError("SESSION_SECRET environment variable is required in production")
+        logging.warning("SECURITY WARNING: SESSION_SECRET environment variable is missing in production. Using ephemeral key; sessions will wipe on reboot.")
 app.secret_key = SESSION_SECRET
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# SECURITY: Admin password hash must be set in production
+# SECURITY: Admin password hash should be set in production
 ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH")
 if not ADMIN_PASSWORD_HASH:
+    from werkzeug.security import generate_password_hash
     if os.environ.get("FLASK_ENV") == "development":
-        from werkzeug.security import generate_password_hash
         ADMIN_PASSWORD_HASH = generate_password_hash("admin123")
         logging.warning("ADMIN_PASSWORD_HASH not set; using default 'admin123' (dev only)")
     else:
-        raise RuntimeError("ADMIN_PASSWORD_HASH environment variable is required in production")
+        ADMIN_PASSWORD_HASH = generate_password_hash(os.urandom(32).hex())
+        logging.warning("SECURITY WARNING: ADMIN_PASSWORD_HASH not set in production. Admin panel access is effectively disabled this session.")
 
 # Configure upload settings
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
