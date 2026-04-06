@@ -6,7 +6,7 @@ export default function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 h-20 flex items-center justify-between">
         {/* Logo mark only */}
         <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Unfollowr home">
-          <img src="/unfollowr-logo-clean.webp" alt="Unfollowr" className="h-[4.5rem] w-auto" />
+          <img src="/erasebg-transformed.png" alt="Unfollowr" className="h-[4.5rem] w-auto" />
         </Link>
         
         {/* Navigation links */}
