@@ -32,7 +32,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/unfollowr-logo.png",
+        url: "/favicon.webp",
         width: 1200,
         height: 630,
         alt: "Unfollowr - Instagram Unfollowers Tracker"
@@ -44,7 +44,7 @@ export const metadata = {
     title: "Instagram Unfollowers Tracker — Free, No Login | Unfollowr",
     description:
       "See who unfollows you on Instagram using your own data export. Unfollowr analyzes JSON/HTML offline\u2014no login, 100% private.",
-    images: ["/unfollowr-logo.png"]
+    images: ["/favicon.webp"]
   },
   verification: {
     google: "O0MJUk7yjFtJMun5hsE-ZaV87yNPEAmidP6JjidrAY8"
@@ -69,8 +69,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="antialiased">
       <head>
-        <link rel="icon" href="/unfollowr-logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/unfollowr-logo.png" />
+        <link rel="icon" href="/favicon.webp" type="image/webp" />
+        <link rel="apple-touch-icon" href="/favicon.webp" />
         <link
           rel="preconnect"
           href="https://fonts.googleapis.com"
