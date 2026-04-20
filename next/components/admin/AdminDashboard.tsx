@@ -450,11 +450,13 @@ function StatusDot({ active }: { active: boolean }) {
 
 async function fetchJson<T>(path: string, secret: string, range?: string): Promise<T> {
   const url = new URL(`${API_BASE}${path}`);
-  url.searchParams.set("secret", secret);
   if (range) url.searchParams.set("range", range);
   if (path.endsWith("/recent")) url.searchParams.set("limit", "20");
 
   const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
     credentials: "include",
     cache: "no-store",
   });

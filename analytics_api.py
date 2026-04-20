@@ -111,36 +111,44 @@ def analytics_event():
     return response
 
 
-@analytics_api.route("/api/admin/kpis", methods=["GET"])
+@analytics_api.route("/api/admin/kpis", methods=["GET", "OPTIONS"])
 @rate_limit(max_requests=60, window_seconds=60)
 def admin_kpis():
+    if request.method == "OPTIONS":
+        return _options_response()
     auth_error = _require_admin_secret()
     if auth_error:
         return auth_error
     return jsonify(get_kpis(_parse_range()))
 
 
-@analytics_api.route("/api/admin/trends", methods=["GET"])
+@analytics_api.route("/api/admin/trends", methods=["GET", "OPTIONS"])
 @rate_limit(max_requests=60, window_seconds=60)
 def admin_trends():
+    if request.method == "OPTIONS":
+        return _options_response()
     auth_error = _require_admin_secret()
     if auth_error:
         return auth_error
     return jsonify(get_trends(_parse_range(default="28d")))
 
 
-@analytics_api.route("/api/admin/breakdowns", methods=["GET"])
+@analytics_api.route("/api/admin/breakdowns", methods=["GET", "OPTIONS"])
 @rate_limit(max_requests=60, window_seconds=60)
 def admin_breakdowns():
+    if request.method == "OPTIONS":
+        return _options_response()
     auth_error = _require_admin_secret()
     if auth_error:
         return auth_error
     return jsonify(get_breakdowns(_parse_range()))
 
 
-@analytics_api.route("/api/admin/recent", methods=["GET"])
+@analytics_api.route("/api/admin/recent", methods=["GET", "OPTIONS"])
 @rate_limit(max_requests=60, window_seconds=60)
 def admin_recent():
+    if request.method == "OPTIONS":
+        return _options_response()
     auth_error = _require_admin_secret()
     if auth_error:
         return auth_error
