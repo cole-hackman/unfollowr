@@ -21,6 +21,8 @@ analytics_api = Blueprint("analytics_api", __name__)
 
 # SECURITY: Only allow known origins for CORS (prevents credential theft)
 ALLOWED_ORIGINS = {
+    "https://unfollowr.app",
+    "https://www.unfollowr.app",
     "https://unfollowr.com",
     "https://www.unfollowr.com",
     "http://localhost:3001",  # dev only
