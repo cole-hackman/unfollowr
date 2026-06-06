@@ -5,34 +5,36 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](#run-locally)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](#run-locally)
 
+Live at https://unfollowr.app — 1K+ monthly users, ranks #2 on Google for target queries.
+
 ## 1. What Is the Project?
 
-Unfollowr is a privacy-first web application that helps users find out who doesn't follow them back on Instagram. Users can upload their official Instagram data exports (HTML or JSON) and instantly view their non-followers, fans, and mutual connections—all without ever logging into their Instagram account.
+Unfollowr is a privacy-first web application that helps users find out who doesn't follow them back on Instagram. Users can upload their official Instagram data exports (HTML or JSON) and instantly view their non-followers, fans, and mutual connections—all without ever logging into their Instagram account. The live Next.js frontend is local-first: parsing happens in your browser; only anonymous usage analytics are sent to the server.
 
 ## 2. Why Was This Project Built?
 
-Many third-party Instagram tracker apps require users to hand over their login credentials, which poses significant security risks. Other apps utilize undocumented APIs that can trigger Instagram's anti-bot systems and get user accounts permanently banned. Unfollowr was built to provide a completely secure, local-first alternative that respects user privacy and keeps their Instagram account 100% safe.
+Many third-party Instagram tracker apps require users to hand over their login credentials, which poses significant security risks. Other apps utilize undocumented APIs that can trigger Instagram's anti-bot systems and get user accounts permanently banned. Unfollowr was built to provide a completely secure, local-first alternative that respects user privacy and keeps their Instagram account 100% safe. Export parsing runs client-side in the browser; only anonymous usage analytics may be sent to the backend.
 
 ## 3. What Problems Did It Solve?
 
-The primary challenge was analyzing Instagram follower data without compromising account security. This was solved by building a robust data parser that reads Instagram's official HTML and JSON data exports directly, meaning no login credentials are required.
+The primary challenge was analyzing Instagram follower data without compromising account security. This was solved by building a robust data parser that reads Instagram's official HTML and JSON data exports directly, meaning no login credentials are required. On the live site, the Next.js app parses exports entirely in the browser (local-first); anonymous analytics events may be sent to the Flask backend.
 
-A secondary challenge was helping users make sense of their "non-follower" lists. For instance, a user shouldn't be told to unfollow a celebrity or brand just because they don't follow back. This was solved by implementing a hybrid heuristic and LLM-powered classification system (using Google Gemini via `ai_classifier.py`) that intelligently segments accounts and provides "Unfollow Suggestion Scores."
+A secondary challenge was helping users make sense of their "non-follower" lists. For instance, a user shouldn't be told to unfollow a celebrity or brand just because they don't follow back. This was solved by implementing a hybrid heuristic and LLM-powered classification system in the Flask backend (using Google Gemini via `ai_classifier.py`) that intelligently segments accounts and provides "Unfollow Suggestion Scores."
 
 ## 4. What Technologies Are Used?
 
 - **Frontend**: Next.js 14, React 18, Tailwind CSS, Framer Motion, Chart.js
 - **Backend**: Python 3.11+, Flask
-- **Data Parsing**: BeautifulSoup4 (HTML parsing)
-- **AI Integration**: Google Generative AI (Gemini) for account segmentation and natural language search
+- **Data Parsing**: BeautifulSoup4 (HTML parsing in Flask); client-side parsing in the Next.js frontend
+- **AI Integration**: Google Generative AI (Gemini) in the Flask backend for account segmentation and natural language search
 - **Database**: PostgreSQL (psycopg2-binary)
 
 ## 5. What Did You Implement?
 
-- **Privacy-First Data Parsing**: Local processing of Instagram HTML and JSON exports.
+- **Privacy-First Data Parsing**: Local-first processing of Instagram HTML and JSON exports in the browser (parsing happens in your browser; only anonymous usage analytics are sent to the server).
 - **Connection Comparison Engine**: Logic to accurately cross-reference Followers and Following lists to categorize Non-followers, Fans, and Mutuals.
-- **AI Account Segmentation**: Integration with Google Gemini to classify non-followers (e.g., assessing if an account is a brand/celebrity) and score them.
-- **Natural Language Search**: A chatbot interface that translates natural language queries into filter parameters.
+- **AI Account Segmentation** (Flask backend): Integration with Google Gemini to classify non-followers (e.g., assessing if an account is a brand/celebrity) and score them.
+- **Natural Language Search** (Flask backend): A chatbot interface that translates natural language queries into filter parameters.
 - **Interactive UI**: A modern dashboard with smooth Framer Motion animations and visual analytics using Chart.js.
 - **SEO & discoverability improvements (Next.js App Router)**:
   - Updated homepage title/description to match high-intent “unfollowers tracker/checker” patterns (2026).
