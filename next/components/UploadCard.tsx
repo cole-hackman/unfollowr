@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X, Sparkles } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 
 type Props = {
@@ -159,10 +159,10 @@ export function UploadCard({ onFilesReady }: Props) {
           onClick={() => inputRef.current?.click()}
           className={`cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-200 ${
             drag
-              ? "border-[color:var(--primary)] bg-[color:var(--primary-soft)]"
+              ? "border-[color:var(--primary)] bg-[color:var(--primary-soft)] px-6 py-10"
               : files.length
-                ? "border-[color:var(--success)] bg-[color:var(--success-soft)] py-8"
-                : "border-[color:var(--border)] bg-[color:var(--surface-2)] py-14 px-8 hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface)]"
+                ? "border-[color:var(--success)] bg-[color:var(--success-soft)] px-6 py-6"
+                : "border-[color:var(--border)] bg-[color:var(--surface-2)] px-8 py-14 hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface)]"
           }`}
         >
           <input
@@ -188,16 +188,16 @@ export function UploadCard({ onFilesReady }: Props) {
               </p>
             </div>
           ) : (
-            <div>
-              <div className="flex flex-wrap justify-center gap-2 mb-4">
+            <div className="mx-auto max-w-sm">
+              <ul className="space-y-2">
                 {files.map((file, index) => (
-                  <div
+                  <li
                     key={file.name + index}
-                    className="inline-flex items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 pl-3 text-[13px] text-[color:var(--text)]"
+                    className="flex items-center gap-2.5 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-[13px] text-[color:var(--text)]"
                   >
-                    <FileText size={14} className="text-[color:var(--text-muted)] shrink-0" aria-hidden />
-                    <span className="max-w-[180px] truncate">
-                      {file.name?.length > 28 ? file.name.slice(0, 28) + "…" : file.name || `File ${index + 1}`}
+                    <FileText size={14} className="shrink-0 text-[color:var(--text-muted)]" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate">
+                      {file.name || `File ${index + 1}`}
                     </span>
                     <button
                       type="button"
@@ -206,49 +206,42 @@ export function UploadCard({ onFilesReady }: Props) {
                         removeFile(index);
                       }}
                       aria-label={`Remove ${file.name}`}
-                      className="flex rounded p-0.5 text-[color:var(--text-faint)] transition-colors hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text)]"
+                      className="flex shrink-0 rounded p-0.5 text-[color:var(--text-faint)] transition-colors hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text)]"
                     >
                       <X size={14} aria-hidden />
                     </button>
-                  </div>
+                  </li>
                 ))}
-              </div>
-              <p className="text-[13px] font-medium text-[color:var(--success)]">
-                {files.length} file{files.length > 1 ? "s" : ""} selected · Click to add more
+              </ul>
+              <p className="mt-3 text-center text-[12px] text-[color:var(--text-faint)]">
+                {files.length} file{files.length > 1 ? "s" : ""} selected · click to add more
               </p>
             </div>
           )}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => inputRef.current?.click()}
-              className="rounded-xl px-4 text-[13px]"
-            >
-              Choose files
-            </Button>
-            <Button
-              size="lg"
-              disabled={files.length < 2}
-              onClick={async () => await handleAnalyze()}
-              className="rounded-xl px-7 py-3 text-[15px] disabled:opacity-45 disabled:pointer-events-none"
-            >
-              Analyze
-            </Button>
-          </div>
-          <button
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <Button
+            size="md"
+            disabled={files.length < 2}
+            onClick={async () => await handleAnalyze()}
+            className="rounded-lg px-5 py-2 text-sm disabled:opacity-45 disabled:pointer-events-none"
+          >
+            Analyze
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             type="button"
+            iconLeft={<Sparkles size={14} className="text-[color:var(--text-muted)]" aria-hidden />}
             onClick={async () => {
               await useSampleFiles(setFiles);
               resetInput();
             }}
-            className="text-[13px] font-medium text-[color:var(--text-muted)] underline underline-offset-2 hover:text-[color:var(--text)]"
+            className="rounded-lg px-3 text-[13px] text-[color:var(--text-muted)] hover:text-[color:var(--text)]"
           >
-            Try with sample files
-          </button>
+            Try sample files
+          </Button>
         </div>
 
         {/* Progress (shown only when analyzing) */}
