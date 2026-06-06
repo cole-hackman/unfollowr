@@ -35,6 +35,10 @@ analytics_events.json
 .replit
 attached_assets/
 
+# Local editor / agent files
+*.code-workspace
+claude.md
+
 # Misc
 *.tsbuildinfo
 google*.html
