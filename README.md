@@ -63,9 +63,11 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows (PowerShell) use: .venv\Scripts\Activate.ps1
 
 # Install dependencies and start the server
-pip install -e .
+pip install -r requirements.txt
 python app.py  # Runs on http://localhost:5000
 ```
+
+> **macOS note:** port 5000 is reserved by AirPlay Receiver (ControlCenter) on macOS 12+. To free it, go to System Settings → General → AirDrop & Handoff and turn off **AirPlay Receiver**. Alternatively, start Flask on a different port: `flask run -p 5001`.
 
 ### Step 2: Start the Frontend (Next.js)
 
@@ -82,6 +84,8 @@ npm run dev   # Runs on http://localhost:3001
 ```
 
 Once both servers are running, open `http://localhost:3001` in your browser. Upload your Instagram Followers/Following HTML or JSON exports to see it in action!
+
+> The frontend is local-first — it works without the Flask backend. The backend is only required for AI account classification and analytics features.
 
 ## Contributing
 
