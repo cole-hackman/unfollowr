@@ -57,7 +57,7 @@ Both services: **Free** plan, Oregon, repo `cole-hackman/unfollowr`, branch
 | Runtime | Python 3 | Node |
 | Root directory | *(repo root)* | `next` |
 | Build | **`uv sync --frozen && uv cache prune --ci`** | **`npm ci && npm run build`** |
-| Start | **`gunicorn app:app --preload --workers 2 --timeout <N>`** | **`npm start`** |
+| Start | **`gunicorn app:app --preload --workers 2 --timeout 120`** | **`npm start`** |
 | Deployed commit | `3a3fef0` | `6662d67` (~4 months old) |
 
 Both inferences in §1 were wrong:
@@ -72,7 +72,10 @@ Both inferences in §1 were wrong:
   `from app import app`), but production runs `app:app`, with
   `--preload --workers 2`. Note **2 workers on a 1-core B1**, and that
   `--preload` forks after import, which matters for the per-process
-  `lib/rate_limiter.py` state described in §4 item 11.
+  `lib/rate_limiter.py` state described in §4 item 11. **The timeout is
+  confirmed as `--timeout 120`** (Cole, 2026-09-22) — i.e. production already
+  runs exactly what §4 item 8 recommends for keeping the legacy UI, and well
+  inside App Service's 230 s front-end idle. Carry it over verbatim.
 
 ### Only two environment variables are set per service (revises §1's table)
 

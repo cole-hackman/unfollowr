@@ -24,8 +24,8 @@ Neon and always was (see Decisions #1), so `tracktoolkit-pg` is not involved.
 | Phase | What | Status |
 |---|---|---|
 | 0 | Preserve Render config + `pg_dump` analytics_events | **COMPLETE & VERIFIED** 2026-09-22 |
-| 1 | Azure groundwork (RG + App Insights; **DB steps cancelled**) | Next up |
-| 2 | Backend Web App on `tracktoolkit-plan` | Not started |
+| 1 | Azure groundwork (RG + App Insights; **DB steps cancelled**) | **COMPLETE & VERIFIED** 2026-09-22 |
+| 2 | Backend Web App on `tracktoolkit-plan` | Next up — **3 open decisions, see below** |
 | 3 | `api.unfollowr.app` custom domain + cert | Not started |
 | 4 | Frontend Static Web App | Not started — **has a known spec defect, see Open items** |
 | 5 | DNS cutover | Not started — **approval gate** |
@@ -107,7 +107,7 @@ Both services are **Free** plan, Oregon, repo `cole-hackman/unfollowr`, branch
 | Runtime | Python 3 | Node |
 | Root directory | *(repo root)* | `next` |
 | Build command | **`uv sync --frozen && uv cache prune --ci`** | **`npm ci && npm run build`** |
-| Start command | **`gunicorn app:app --preload --workers 2 --timeou…`** *(truncated in UI — tail not yet captured)* | **`npm start`** |
+| Start command | **`gunicorn app:app --preload --workers 2 --timeout 120`** | **`npm start`** |
 | Deployed commit | `3a3fef0` | `6662d67` (~4 months old) |
 | Env vars | `ADMIN_SECRET`, `DATABASE_URL` | `ADMIN_SECRET`, `NEXT_PUBLIC_API_URL` |
 
@@ -164,9 +164,11 @@ the next billing period**. Nothing is being reclaimed or deleted.
 4. ~~**Decision needed: does the database move to Azure at all?**~~ **DECIDED —
    stays on Neon.** See Decisions #1.
 
-5. **Backend start-command tail not captured.** The Render UI truncates it at
-   `--timeou…`. Everything before is confirmed. Tab left open at the backend
-   Settings page for Cole to read the last few characters.
+5. ~~**Backend start-command tail not captured.**~~ **RESOLVED** — Cole
+   confirmed `--timeout 120` (2026-09-22). Full command:
+   `gunicorn app:app --preload --workers 2 --timeout 120`. Note this is already
+   what plan §4 item 8 recommends, and is well inside App Service's 230 s
+   front-end idle timeout.
 
 ---
 
@@ -191,6 +193,57 @@ Contents verified by decoding the dump's own `COPY` stream — not just the TOC:
 | `analysis_run` | 4,055 | **4,055** | match |
 
 Every figure matches, `max(created_at)` to the microsecond. **Phase 0 is done.**
+
+---
+
+## Phase 1 verification evidence (2026-09-22)
+
+Two resources created, both in `rg-unfollowr`. Nothing else touched.
+
+```
+az group create -n rg-unfollowr -l westus3          → provisioningState: Succeeded
+az monitor app-insights component create ...        → provisioningState: Succeeded
+az monitor app-insights component billing update    → cap: 0.1
+```
+
+`unfollowr-insights` (westus3, `rg-unfollowr`):
+
+| Property | Value |
+|---|---|
+| `ingestionMode` | `LogAnalytics` (workspace-based, as the plan requires) |
+| `workspaceResourceId` | `…/rg-tracktoolkit/…/workspaces/tracktoolkit-logs` |
+| Daily cap | **0.1 GB**, warning at 90%, email on cap enabled |
+| `retentionInDays` | 90 |
+| `applicationType` / `kind` | `web` / `web` |
+
+**Boundary check — `tracktoolkit` was not modified.** Re-read after the work:
+
+| `tracktoolkit-logs` | Before | After |
+|---|---|---|
+| `sku` | PerGB2018 | PerGB2018 |
+| `retentionInDays` | 30 | 30 |
+| `workspaceCapping.dailyQuotaGb` | -1 (uncapped) | **-1 (uncapped)** |
+| `modifiedDate` | — | **2026-09-20T16:58:56Z** (two days before this session) |
+
+`rg-tracktoolkit` still contains exactly its original **10** resources. The
+0.1 GB cap is on the *component*, never on the shared workspace — capping the
+workspace would have throttled tracktoolkit's logging too.
+
+### Two things Phase 1 did NOT deliver, stated plainly
+
+1. **Sampling is not enabled.** The plan's §2 says "sampling on", but
+   `samplingPercentage` is `None` on the component. For a Python/Flask app,
+   sampling is an SDK-side setting, not a component property — it belongs to
+   whatever gets wired up in Phase 2. At ~3,300 requests/month it is moot for
+   cost; the 0.1 GB daily cap is the hard stop that actually matters.
+
+2. **App Insights currently receives nothing, and will keep receiving nothing
+   until Phase 2 wires it up.** The plan never says *how* the Flask app emits
+   telemetry, and the backend has **zero** telemetry dependencies —
+   `grep -icE 'azure-monitor|opencensus|opentelemetry|applicationinsights'`
+   returns 0 across `pyproject.toml`, `requirements.txt` and `uv.lock`. The
+   component is a correctly-configured, empty sink. Resolving this is a Phase 2
+   decision (see below) and involves a code change.
 
 ---
 
@@ -222,25 +275,37 @@ Every figure matches, `max(created_at)` to the microsecond. **Phase 0 is done.**
 
 ## Next action
 
-**Phase 0 is complete and committed.** Outstanding before Phase 1:
+**Phases 0 and 1 are complete and committed.** Outstanding:
 
-1. **Cole reads the tail of the backend start command** — Render's UI truncates
-   at `--timeou…`; the Settings page is open in Chrome.
-2. **Cole checks the sponsorship balance/expiry** at
+1. **Cole checks the sponsorship balance/expiry** at
    microsoftazuresponsorships.com (plan open question #1, still the biggest
    unknown). Now lower stakes: with the DB on Neon, a subscription outage costs
    compute and hosting, not data.
 
-### Phase 1, once unblocked
+### Phase 2 — three decisions needed before provisioning
 
-Reduced to two resources by Decision #1:
+1. **How the backend installs dependencies.** Production builds with
+   `uv sync --frozen` against `uv.lock`; App Service's
+   `SCM_DO_BUILD_DURING_DEPLOYMENT` runs **pip** against `requirements.txt`,
+   which is *not* the lock (it is loose `>=` pins). Deploying as-is would
+   silently install a different dependency set than has been running for six
+   months. Proposed: `uv export --frozen --no-dev -o requirements.txt` at build
+   time so the pinned versions survive. **Touches a file the plan doesn't call
+   out — needs Cole's approval.**
 
-1. `az group create -n rg-unfollowr -l westus3`
-2. Application Insights against the existing `tracktoolkit-logs` workspace,
-   sampling on, daily cap 0.1 GB.
+2. **Whether to wire up App Insights at all, and how.** Options: add
+   `azure-monitor-opentelemetry` + `configure_azure_monitor()` to the Flask app
+   (a code change), use App Service auto-instrumentation for Python, or accept
+   the component stays empty for now and revisit. **Needs Cole's call.**
 
-The plan's Phase 1 steps 2–3 (create + restore the database on
-`tracktoolkit-pg`) are cancelled.
+3. **Whether the legacy Flask UI ships.** Plan open question #4. §0 strengthened
+   the case for deleting it: the admin panel is already non-functional (random
+   per-boot secrets) and `/api/ai/*` is already disabled (no Gemini key), so
+   deploying it "unchanged" preserves nothing that works — while keeping a
+   50 MB upload surface and the `--timeout 120` requirement.
+
+Also per plan §8, the **$40/month subscription budget** should be set before
+Phase 2. No budgets exist on this subscription today.
 
 ### Housekeeping note
 
