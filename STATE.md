@@ -26,8 +26,8 @@ Neon and always was (see Decisions #1), so `tracktoolkit-pg` is not involved.
 | 0 | Preserve Render config + `pg_dump` analytics_events | **COMPLETE & VERIFIED** 2026-09-22 |
 | 1 | Azure groundwork (RG + App Insights; **DB steps cancelled**) | **COMPLETE & VERIFIED** 2026-09-22 |
 | 2 | Backend Web App on `tracktoolkit-plan` | **COMPLETE & VERIFIED** 2026-09-23 |
-| 3 | `api.unfollowr.app` custom domain + cert | Next up |
-| 4 | Frontend Static Web App | Not started — **has a known spec defect, see Open items** |
+| 3 | `api.unfollowr.app` custom domain + cert | **COMPLETE & VERIFIED** 2026-09-23 |
+| 4 | Frontend Static Web App | Next up — **has a known spec defect, see Open items** |
 | 5 | DNS cutover | Not started — **approval gate** |
 | 6 | Soak 48h, then decommission Render | Not started — **approval gate** |
 | 7 | Optional: decouple backend to Container Apps | Out of scope for now |
@@ -336,6 +336,75 @@ instruction, by explicit id rather than a `LIKE` pattern so no real row could
 match. Verified after: `smoke_rows_remaining = 0`, `total_rows = 26804` — the
 same count as the Phase 0 dump — and `max(created_at)` back to
 **2026-09-21 16:44:26 UTC**, the genuine last user event.
+
+---
+
+## Phase 3 verification evidence (2026-09-23)
+
+`api.unfollowr.app` bound to `unfollowr-api`, `hostNameType: Verified`,
+SNI SSL, thumbprint `C9ACBD623AB7EDFCAD601959C12D122C4C758C7A`.
+
+```
+subject : CN=api.unfollowr.app
+issuer  : C=US, O=DigiCert Inc, CN=GeoTrust TLS RSA CA G1
+valid   : 2026-09-23  ->  2027-03-23      (App Service Managed, auto-renewing)
+```
+
+| Check | Result |
+|---|---|
+| CNAME `api.unfollowr.app` | → `unfollowr-api.azurewebsites.net` (TTL 300) |
+| TXT `asuid.api` | matches `customDomainVerificationId` |
+| CAA on `unfollowr.app` | none — no CA blocked |
+| TLS chain | `ssl_verify_result 0` — verifies against system trust store |
+| `OPTIONS /api/analytics/event` over TLS | `204`, `Server: gunicorn`, correct CORS |
+| `GET /api/admin/kpis` | `403` (ADMIN_SECRET still unset, expected) |
+
+Verified with `--resolve` because this machine had negative-cached the earlier
+NXDOMAIN for `api.unfollowr.app`; public resolvers (Cloudflare + Google) both
+return the CNAME correctly. The first handshake after binding served the shared
+`*.azurewebsites.net` cert — normal mid-rollout behaviour; five consecutive
+handshakes afterwards all returned `CN=api.unfollowr.app`.
+
+---
+
+## ⚠️ OPEN INCIDENT — `www` and apex DNS records were lost (2026-09-23)
+
+While the `api` records were being added at name.com, the two pre-existing
+records disappeared. Confirmed independently by Cloudflare DoH **and** Google
+DoH:
+
+| Record | Before (verified 2026-09-22) | Now |
+|---|---|---|
+| `www.unfollowr.app` | `CNAME → unfollowr-frontend.onrender.com` (TTL 300) | **NXDOMAIN** |
+| `unfollowr.app` | `A → 216.24.57.16, 216.24.57.18` (TTL 34) | NOERROR, **no A record** |
+
+The zone itself is intact and still delegated to name.com
+(`ns1cny`/`ns2kqz`/`ns3jmt`/`ns4lpv`), and the two new `api` records are
+correct — so this looks like collateral damage from the edit, not a zone
+failure.
+
+**Impact — no *additional* user-facing harm.** The site was already down:
+Render is suspended and was returning `503`. Users previously got an error page
+and now get a DNS failure. Either way, down.
+
+**But it removes the rollback target the plan depends on.** Plan §6 says roll
+back by reverting the `www` CNAME to `unfollowr-frontend.onrender.com`. That
+record no longer exists to revert to. It is trivially recreatable, but until it
+is, Phase 5 has no documented undo.
+
+**Needs Cole to confirm whether this was intentional**, and if not, to
+recreate:
+
+| Type | Host | Value | TTL |
+|---|---|---|---|
+| `CNAME` | `www` | `unfollowr-frontend.onrender.com` | 300 |
+| `A` | `@` | `216.24.57.16` and `216.24.57.18` | 300 |
+
+Recreating them is only worth it if the Render rollback path still matters. If
+Phase 4 lands first, `www` gets pointed at the Static Web App anyway — in which
+case the honest position is that **the migration proceeds without a rollback
+path**, which is a real change to the plan's risk posture and Cole's call, not
+Claude's.
 
 ---
 

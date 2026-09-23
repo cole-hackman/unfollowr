@@ -519,12 +519,18 @@ Nothing user-facing has moved.
 
 **Revert:** delete `unfollowr-api`. Render still serves everything.
 
-### Phase 3 — Backend custom domain
+### Phase 3 — Backend custom domain — **DONE 2026-09-23**
 
-1. Add `api.unfollowr.app` as a custom domain (CNAME + the `asuid` TXT
-   validation record at name.com).
-2. Bind a free App Service Managed Certificate.
-3. Verify `https://api.unfollowr.app/api/analytics/event` over TLS.
+1. ~~Add `api.unfollowr.app` as a custom domain~~ — done, `hostNameType: Verified`.
+2. ~~Bind a free App Service Managed Certificate~~ — done, SNI, thumbprint
+   `C9ACBD62…`, `CN=api.unfollowr.app`, issuer GeoTrust TLS RSA CA G1,
+   valid 2026-09-23 → 2027-03-23, auto-renewing.
+3. ~~Verify over TLS~~ — done: `ssl_verify_result 0` (chain verifies),
+   `204` preflight with correct CORS from `Server: gunicorn`.
+
+**Note:** while these records were added, the pre-existing `www` CNAME and the
+apex `A` records were lost. See STATE.md — this removes the rollback target
+§6 depends on.
 
 **Revert:** delete the DNS records. Nothing points at `api.` yet.
 
@@ -606,7 +612,7 @@ CAA records exist at the apex, so validation and cert issuance are unobstructed.
 3. **Apex second, after `www` is verified good.** Three options, in order of
    preference:
    - **ALIAS/ANAME at name.com** → `<name>.azurestaticapps.net`. Keeps global
-     distribution. Use this if step 1's investigation confirms support.
+     distribution. **CONFIRMED AVAILABLE 2026-09-23 — use this one.**
    - **Forward apex → `www`.** Matches today's behaviour exactly (the apex
      currently 301s to `www`). Zero risk, fully reversible, and costs nothing
      since no traffic lands on the apex anyway.
@@ -793,9 +799,12 @@ drop the backend. The product survives losing two of the three.
    --workers 2 --timeout <N>`; frontend `npm ci && npm run build` / `npm start`
    with root directory `next`. **Both §1 inferences were wrong** — it is uv, not
    pip, and `app:app`, not `main:app`.
-3. **Does name.com support ALIAS/ANAME?** The apex's 34-second TTL suggests record
-   flattening, but I could not confirm it from outside. *Assumed:* if not, the
-   forward-apex-to-`www` option reproduces today's behaviour exactly at no cost.
+3. ~~**Does name.com support ALIAS/ANAME?**~~ **ANSWERED 2026-09-23 — yes.**
+   Cole confirmed ALIAS is available in the name.com panel. Phase 5's apex
+   strategy is therefore settled on §6's **first and preferred** option: an
+   ALIAS at the apex pointing to the Static Web App hostname, keeping global
+   distribution. The forward-to-`www` fallback and the `stableInboundIP`
+   A-record last resort are both off the table.
 4. **Is the legacy Flask UI worth deploying at all?** `app.py` is 50 KB of routes
    nothing in the live product calls. Keeping it preserves a URL someone may have
    bookmarked and forces `--timeout 120` plus the 50 MB upload surface. *Assumed:*
