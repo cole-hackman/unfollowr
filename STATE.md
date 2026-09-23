@@ -27,8 +27,8 @@ Neon and always was (see Decisions #1), so `tracktoolkit-pg` is not involved.
 | 1 | Azure groundwork (RG + App Insights; **DB steps cancelled**) | **COMPLETE & VERIFIED** 2026-09-22 |
 | 2 | Backend Web App on `tracktoolkit-plan` | **COMPLETE & VERIFIED** 2026-09-23 |
 | 3 | `api.unfollowr.app` custom domain + cert | **COMPLETE & VERIFIED** 2026-09-23 |
-| 4 | Frontend Static Web App | Next up — **has a known spec defect, see Open items** |
-| 5 | DNS cutover | Not started — **approval gate** |
+| 4 | Frontend Static Web App | **COMPLETE & VERIFIED** 2026-09-23 |
+| 5 | DNS cutover | Next up — **APPROVAL GATE, needs Cole's explicit go-ahead** |
 | 6 | Soak 48h, then decommission Render | Not started — **approval gate** |
 | 7 | Optional: decouple backend to Container Apps | Out of scope for now |
 
@@ -408,6 +408,72 @@ Claude's.
 
 ---
 
+## Phase 4 verification evidence (2026-09-23)
+
+`unfollowr-web` — Static Web App, **Free**, West US 2, in `rg-unfollowr`.
+Host: **`lemon-smoke-00821241e.2.azurestaticapps.net`**.
+No GitHub repo linked (`provider: None`), so nothing was committed to the repo
+and no workflow was auto-created. CI/CD (plan §7) is still outstanding.
+
+Build: `NEXT_PUBLIC_API_URL=https://api.unfollowr.app npm run build` →
+17 routes, **all `○` static**, `out/` = 2.7 MB (plan estimated ~3 MB; Free-plan
+limit is 250 MB).
+
+| Check | Result |
+|---|---|
+| All 12 app routes + `robots.txt`, `sitemap.xml`, `llms.txt` | **200** |
+| `NEXT_PUBLIC_API_URL` baked into bundle | **yes** — `https://api.unfollowr.app` found in `out/_next/static/chunks/` |
+| Old Render host in bundle | **none** — zero references to `onrender.com` in `out/` |
+| Security headers served | **all 5** (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) |
+| CSP `connect-src` | includes `https://api.unfollowr.app` |
+| Blog images | all 6 **200 `image/jpeg`**, served locally, render in-page |
+| Upload flow end-to-end | **works** — sample files → `/results` populated: Following 41, Followers 23, Don't follow back 30, Fans 12, Mutuals 11 (internally consistent: 41−11=30, 23−11=12) |
+| Analytics during browsing | **0 rows** — exactly as plan §4 item 2 predicts; `*.azurestaticapps.net` is not in the CORS allowlist. Correct behaviour, not a bug. |
+
+### The §0 CSP correction is confirmed correct
+
+`next build` printed the warning three times:
+
+> `⚠ rewrites, redirects, and headers are not applied when exporting your
+> application, detected (headers).`
+
+Had the plan been followed as written, the site would have shipped with **no
+CSP, HSTS, X-Frame-Options or Referrer-Policy at all**. They are now served by
+SWA from `next/public/staticwebapp.config.json` (which Next copies into `out/`,
+the deploy root). `next.config.mjs` keeps its `headers()` block for `next dev`
+parity only, with a comment saying so — and the build warning stays visible as
+a standing reminder that it is not the production source of truth.
+
+### A second defect found and fixed during Phase 4
+
+The first `staticwebapp.config.json` used `navigationFallback` (an SPA pattern).
+This is a multi-page static site where every route is a real file, so the
+fallback caught genuine misses and served `/404.html` with **HTTP 200** —
+soft-404s, which Google penalises and which plan §6 would have had us watch for
+in Search Console without knowing the cause.
+
+Fixed by dropping `navigationFallback` entirely and relying on
+`responseOverrides.404` with an explicit `"statusCode": 404`. Verified after
+redeploy: `/definitely-not-a-page` and `/guides/nope` both return **404** with
+the rendered 404 page, while every real route still returns 200.
+
+### Frontend changes made
+
+- `next.config.mjs`: `output: 'export'`, `images: { unoptimized: true }`,
+  `connect-src` → `api.unfollowr.app`, plus the explanatory comment.
+- `next/public/staticwebapp.config.json`: **new** — production headers, 404 handling, MIME types.
+- 6 blog images downloaded from Supabase into `next/public/blog/` (548 KB) and
+  both blog pages rewritten to local paths. These were **already broken in
+  production** before this migration (no `images.remotePatterns`); they now work.
+- Deleted `app/api/health/route.ts` and `app/api/metrics/route.ts` — static
+  export cannot emit them, and both were dead.
+- Deleted 3 unreferenced images (~1.6 MB): `unfollowr-logo-clean.png`,
+  `erasebg-transformed.png`, `unfollowr-logo.png`. **Kept** `llms.txt` — it has
+  0 code references but is URL-served like `robots.txt`.
+  Left `unfollowr-logo-new.png` (45 bytes, unreferenced) alone — not named by the plan.
+
+---
+
 ## Decisions
 
 1. **2026-09-22 — The analytics database stays on Neon.** It is not migrated to
@@ -492,7 +558,28 @@ Claude's.
    unknown). Now lower stakes: with the DB on Neon, a subscription outage costs
    compute and hosting, not data.
 
-### Phase 3 — backend custom domain (next, blocked on Cole)
+### Phase 5 — DNS cutover ⚠️ APPROVAL GATE
+
+**Do not proceed without Cole's explicit go-ahead.** Per plan §6, and now
+settled by the ALIAS confirmation:
+
+1. Add the SWA custom-domain validation TXT at `@`, wait for Azure to validate.
+2. **`www` first** — CNAME `www` → `lemon-smoke-00821241e.2.azurestaticapps.net`.
+   TTL 300, converges in ~5 min. This is the real cutover.
+3. **Apex second**, after `www` is verified good — **ALIAS** `@` →
+   `lemon-smoke-00821241e.2.azurestaticapps.net` (name.com supports ALIAS,
+   confirmed 2026-09-23).
+
+**Rollback is currently impossible** — see the open incident above. The `www`
+CNAME to Render no longer exists to revert to. Decide that before cutting over.
+
+Also recommended before cutover (plan §4 item 2, open question #6): drop
+`unfollowr.com` and `www.unfollowr.com` from `ALLOWED_ORIGINS` in
+`analytics_api.py:24-29`. That domain is not Cole's, and it is currently
+allowed to make **credentialed** cross-origin requests. Low risk, but it is a
+backend code change plus a redeploy, so it was not bundled into Phase 4.
+
+### Phase 3 — backend custom domain (done)
 
 `api.unfollowr.app` currently returns **NXDOMAIN** — free, no conflict.
 `www.unfollowr.app` still points at Render (`unfollowr-frontend.onrender.com`),

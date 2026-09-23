@@ -35,7 +35,7 @@ export default function Blog2Page() {
 
         <div className="mb-8 overflow-hidden rounded-2xl border border-[#E2E8F0]">
           <Image 
-            src="https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421360608_Social-media-manager-checking-celebrity-followers.jpeg" 
+            src="/blog/Social-media-manager-checking-celebrity-followers.jpeg" 
             alt="Social media manager checking celebrity followers" 
             width={1200} 
             height={630} 
@@ -132,7 +132,7 @@ export default function Blog2Page() {
 
           <div className="my-8 overflow-hidden rounded-2xl border border-[#E2E8F0]">
             <Image 
-              src="https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421329445_Analyst-reviewing-passive-celebrity-followers-list.jpeg" 
+              src="/blog/Analyst-reviewing-passive-celebrity-followers-list.jpeg" 
               alt="Analyst reviewing passive celebrity followers list" 
               width={1200} 
               height={630} 
@@ -154,7 +154,7 @@ export default function Blog2Page() {
 
           <div className="my-8 overflow-hidden rounded-2xl border border-[#E2E8F0]">
             <Image 
-              src="https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421339810_Infographic-debunking-celebrity-follower-myths.jpeg" 
+              src="/blog/Infographic-debunking-celebrity-follower-myths.jpeg" 
               alt="Infographic debunking celebrity follower myths" 
               width={1200} 
               height={630} 
@@ -273,7 +273,7 @@ export default function Blog2Page() {
           "@type": "BlogPosting",
           "headline": "Instagram Celebrity Followers: Value, Myths & Real Impact",
           "image": [
-            "https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421360608_Social-media-manager-checking-celebrity-followers.jpeg"
+            "/blog/Social-media-manager-checking-celebrity-followers.jpeg"
           ],
           "datePublished": "2026-04-05T08:00:00+08:00",
           "dateModified": "2026-04-05T08:00:00+08:00",

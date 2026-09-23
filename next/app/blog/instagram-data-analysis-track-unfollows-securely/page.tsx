@@ -35,7 +35,7 @@ export default function Blog1Page() {
 
         <div className="mb-8 overflow-hidden rounded-2xl border border-[#E2E8F0]">
           <Image 
-            src="https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421319737_Woman-downloading-Instagram-data-in-home-office.jpeg" 
+            src="/blog/Woman-downloading-Instagram-data-in-home-office.jpeg" 
             alt="Woman downloading Instagram data in home office" 
             width={1200} 
             height={630} 
@@ -133,7 +133,7 @@ export default function Blog1Page() {
 
           <div className="my-8 overflow-hidden rounded-2xl border border-[#E2E8F0]">
             <Image 
-              src="https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421334026_Man-checking-Instagram-unfollows-spreadsheet.jpeg" 
+              src="/blog/Man-checking-Instagram-unfollows-spreadsheet.jpeg" 
               alt="Man checking Instagram unfollows spreadsheet" 
               width={1200} 
               height={630} 
@@ -175,7 +175,7 @@ export default function Blog1Page() {
 
           <div className="my-8 overflow-hidden rounded-2xl border border-[#E2E8F0]">
             <Image 
-              src="https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421323728_Infographic-secure-Instagram-unfollow-workflow.jpeg" 
+              src="/blog/Infographic-secure-Instagram-unfollow-workflow.jpeg" 
               alt="Infographic secure Instagram unfollow workflow" 
               width={1200} 
               height={630} 
@@ -264,7 +264,7 @@ export default function Blog1Page() {
           "@type": "BlogPosting",
           "headline": "Instagram Data Analysis: Track Unfollows Securely in 2026",
           "image": [
-            "https://csuxjmfbwmkxiegfpljm.supabase.co/storage/v1/object/public/blog-images/organization-25310/1775421319737_Woman-downloading-Instagram-data-in-home-office.jpeg"
+            "/blog/Woman-downloading-Instagram-data-in-home-office.jpeg"
           ],
           "datePublished": "2026-04-05T08:00:00+08:00",
           "dateModified": "2026-04-05T08:00:00+08:00",

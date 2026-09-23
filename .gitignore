@@ -17,6 +17,7 @@ next/node_modules/
 next/.next/
 next/.turbo/
 next/.vercel/
+next/out/
 
 # Logs
 npm-debug.log*
