@@ -688,13 +688,52 @@ highest-value thing you could add, and would be the natural first job in
 
 ## 8. Cost guardrails
 
-**No budgets exist on this subscription today** (`az consumption budget list`
-returns empty). Set these before Phase 2:
+> **CORRECTED 2026-09-23 — both premises of item 1 below were wrong. Do not
+> create a second budget.** See "Budget reality check" immediately below.
 
-1. **Subscription budget, $40/month** — roughly 1.4x the ~$28 steady state.
-   Alerts at 50%, 80%, 100% actual and 100% forecast, to
-   `colehackman111@gmail.com`. $40 is high enough not to nag and low enough that
-   a runaway resource trips it within days.
+~~**No budgets exist on this subscription today** (`az consumption budget list`
+returns empty). Set these before Phase 2:~~
+
+1. ~~**Subscription budget, $40/month** — roughly 1.4x the ~$28 steady state.~~
+   **CANCELLED.** A subscription-scoped budget already exists and is better
+   configured than this proposal. Details below.
+### Budget reality check (verified 2026-09-23)
+
+**A subscription-wide budget already exists.** The claim above that
+`az consumption budget list` returns empty was wrong:
+
+| `polyeats-monthly-budget` | |
+|---|---|
+| Scope | `/subscriptions/14ca6838…/providers/Microsoft.Consumption/budgets/` |
+| Filter | **`None` — covers the entire subscription**, not just polyeats |
+| Amount | **$20/month** |
+| Alerts | 25%, 50%, 75% actual + 100% forecast, all enabled |
+| Recipient | `colehackman111@gmail.com` |
+
+It is *tighter* than the proposed $40 and wired to the right inbox. Adding a
+second budget would only duplicate the alerts.
+
+**The "~$28/mo steady state" figure was never a bill.** §3 derives it from
+`prices.azure.com/api/retail/prices` — **retail list prices**. This is a
+**Sponsored** subscription, so actual billing differs. Azure's own cost engine,
+read off the budget's `currentSpend`:
+
+```
+currentSpend: $2.97 USD   (2026-09-01 → 2026-09-23, i.e. 22 days)
+                          → run rate ≈ $4/month, not $28
+```
+
+So the cost section overstates real spend by roughly 7x. The *relative*
+conclusion in §3 still holds — unfollowr adds $0 marginal, because it creates no
+new compute — but the absolute figures throughout §3 should be read as list
+prices, not as what this subscription is charged.
+
+**Also note: the subscription now hosts three products, not two.**
+`rg-polyeats-prod` (a Y1 Consumption Function App, storage, Key Vault, Log
+Analytics workspace, action group and alert rule in West US 2) appeared between
+2026-09-22 and 2026-09-23 and was not present when this plan was written. The
+$20 budget is shared across tracktoolkit, polyeats and unfollowr.
+
 2. **App Insights daily cap, 0.1 GB/day.** Hard stop, not an alert. At $2.30/GB
    past the 5 GB monthly free grant, this caps the worst case at ~$7/mo even if
    something starts logging in a loop. Enable sampling.

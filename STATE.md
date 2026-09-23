@@ -34,6 +34,27 @@ Neon and always was (see Decisions #1), so `tracktoolkit-pg` is not involved.
 
 ---
 
+## Cost reality (verified 2026-09-23)
+
+| | |
+|---|---|
+| Actual subscription spend, 2026-09-01 → 09-23 | **$2.97** (~$4/mo run rate) |
+| Plan §3's claimed steady state | ~$28/mo — **retail list prices, not the bill** |
+| Existing budget | `polyeats-monthly-budget`, **$20/mo, subscription-wide** |
+| Unfollowr's marginal compute cost | **$0** — Phase 1 created no compute; Phase 2 attaches to the existing `tracktoolkit-plan` B1 |
+
+`tracktoolkit-plan` is a B1 Basic, 1 worker, currently hosting **1 site**.
+Adding `unfollowr-api` makes it 2 sites on one 1-core/1.75 GB instance — no
+extra charge, but shared CPU and memory (plan §4 item 13).
+
+**The subscription now hosts three products, not two.** `rg-polyeats-prod`
+appeared between 2026-09-22 and 2026-09-23 (Y1 Consumption Function App,
+storage, Key Vault, Log Analytics, action group, alert — West US 2). It was not
+there when this migration was scoped. Not touched; noted because the $20 budget
+is shared across all three.
+
+---
+
 ## Verified facts (read-only checks, 2026-09-22)
 
 - Azure CLI logged in as `colehackman111@gmail.com`, subscription
@@ -265,6 +286,16 @@ workspace would have throttled tracktoolkit's logging too.
    X-Frame-Options. Recorded in plan §0. *(Cole approved writing this into the
    plan.)*
 
+4. **2026-09-23 — No new Azure budget.** Plan §8 item 1 (a $40/month
+   subscription budget) is cancelled. Its two premises were both false: a
+   subscription-scoped budget already exists (`polyeats-monthly-budget`, $20/mo,
+   `filter: None`, alerting at 25/50/75% + 100% forecast to
+   colehackman111@gmail.com), and the "~$28/mo steady state" it was sized
+   against was computed from Azure **retail list prices**, not this
+   subscription's actual bill. Real month-to-date spend is **$2.97** across
+   22 days (~$4/mo run rate) on a Sponsored subscription. A second budget would
+   only duplicate alerts at a looser threshold.
+
 3. **2026-09-22 — Cole takes the `pg_dump` himself.** Claude's
    `get_connection_string` call was denied by the auto-mode classifier
    (`[Credential Materialization]`). Running it locally keeps the Neon role
@@ -304,8 +335,8 @@ workspace would have throttled tracktoolkit's logging too.
    deploying it "unchanged" preserves nothing that works — while keeping a
    50 MB upload surface and the `--timeout 120` requirement.
 
-Also per plan §8, the **$40/month subscription budget** should be set before
-Phase 2. No budgets exist on this subscription today.
+**The plan's $40/month budget is cancelled** (Decision #4) — a subscription-wide
+$20 budget already exists and is tighter. Nothing to do here.
 
 ### Housekeeping note
 
