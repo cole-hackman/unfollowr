@@ -25,8 +25,8 @@ Neon and always was (see Decisions #1), so `tracktoolkit-pg` is not involved.
 |---|---|---|
 | 0 | Preserve Render config + `pg_dump` analytics_events | **COMPLETE & VERIFIED** 2026-09-22 |
 | 1 | Azure groundwork (RG + App Insights; **DB steps cancelled**) | **COMPLETE & VERIFIED** 2026-09-22 |
-| 2 | Backend Web App on `tracktoolkit-plan` | Next up — **3 open decisions, see below** |
-| 3 | `api.unfollowr.app` custom domain + cert | Not started |
+| 2 | Backend Web App on `tracktoolkit-plan` | **COMPLETE & VERIFIED** 2026-09-23 |
+| 3 | `api.unfollowr.app` custom domain + cert | Next up |
 | 4 | Frontend Static Web App | Not started — **has a known spec defect, see Open items** |
 | 5 | DNS cutover | Not started — **approval gate** |
 | 6 | Soak 48h, then decommission Render | Not started — **approval gate** |
@@ -268,6 +268,80 @@ workspace would have throttled tracktoolkit's logging too.
 
 ---
 
+## Phase 2 verification evidence (2026-09-23)
+
+`unfollowr-api` — Linux Web App in `rg-unfollowr`, on the **existing**
+`tracktoolkit-plan` B1 (`serverFarmId` points into `rg-tracktoolkit`; no new
+plan, $0 marginal). `PYTHON|3.12`, Always On, HTTPS-only, TLS 1.2, FTPS-only.
+
+Startup command:
+```
+gunicorn wsgi:app --workers 2 --timeout 120 --access-logfile - --error-logfile -
+```
+
+App settings: `DATABASE_URL` (Neon), `APPLICATIONINSIGHTS_CONNECTION_STRING`,
+`FLASK_ENV=production`, `SCM_DO_BUILD_DURING_DEPLOYMENT=true`.
+**`ADMIN_SECRET` is deliberately NOT set** — see Next action.
+No `GEMINI_API_KEY`, no `SESSION_SECRET`, no `ADMIN_PASSWORD_HASH`, no
+`ADMIN_KEY` (the legacy app that reads them is not served).
+
+### Live verification against https://unfollowr-api.azurewebsites.net
+
+| Check | Result |
+|---|---|
+| `OPTIONS /api/analytics/event` | `204`, `Server: gunicorn`, `Access-Control-Allow-Origin: https://www.unfollowr.app` |
+| Unknown origin preflight | origin **not** reflected — correct |
+| `POST /api/analytics/event` | **`{"ok":true}`**, HTTP 200 |
+| Row actually written | **id 26805** in Neon, `created_at` 5 s after the POST |
+| `GET /api/admin/kpis` (no secret) | `403 Forbidden - admin secret not configured` |
+| `/`, `/compare`, `/faq`, `/admin`, `/api/ai/chat`, `/api/ai/classify-batch` | **all `404`** — legacy surface gone |
+
+### The instrumentation bug, found and fixed in production
+
+First deploy shipped telemetry that *looked* fine — dependencies flowed — but
+the `requests` table stayed empty and every psycopg2 span arrived as its own
+parentless root:
+
+```
+INSERT  operation_Id=79cf495e…  operation_ParentId=79cf495e…   <- self = root
+```
+
+Cause: `from flask import Flask` executed *before* `configure_azure_monitor()`,
+which enables Flask instrumentation by replacing the `flask.Flask` symbol with
+an instrumented subclass. The module had already bound the original class, so
+the app was never wrapped — no server span, meaning **failure rate and latency
+would have been invisible** while the dashboard looked populated.
+
+The local check that passed was also wrong:
+`FlaskInstrumentor().is_instrumented_by_opentelemetry` only reports that
+`instrument()` ran, not that this app instance was wrapped.
+
+Fixed with an explicit, order-independent `FlaskInstrumentor().instrument_app(app)`.
+Proven by an in-memory span exporter — old ordering produced **0 spans**, new
+produces `kind=SERVER name='OPTIONS /api/analytics/event'` — and confirmed in
+production after redeploy:
+
+```
+POST /api/analytics/event  200  789ms  operation_Id=afe24e32…
+CREATE  operation_Id=afe24e32…  operation_ParentId=2133c035aea7a8b2   36ms
+```
+
+DB spans are now children of the request span — full trace correlation.
+
+### Leftover test data
+
+Three smoke rows were written to production `analytics_events` with
+`metadata->>'path'` of `/azure-phase2-smoke`, `/azure-phase2-smoke2`,
+`/azure-phase2-smoke3`. Harmless (3 rows in 26,800+) but mislabelled as real
+page views. **Not deleted** — deleting rows is destructive and needs Cole's
+say-so. One statement removes them:
+
+```sql
+DELETE FROM analytics_events WHERE metadata->>'path' LIKE '/azure-phase2-smoke%';
+```
+
+---
+
 ## Decisions
 
 1. **2026-09-22 — The analytics database stays on Neon.** It is not migrated to
@@ -285,6 +359,35 @@ workspace would have throttled tracktoolkit's logging too.
    plan's CSP edit would be a no-op and the site would ship with no CSP/HSTS/
    X-Frame-Options. Recorded in plan §0. *(Cole approved writing this into the
    plan.)*
+
+7. **2026-09-23 — The legacy Flask UI is not served.** A new `wsgi.py`
+   registers only the analytics blueprint; `app.py` is left untouched in the
+   repo. Justification: `analytics_api.py` is a self-contained Blueprint whose
+   entire transitive dependency set is flask + werkzeug + psycopg2, so the split
+   is clean. The live product's whole server surface is those 5 endpoints.
+   Dropping the 14 legacy routes removes a 50 MB upload surface running
+   BeautifulSoup and the unauthenticated `/api/ai/*` endpoints from a B1 that is
+   **shared with tracktoolkit** — that shared blast radius is what tipped it.
+   No user-facing bookmark is affected: the legacy routes live on the *backend*
+   host, which users never visit; the site itself is the Next.js frontend.
+   **Reversible without a redeploy** — set the startup command back to
+   `gunicorn app:app --preload --workers 2 --timeout 120`.
+
+6. **2026-09-23 — Dependencies install from a lock-derived requirements.txt.**
+   `uv export --frozen --no-dev --no-hashes --no-emit-project` regenerates
+   `requirements.txt` from `uv.lock` as 106 exact `==` pins. App Service's Oryx
+   build runs pip unchanged; no uv on the server. This closes the gap where the
+   committed `requirements.txt` held loose `>=` pins that would have resolved to
+   different versions than the six months of production. Hashes omitted
+   deliberately: exact pins give the parity that matters, and `--require-hashes`
+   makes pip brittle about platform wheels on a first deploy. `uv.lock` retains
+   the hashes for auditing.
+
+5. **2026-09-23 — Always On, HTTPS-only, and no `--preload`.** Always On per
+   plan §4 item 7. HTTPS-only because nothing needs plaintext. `--preload` is
+   dropped from production's start command — see the instrumentation note in
+   the Phase 2 evidence below; it is incompatible with initialising the
+   telemetry SDK correctly.
 
 4. **2026-09-23 — No new Azure budget.** Plan §8 item 1 (a $40/month
    subscription budget) is cancelled. Its two premises were both false: a
@@ -306,14 +409,31 @@ workspace would have throttled tracktoolkit's logging too.
 
 ## Next action
 
-**Phases 0 and 1 are complete and committed.** Outstanding:
+**Phases 0, 1 and 2 are complete and committed.** Outstanding:
+
+0. **`ADMIN_SECRET` is not set on `unfollowr-api`**, so the admin dashboard
+   endpoints return 403. Deliberate — Claude does not have the value and
+   reading it from Render would put it in the transcript. Set it yourself
+   (value is on the Render backend's Environment page):
+
+   ```sh
+   az webapp config appsettings set -g rg-unfollowr -n unfollowr-api \
+     --settings "ADMIN_SECRET=<value>" -o none
+   ```
 
 1. **Cole checks the sponsorship balance/expiry** at
    microsoftazuresponsorships.com (plan open question #1, still the biggest
    unknown). Now lower stakes: with the DB on Neon, a subscription outage costs
    compute and hosting, not data.
 
-### Phase 2 — three decisions needed before provisioning
+### Phase 3 — backend custom domain (next)
+
+Add `api.unfollowr.app` to `unfollowr-api`: CNAME → `unfollowr-api.azurewebsites.net`
+plus the `asuid.api` TXT validation record at name.com, then bind a free App
+Service Managed Certificate. Same pattern already proven on
+`api.soundcloudtoolkit.com`. **The name.com records are Cole's to add.**
+
+### Phase 2 decisions, for the record
 
 1. **How the backend installs dependencies.** Production builds with
    `uv sync --frozen` against `uv.lock`; App Service's
