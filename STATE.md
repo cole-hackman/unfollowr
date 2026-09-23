@@ -9,9 +9,17 @@ day with a `§0 Field corrections` section; §0 overrides the rest where they di
 
 ## Situation
 
-Unfollowr is **down**. Both Render services are suspended and return `503`
-with `x-render-routing: suspend` (verified by curl, 2026-09-22 12:06 UTC).
-The apex still `301`s to `www` via Render's Cloudflare edge.
+**Unfollowr is BACK UP on Azure as of 2026-09-23 16:30 UTC**, after ~2 days down.
+`https://www.unfollowr.app` serves from Azure Static Web Apps with a managed
+certificate, and analytics are recording again through
+`api.unfollowr.app` → Neon.
+
+Proof it works end to end: **a real visitor** (Android Chrome, not a synthetic
+test) loaded the site at 16:44:25 UTC and the page view landed in Postgres as
+row 26808.
+
+Remaining: the apex (`unfollowr.app`) has no record yet — `www` was cut over
+first per plan §6, deliberately.
 
 Migrating to Azure is the fix. Target: $0/mo marginal, attaching the backend to
 the existing `tracktoolkit-plan` B1. The **database is not moving** — it is on
@@ -28,8 +36,8 @@ Neon and always was (see Decisions #1), so `tracktoolkit-pg` is not involved.
 | 2 | Backend Web App on `tracktoolkit-plan` | **COMPLETE & VERIFIED** 2026-09-23 |
 | 3 | `api.unfollowr.app` custom domain + cert | **COMPLETE & VERIFIED** 2026-09-23 |
 | 4 | Frontend Static Web App | **COMPLETE & VERIFIED** 2026-09-23 |
-| 5 | DNS cutover | Next up — **APPROVAL GATE, needs Cole's explicit go-ahead** |
-| 6 | Soak 48h, then decommission Render | Not started — **approval gate** |
+| 5 | DNS cutover | **`www` LIVE & VERIFIED** 2026-09-23 · apex pending |
+| 6 | Soak 48h, then decommission Render | Soak started 2026-09-23 16:30 UTC — **approval gate before deleting anything** |
 | 7 | Optional: decouple backend to Container Apps | Out of scope for now |
 
 ---
@@ -471,6 +479,54 @@ the rendered 404 page, while every real route still returns 200.
   `erasebg-transformed.png`, `unfollowr-logo.png`. **Kept** `llms.txt` — it has
   0 code references but is URL-served like `robots.txt`.
   Left `unfollowr-logo-new.png` (45 bytes, unreferenced) alone — not named by the plan.
+
+---
+
+## Phase 5 verification evidence — `www` cutover (2026-09-23)
+
+Cutover method: **CNAME delegation**, not the TXT-token flow the plan assumed.
+`www.unfollowr.app` CNAME → `lemon-smoke-00821241e.2.azurestaticapps.net`, then
+`az staticwebapp hostname set` returned **`status: Ready` immediately** —
+Azure validated ownership from the CNAME itself, so no TXT record was ever
+needed for `www`. Simpler than plan §6 step 1 describes.
+
+```
+subject : CN=www.unfollowr.app
+issuer  : C=US, O=DigiCert Inc, CN=GeoTrust TLS RSA CA G1
+valid   : 2026-09-23  ->  2027-03-23        (SWA managed, auto-renewing)
+```
+
+| Check | Result |
+|---|---|
+| TLS chain | `ssl_verify_result 0` — verified |
+| All 12 routes + `robots.txt`, `sitemap.xml`, `llms.txt` | **200** |
+| `/not-a-real-page` | **404** (the soft-404 fix holds on the real domain) |
+| Security headers | CSP + HSTS present on `https://www.unfollowr.app` |
+| **Analytics recording** | **YES — row 26808** |
+
+### The end-to-end proof
+
+```
+id         : 26808
+event_type : page_view      path: /
+user_agent : Mozilla/5.0 (Linux; Android 10; K) ... Chrome/153 Mobile Safari
+created_at : 2026-09-23T16:44:25Z
+```
+
+A **real visitor on an Android phone** — not curl, not this machine (macOS), not
+a synthetic probe. That single row proves the entire new chain:
+
+> browser → `www.unfollowr.app` (SWA, custom domain, managed TLS)
+> → JS `POST` → `api.unfollowr.app` (App Service, custom domain, managed TLS)
+> → Neon Postgres
+
+Every component of the migration, validated by actual traffic.
+
+**Note on local verification:** this machine's resolver had negative-cached
+`www.unfollowr.app` as NXDOMAIN from checks made while it genuinely did not
+exist, so local `curl` returns 000. That is a local artifact only — Cloudflare
+and Google DoH both resolve it correctly, and verification above was done with
+`--resolve` against `20.82.22.191`. Do not mistake this for an outage.
 
 ---
 
