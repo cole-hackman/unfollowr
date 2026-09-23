@@ -328,17 +328,14 @@ CREATE  operation_Id=afe24e32…  operation_ParentId=2133c035aea7a8b2   36ms
 
 DB spans are now children of the request span — full trace correlation.
 
-### Leftover test data
+### Leftover test data — CLEANED UP 2026-09-23
 
-Three smoke rows were written to production `analytics_events` with
-`metadata->>'path'` of `/azure-phase2-smoke`, `/azure-phase2-smoke2`,
-`/azure-phase2-smoke3`. Harmless (3 rows in 26,800+) but mislabelled as real
-page views. **Not deleted** — deleting rows is destructive and needs Cole's
-say-so. One statement removes them:
-
-```sql
-DELETE FROM analytics_events WHERE metadata->>'path' LIKE '/azure-phase2-smoke%';
-```
+Three smoke rows (ids 26805–26807, paths `/azure-phase2-smoke{,2,3}`) were
+written to production `analytics_events` during verification. Deleted on Cole's
+instruction, by explicit id rather than a `LIKE` pattern so no real row could
+match. Verified after: `smoke_rows_remaining = 0`, `total_rows = 26804` — the
+same count as the Phase 0 dump — and `max(created_at)` back to
+**2026-09-21 16:44:26 UTC**, the genuine last user event.
 
 ---
 
@@ -426,12 +423,36 @@ DELETE FROM analytics_events WHERE metadata->>'path' LIKE '/azure-phase2-smoke%'
    unknown). Now lower stakes: with the DB on Neon, a subscription outage costs
    compute and hosting, not data.
 
-### Phase 3 — backend custom domain (next)
+### Phase 3 — backend custom domain (next, blocked on Cole)
 
-Add `api.unfollowr.app` to `unfollowr-api`: CNAME → `unfollowr-api.azurewebsites.net`
-plus the `asuid.api` TXT validation record at name.com, then bind a free App
-Service Managed Certificate. Same pattern already proven on
-`api.soundcloudtoolkit.com`. **The name.com records are Cole's to add.**
+`api.unfollowr.app` currently returns **NXDOMAIN** — free, no conflict.
+`www.unfollowr.app` still points at Render (`unfollowr-frontend.onrender.com`),
+untouched; the Phase 5 cutover has not happened.
+
+**Records to add at name.com on `unfollowr.app`:**
+
+| Type | Host | Value | TTL |
+|---|---|---|---|
+| `CNAME` | `api` | `unfollowr-api.azurewebsites.net` | 300 |
+| `TXT` | `asuid.api` | `E0DE17E62AF5B491F35685535CC4D36BA9D8FA9D43A0D7517C349B4B4DF50683` | 300 |
+
+The TXT value is `customDomainVerificationId`, which is **per-subscription, not
+per-app**. Confirmed: `asuid.api.soundcloudtoolkit.com` already resolves to this
+exact string, so it is the same value Cole has already used successfully.
+
+Both records are additive and affect nothing live.
+
+Once they resolve, Claude runs:
+
+```sh
+az webapp config hostname add -g rg-unfollowr \
+  --webapp-name unfollowr-api --hostname api.unfollowr.app
+
+az webapp config ssl create -g rg-unfollowr \
+  --name unfollowr-api --hostname api.unfollowr.app
+
+# then bind the managed cert by its thumbprint, SNI SSL
+```
 
 ### Phase 2 decisions, for the record
 
