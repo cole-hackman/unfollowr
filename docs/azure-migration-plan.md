@@ -612,7 +612,7 @@ CAA records exist at the apex, so validation and cert issuance are unobstructed.
 3. **Apex second, after `www` is verified good.** Three options, in order of
    preference:
    - **ALIAS/ANAME at name.com** → `<name>.azurestaticapps.net`. Keeps global
-     distribution. **CONFIRMED AVAILABLE 2026-09-23 — use this one.**
+     distribution. **CONFIRMED AVAILABLE 2026-09-24 — name.com calls it `ANAME`. Use this one.**
    - **Forward apex → `www`.** Matches today's behaviour exactly (the apex
      currently 301s to `www`). Zero risk, fully reversible, and costs nothing
      since no traffic lands on the apex anyway.
@@ -799,8 +799,10 @@ drop the backend. The product survives losing two of the three.
    --workers 2 --timeout <N>`; frontend `npm ci && npm run build` / `npm start`
    with root directory `next`. **Both §1 inferences were wrong** — it is uv, not
    pip, and `app:app`, not `main:app`.
-3. ~~**Does name.com support ALIAS/ANAME?**~~ **ANSWERED 2026-09-23 — yes.**
-   Cole confirmed ALIAS is available in the name.com panel. Phase 5's apex
+3. ~~**Does name.com support ALIAS/ANAME?**~~ **ANSWERED 2026-09-23/24 — yes, as ANAME.**
+   name.com's record-type dropdown offers `ANAME` (not the word "ALIAS"). ANAME and
+   ALIAS are two vendor names for the same mechanism: a CNAME-like record at the
+   apex that the authoritative server flattens to A records. Phase 5's apex
    strategy is therefore settled on §6's **first and preferred** option: an
    ALIAS at the apex pointing to the Static Web App hostname, keeping global
    distribution. The forward-to-`www` fallback and the `stableInboundIP`

@@ -622,9 +622,10 @@ settled by the ALIAS confirmation:
 1. Add the SWA custom-domain validation TXT at `@`, wait for Azure to validate.
 2. **`www` first** — CNAME `www` → `lemon-smoke-00821241e.2.azurestaticapps.net`.
    TTL 300, converges in ~5 min. This is the real cutover.
-3. **Apex second**, after `www` is verified good — **ALIAS** `@` →
-   `lemon-smoke-00821241e.2.azurestaticapps.net` (name.com supports ALIAS,
-   confirmed 2026-09-23).
+3. **Apex second**, after `www` is verified good — **ANAME** (name.com's name
+   for ALIAS) `@` → `lemon-smoke-00821241e.2.azurestaticapps.net`. Confirmed
+   available in the panel 2026-09-24; the dropdown offers
+   A / MX / CNAME / TXT / SRV / AAAA / NS / **ANAME**.
 
 **Rollback is currently impossible** — see the open incident above. The `www`
 CNAME to Render no longer exists to revert to. Decide that before cutting over.
