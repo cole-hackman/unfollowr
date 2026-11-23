@@ -77,9 +77,6 @@ export ships followers and following as HTML or JSON. Unfollowr reads that
 export instead. There is nothing to log into and nothing for Instagram to
 detect.
 
-<!-- TODO: verify — one line on how the problem was discovered (own
-experience? watching friends use credential apps?). See README-QUESTIONS.md. -->
-
 ---
 
 ## 🔧 How it works
